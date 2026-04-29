@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SkillRequest;
 use App\Models\Skill;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class SkillController extends AdminController
+class SkillController extends Controller
 {
     public function index(): Response
     {

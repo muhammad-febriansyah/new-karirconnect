@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Database\Factories\SkillFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable([
     'name',
@@ -15,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class Skill extends Model
 {
-    /** @use HasFactory<\Database\Factories\SkillFactory> */
+    /** @use HasFactory<SkillFactory> */
     use HasFactory;
 
     /**
@@ -26,5 +28,15 @@ class Skill extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * @return BelongsToMany<Job>
+     */
+    public function jobs(): BelongsToMany
+    {
+        return $this->belongsToMany(Job::class, 'job_skill')
+            ->withPivot(['proficiency', 'is_required'])
+            ->withTimestamps();
     }
 }

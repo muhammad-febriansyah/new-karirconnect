@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Http\Controllers\Employee;
+
+use App\Enums\JobStatus;
+use App\Http\Controllers\Controller;
+use App\Models\Job;
+use App\Models\SavedJob;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class SavedJobController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $items = $request->user()
+            ->savedJobs()
+            ->with(['job.company:id,name', 'job.category:id,name', 'job.city:id,name'])
+            ->latest('id')
+            ->get()
+            ->map(fn (SavedJob $savedJob) => [
+                'id' => $savedJob->id,
+                'job' => [
+                    'id' => $savedJob->job->id,
+                    'title' => $savedJob->job->title,
+                    'status' => $savedJob->job->status?->value,
+                    'employment_type' => $savedJob->job->employment_type?->value,
+                    'work_arrangement' => $savedJob->job->work_arrangement?->value,
+                    'company_name' => $savedJob->job->company?->name,
+                    'category_name' => $savedJob->job->category?->name,
+                    'city_name' => $savedJob->job->city?->name,
+                    'application_deadline' => optional($savedJob->job->application_deadline)->toDateString(),
+                ],
+                'saved_at' => optional($savedJob->created_at)->toIso8601String(),
+            ])
+            ->values();
+
+        return Inertia::render('employee/saved-jobs/index', [
+            'items' => $items,
+        ]);
+    }
+
+    public function store(Request $request, Job $job): RedirectResponse
+    {
+        abort_unless($job->status === JobStatus::Published, 422, 'Hanya lowongan aktif yang bisa disimpan.');
+
+        $request->user()->savedJobs()->firstOrCreate([
+            'job_id' => $job->id,
+        ]);
+
+        return back()->with('success', 'Lowongan berhasil disimpan.');
+    }
+
+    public function destroy(Request $request, Job $job): RedirectResponse
+    {
+        $request->user()->savedJobs()
+            ->where('job_id', $job->id)
+            ->delete();
+
+        return back()->with('success', 'Lowongan tersimpan berhasil dihapus.');
+    }
+}

@@ -17,9 +17,7 @@ class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
-    public function __construct(private readonly SettingService $settings)
-    {
-    }
+    public function __construct(private readonly SettingService $settings) {}
 
     /**
      * Determines the current asset version.
@@ -78,6 +76,33 @@ class HandleInertiaRequests extends Middleware
                 'google_tag_manager_id' => $public['seo']['google_tag_manager_id'] ?? null,
             ],
             'features' => $public['feature_flags'] ?? [],
+            'notificationCenter' => fn () => $this->resolveNotifications($request),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveNotifications(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return ['unread_count' => 0, 'recent' => []];
+        }
+
+        $unread = $user->unreadNotifications()->latest()->limit(5)->get();
+
+        return [
+            'unread_count' => $user->unreadNotifications()->count(),
+            'recent' => $unread->map(fn ($n) => [
+                'id' => $n->id,
+                'title' => (string) ($n->data['title'] ?? 'Notifikasi'),
+                'body' => (string) ($n->data['body'] ?? ''),
+                'action_url' => $n->data['action_url'] ?? null,
+                'icon' => (string) ($n->data['icon'] ?? 'bell'),
+                'created_at' => optional($n->created_at)->toIso8601String(),
+            ])->values(),
         ];
     }
 

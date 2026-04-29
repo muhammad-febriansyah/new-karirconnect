@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\JobCategoryRequest;
 use App\Models\JobCategory;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class JobCategoryController extends AdminController
+class JobCategoryController extends Controller
 {
     public function index(): Response
     {

@@ -3,13 +3,13 @@ import AppLogoIcon from '@/components/app-logo-icon';
 import type { AppMeta, Branding } from '@/types/shared';
 
 export default function AppLogo() {
-    const { app, branding } = usePage().props as {
+    const props = usePage().props as unknown as {
         app?: AppMeta;
         branding?: Branding;
     };
 
-    const name = app?.name ?? 'KarirConnect';
-    const logo = branding?.logo_path;
+    const name = props.app?.name ?? 'KarirConnect';
+    const logo = props.branding?.logo_path;
 
     return (
         <>

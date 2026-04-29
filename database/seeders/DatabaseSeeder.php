@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             ProvinceCitySeeder::class,
             LookupSeeder::class,
+            SubscriptionPlanSeeder::class,
         ]);
 
         User::factory()->create([
@@ -39,6 +40,10 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => UserRole::Employee,
             'email_verified_at' => now(),
+        ]);
+
+        $this->call([
+            CompanySeeder::class,
         ]);
     }
 }

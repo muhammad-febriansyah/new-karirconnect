@@ -4,6 +4,7 @@ namespace App\Services\Settings;
 
 use App\Enums\SettingType;
 use App\Models\Setting;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -87,7 +88,7 @@ class SettingService
     /**
      * Upload a file (logo/favicon/etc) and store its path on the setting.
      */
-    public function uploadFile(string $group, string $key, \Illuminate\Http\UploadedFile $file, string $directory = 'settings'): Setting
+    public function uploadFile(string $group, string $key, UploadedFile $file, string $directory = 'settings'): Setting
     {
         $oldPath = $this->get("{$group}.{$key}");
 
@@ -110,10 +111,32 @@ class SettingService
 
     /**
      * Resolve all settings keyed by "group.key", with cast/decrypted value.
+     * Returns an empty collection if the table is not yet migrated (eg. before
+     * the install/test bootstrap completes) so the middleware doesn't crash.
+     *
+     * Cache stores a plain array (not a Collection) so cache drivers that
+     * serialize to disk/db cannot return __PHP_Incomplete_Class on retrieval.
      */
     private function all(): Collection
     {
-        return Cache::rememberForever(self::CACHE_KEY, function (): Collection {
+        $cached = Cache::get(self::CACHE_KEY);
+
+        if (is_array($cached)) {
+            return collect($cached);
+        }
+
+        $resolved = $this->resolveFromDatabase();
+
+        if ($resolved->isNotEmpty()) {
+            Cache::forever(self::CACHE_KEY, $resolved->all());
+        }
+
+        return $resolved;
+    }
+
+    private function resolveFromDatabase(): Collection
+    {
+        try {
             return Setting::query()
                 ->orderBy('group')
                 ->orderBy('sort_order')
@@ -132,7 +155,9 @@ class SettingService
                         ],
                     ];
                 });
-        });
+        } catch (\Throwable) {
+            return collect();
+        }
     }
 
     private function decodeValue(SettingType $type, ?string $raw): mixed

@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\IndustryRequest;
 use App\Models\Industry;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class IndustryController extends AdminController
+class IndustryController extends Controller
 {
     public function index(): Response
     {

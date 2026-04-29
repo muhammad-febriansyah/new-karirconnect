@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import type { FlashBag } from '@/types/shared';
@@ -12,24 +12,62 @@ const HANDLERS: Record<ToastType, (message: string) => void> = {
     info: (msg) => toast.info(msg),
 };
 
+type ToastShape = { type?: ToastType; message?: string };
+
+/**
+ * Subscribe to Inertia router events instead of usePage() so this hook stays
+ * mountable from globally-rendered components (e.g. <Toaster /> in app.tsx)
+ * that live outside the Inertia page tree.
+ *
+ * Supports two flash shapes:
+ *   { flash: { success?, error?, warning?, info? } }   ← session()->with('success', '...')
+ *   { flash: { toast: { type, message } } }             ← Inertia::flash('toast', [...])
+ */
 export function useFlashToast(): void {
-    const { flash } = usePage().props as { flash?: FlashBag };
     const lastFiredRef = useRef<string>('');
 
     useEffect(() => {
-        if (!flash) {
-            return;
-        }
+        const fire = (flash: (FlashBag & { toast?: ToastShape }) | undefined) => {
+            if (!flash) {
+                return;
+            }
 
-        for (const key of Object.keys(HANDLERS) as ToastType[]) {
-            const message = flash[key];
-            if (typeof message === 'string' && message.length > 0) {
-                const fingerprint = `${key}|${message}`;
-                if (fingerprint !== lastFiredRef.current) {
-                    HANDLERS[key](message);
+            for (const key of Object.keys(HANDLERS) as ToastType[]) {
+                const message = flash[key];
+
+                if (typeof message === 'string' && message.length > 0) {
+                    const fingerprint = `${key}|${message}|${Date.now()}`;
+
+                    if (fingerprint !== lastFiredRef.current) {
+                        HANDLERS[key](message);
+
+                        lastFiredRef.current = fingerprint;
+                    }
+                }
+            }
+
+            const toastPayload = flash.toast;
+
+            if (
+                toastPayload
+                && typeof toastPayload.message === 'string'
+                && toastPayload.message.length > 0
+            ) {
+                const type = toastPayload.type ?? 'info';
+
+                const fingerprint = `toast|${type}|${toastPayload.message}|${Date.now()}`;
+
+                if (fingerprint !== lastFiredRef.current && HANDLERS[type]) {
+                    HANDLERS[type](toastPayload.message);
+
                     lastFiredRef.current = fingerprint;
                 }
             }
-        }
-    }, [flash]);
+        };
+
+        return router.on('navigate', (event) => {
+            const flash = (event.detail.page.props as { flash?: FlashBag & { toast?: ToastShape } }).flash;
+            fire(flash);
+        });
+    }, []);
 }

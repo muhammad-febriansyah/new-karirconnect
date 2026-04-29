@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Job;
+use App\Observers\JobObserver;
+use App\Services\Ai\Clients\FakeAiClient;
+use App\Services\Ai\Contracts\AiClient;
+use App\Services\Billing\Clients\FakeDuitkuClient;
+use App\Services\Billing\Contracts\PaymentGatewayClient;
 use App\Services\Settings\SettingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +21,17 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(SettingService::class);
+
+        // Default to the deterministic fake AI client during testing so feature
+        // tests never hit the network. Production resolves OpenAiClient via
+        // AiClientFactory based on the `ai.provider` setting.
+        if ($this->app->environment('testing')) {
+            $this->app->singleton('ai.client', fn () => new FakeAiClient);
+            $this->app->singleton(AiClient::class, fn ($app) => $app->make('ai.client'));
+
+            $this->app->singleton('billing.gateway', fn () => new FakeDuitkuClient);
+            $this->app->singleton(PaymentGatewayClient::class, fn ($app) => $app->make('billing.gateway'));
+        }
     }
 
     public function boot(): void
@@ -46,5 +63,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::shouldBeStrict(! app()->isProduction());
         Model::preventLazyLoading(! app()->isProduction());
+        Job::observe(JobObserver::class);
     }
 }

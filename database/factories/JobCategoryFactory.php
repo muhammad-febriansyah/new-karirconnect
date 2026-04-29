@@ -18,16 +18,10 @@ class JobCategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->randomElement([
-            'Engineering',
-            'Design',
-            'Product',
-            'Marketing',
-            'Sales',
-        ]);
+        $name = fake()->unique()->words(2, true).' '.fake()->unique()->randomNumber(4);
 
         return [
-            'name' => $name,
+            'name' => ucwords($name),
             'slug' => Str::slug($name),
             'description' => fake()->sentence(),
             'is_active' => true,

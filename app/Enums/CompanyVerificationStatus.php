@@ -22,4 +22,14 @@ enum CompanyVerificationStatus: string
             self::Rejected => 'Verifikasi Ditolak',
         };
     }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::Unverified => 'secondary',
+            self::Pending => 'warning',
+            self::Verified => 'success',
+            self::Rejected => 'destructive',
+        };
+    }
 }

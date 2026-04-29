@@ -17,7 +17,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import type { Auth, NavItem } from '@/types';
+import type { NavItem } from '@/types';
 
 const footerNavItems: NavItem[] = [
     {
@@ -34,8 +34,8 @@ const navByRole: Record<string, NavItem[]> = {
 };
 
 export function AppSidebar() {
-    const { auth } = usePage().props as { auth: Auth };
-    const role = auth.user?.role ?? 'employee';
+    const { auth } = usePage().props;
+    const role = (auth as { user?: { role?: string } } | undefined)?.user?.role ?? 'employee';
     const items = navByRole[role] ?? employeeMainNavItems;
 
     return (

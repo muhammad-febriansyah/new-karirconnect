@@ -2,8 +2,6 @@ import { Link, usePage } from '@inertiajs/react';
 import { type ReactNode } from 'react';
 import AppLogo from '@/components/app-logo';
 import { Button } from '@/components/ui/button';
-import { Toaster } from '@/components/ui/sonner';
-import { useFlashToast } from '@/hooks/use-flash-toast';
 import { dashboard, login, register } from '@/routes';
 import type { Auth, FeatureFlags } from '@/types';
 
@@ -12,12 +10,12 @@ type PublicLayoutProps = {
 };
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
-    useFlashToast();
-
-    const { auth, features } = usePage().props as {
-        auth: Auth;
-        features: FeatureFlags;
+    const props = usePage().props as unknown as {
+        auth?: Auth;
+        features?: FeatureFlags;
     };
+    const auth = props.auth;
+    const features = props.features ?? {};
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -28,7 +26,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     </Link>
 
                     <div className="flex items-center gap-2">
-                        {auth.user ? (
+                        {auth?.user ? (
                             <Button asChild>
                                 <Link href={dashboard()} prefetch>
                                     Masuk Dashboard
@@ -63,8 +61,6 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     <p>&copy; {new Date().getFullYear()} KarirConnect. Semua hak dilindungi.</p>
                 </div>
             </footer>
-
-            <Toaster richColors closeButton />
         </div>
     );
 }

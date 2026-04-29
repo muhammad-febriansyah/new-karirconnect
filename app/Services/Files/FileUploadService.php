@@ -5,6 +5,7 @@ namespace App\Services\Files;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
 
 class FileUploadService
@@ -34,8 +35,8 @@ class FileUploadService
 
         Storage::disk(self::DISK)->makeDirectory($directory);
 
-        $manager = ImageManager::gd();
-        $image = $manager->read($file->getRealPath());
+        $manager = ImageManager::usingDriver(GdDriver::class);
+        $image = $manager->decodePath($file->getRealPath());
 
         if ($maxWidth !== null && $image->width() > $maxWidth) {
             $image->scaleDown(width: $maxWidth);

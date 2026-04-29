@@ -1,5 +1,6 @@
 import { Upload, X } from 'lucide-react';
-import { useRef, type ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
+import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -7,6 +8,7 @@ import { FormField } from './form-field';
 
 type FileUploadFieldProps = {
     id?: string;
+    name?: string;
     label?: string;
     description?: string;
     error?: string;
@@ -21,6 +23,7 @@ type FileUploadFieldProps = {
 
 export function FileUploadField({
     id,
+    name,
     label,
     description,
     error,
@@ -41,6 +44,7 @@ export function FileUploadField({
         if (inputRef.current) {
             inputRef.current.value = '';
         }
+
         onChange?.(null);
     };
 
@@ -80,6 +84,7 @@ export function FileUploadField({
                 <Input
                     ref={inputRef}
                     id={id}
+                    name={name}
                     type="file"
                     accept={accept}
                     className="hidden"

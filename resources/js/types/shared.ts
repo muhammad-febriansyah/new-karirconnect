@@ -1,3 +1,5 @@
+import type { Auth } from './auth';
+
 export type FlashBag = {
     success?: string | null;
     error?: string | null;
@@ -39,4 +41,16 @@ export type FeatureFlags = {
     cv_builder_enabled?: boolean;
     registration_enabled?: boolean;
     [key: string]: boolean | undefined;
+};
+
+export type SharedPageProps = {
+    name: string;
+    auth: Auth;
+    sidebarOpen: boolean;
+    flash: FlashBag;
+    app: AppMeta;
+    branding: Branding;
+    seo: SeoMeta;
+    features: FeatureFlags;
+    [key: string]: unknown;
 };
