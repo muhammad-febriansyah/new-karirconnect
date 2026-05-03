@@ -1,5 +1,6 @@
 import WorkExperienceController from '@/actions/App/Http/Controllers/Employee/WorkExperienceController';
 import { ProfileRecordPage } from '@/components/employee/profile-record-page';
+import { ProfileTabs } from '@/components/employee/profile-tabs';
 
 type WorkExperienceItem = {
     id: number;
@@ -17,6 +18,7 @@ export default function EmployeeWorkExperiences({ items }: { items: WorkExperien
         <ProfileRecordPage
             title="Pengalaman Kerja"
             description="Simpan pengalaman profesional yang relevan dengan target karir Anda."
+            topContent={<ProfileTabs />}
             items={items}
             actions={WorkExperienceController}
             emptyMessage="Belum ada pengalaman kerja."

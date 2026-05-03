@@ -13,11 +13,11 @@ export type AppMeta = {
     contact_email?: string | null;
     contact_phone?: string | null;
     locale: string;
+    url: string;
 };
 
 export type Branding = {
     logo_path?: string | null;
-    logo_dark_path?: string | null;
     favicon_path?: string | null;
     primary_color?: string | null;
     login_background_path?: string | null;

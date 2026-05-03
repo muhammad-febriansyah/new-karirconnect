@@ -15,6 +15,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type FieldOption = {
     value: string;
@@ -56,6 +57,7 @@ type Props = {
     fields: FieldConfig[];
     actions: ControllerActions;
     emptyMessage: string;
+    topContent?: React.ReactNode;
 };
 
 export function ProfileRecordPage({
@@ -65,6 +67,7 @@ export function ProfileRecordPage({
     fields,
     actions,
     emptyMessage,
+    topContent,
 }: Props) {
     return (
         <>
@@ -83,6 +86,7 @@ export function ProfileRecordPage({
                         />
                     }
                 />
+                {topContent}
 
                 <Section>
                     {items.length === 0 ? (
@@ -90,42 +94,46 @@ export function ProfileRecordPage({
                             {emptyMessage}
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            {items.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="rounded-lg border bg-card p-4 shadow-sm"
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="space-y-2">
+                        <div className="overflow-x-auto rounded-lg border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        {fields.map((field) => (
+                                            <TableHead key={field.name}>{field.label}</TableHead>
+                                        ))}
+                                        <TableHead className="text-right">Aksi</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {items.map((item) => (
+                                        <TableRow key={item.id}>
                                             {fields.map((field) => (
-                                                <div key={field.name}>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {field.label}
-                                                    </p>
-                                                    <p className="text-sm font-medium text-foreground">
+                                                <TableCell key={`${item.id}-${field.name}`} className="align-top">
+                                                    <span className="block max-w-xs whitespace-normal text-sm font-medium text-foreground">
                                                         {formatValue(item[field.name], field)}
-                                                    </p>
-                                                </div>
+                                                    </span>
+                                                </TableCell>
                                             ))}
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <EditDialog
-                                                title={title}
-                                                fields={fields}
-                                                submitLabel="Perbarui"
-                                                action={actions.update}
-                                                item={item}
-                                            />
-                                            <DeleteDialog
-                                                title={title}
-                                                item={item}
-                                                action={actions.destroy}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <EditDialog
+                                                        title={title}
+                                                        fields={fields}
+                                                        submitLabel="Perbarui"
+                                                        action={actions.update}
+                                                        item={item}
+                                                    />
+                                                    <DeleteDialog
+                                                        title={title}
+                                                        item={item}
+                                                        action={actions.destroy}
+                                                    />
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </div>
                     )}
                 </Section>

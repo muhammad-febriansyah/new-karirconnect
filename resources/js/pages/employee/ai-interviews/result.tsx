@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { AlertTriangle, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { InterviewRadarChart } from '@/components/charts/interview-radar';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { formatDateTime } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 
 type Props = {
     session: {
@@ -98,7 +100,7 @@ export default function AiInterviewResult({ session, analysis, responses }: Prop
                                 <CardContent className="space-y-2 p-4">
                                     <div className="text-sm font-semibold">Rekomendasi AI</div>
                                     <Badge variant={recommendationTone(analysis.recommendation) as never} className="text-base">
-                                        {analysis.recommendation.replace('_', ' ')}
+                                        {formatStatus(analysis.recommendation)}
                                     </Badge>
                                     {session.duration_seconds && (
                                         <p className="text-xs text-muted-foreground">Durasi {Math.round(session.duration_seconds / 60)} menit</p>
@@ -134,22 +136,18 @@ export default function AiInterviewResult({ session, analysis, responses }: Prop
                             </Section>
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-4">
-                            {[
-                                ['Komunikasi', analysis.communication_score],
-                                ['Teknis', analysis.technical_score],
-                                ['Problem Solving', analysis.problem_solving_score],
-                                ['Culture Fit', analysis.culture_fit_score],
-                            ].map(([label, value]) => (
-                                <Card key={label as string}>
-                                    <CardContent className="space-y-2 p-4">
-                                        <div className="text-xs text-muted-foreground">{label as string}</div>
-                                        <div className="text-2xl font-bold">{value ?? '-'}</div>
-                                        <Progress value={Number(value ?? 0)} />
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        <Card>
+                            <CardContent className="p-4">
+                                <InterviewRadarChart
+                                    scores={{
+                                        technical: analysis.technical_score,
+                                        communication: analysis.communication_score,
+                                        problem_solving: analysis.problem_solving_score,
+                                        culture_fit: analysis.culture_fit_score,
+                                    }}
+                                />
+                            </CardContent>
+                        </Card>
 
                         {analysis.red_flags.length > 0 && (
                             <Section title="Red Flags">
@@ -169,7 +167,7 @@ export default function AiInterviewResult({ session, analysis, responses }: Prop
                                 {responses.map((r) => (
                                     <Card key={r.order_number}>
                                         <CardContent className="space-y-2 p-4">
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                                 <div className="text-sm">
                                                     <span className="font-semibold">Q{r.order_number}</span>
                                                     <Badge variant="secondary" className="ml-2">{r.category}</Badge>

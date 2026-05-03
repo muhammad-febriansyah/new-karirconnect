@@ -46,14 +46,14 @@ class NotificationController extends Controller
         $row = $request->user()->notifications()->where('id', $notification)->firstOrFail();
         $row->markAsRead();
 
-        return back();
+        return back()->with('success', 'Notifikasi ditandai sebagai sudah dibaca.');
     }
 
     public function markAllRead(Request $request): RedirectResponse
     {
         $request->user()->unreadNotifications->markAsRead();
 
-        return back();
+        return back()->with('success', 'Semua notifikasi berhasil ditandai sebagai sudah dibaca.');
     }
 
     public function destroy(Request $request, string $notification): RedirectResponse
@@ -61,7 +61,7 @@ class NotificationController extends Controller
         $row = $request->user()->notifications()->where('id', $notification)->firstOrFail();
         $row->delete();
 
-        return back();
+        return back()->with('success', 'Notifikasi berhasil dihapus.');
     }
 
     /**

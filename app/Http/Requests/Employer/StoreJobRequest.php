@@ -61,8 +61,8 @@ class StoreJobRequest extends FormRequest
             'job_category_id' => $this->filled('job_category_id') ? (int) $this->input('job_category_id') : null,
             'province_id' => $this->filled('province_id') ? (int) $this->input('province_id') : null,
             'city_id' => $this->filled('city_id') ? (int) $this->input('city_id') : null,
-            'salary_min' => $this->filled('salary_min') ? (int) $this->input('salary_min') : null,
-            'salary_max' => $this->filled('salary_max') ? (int) $this->input('salary_max') : null,
+            'salary_min' => $this->normalizeRupiah($this->input('salary_min')),
+            'salary_max' => $this->normalizeRupiah($this->input('salary_max')),
             'ai_match_threshold' => $this->filled('ai_match_threshold') ? (int) $this->input('ai_match_threshold') : null,
             'skill_ids' => collect($this->input('skill_ids', []))
                 ->filter(fn (mixed $id) => filled($id))
@@ -71,5 +71,16 @@ class StoreJobRequest extends FormRequest
                 ->values()
                 ->all(),
         ]);
+    }
+
+    private function normalizeRupiah(mixed $value): ?int
+    {
+        if (! filled($value)) {
+            return null;
+        }
+
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+
+        return $digits === '' ? null : (int) $digits;
     }
 }

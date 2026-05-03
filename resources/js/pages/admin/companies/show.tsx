@@ -1,8 +1,11 @@
 import { Head } from '@inertiajs/react';
+import { EmptyState } from '@/components/feedback/empty-state';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
+import { SafeHtml } from '@/components/shared/safe-html';
 import { formatDateTime } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 
 type Props = {
     company: {
@@ -55,10 +58,10 @@ export default function AdminCompanyShow({ company }: Props) {
                     actions={
                         <div className="flex gap-2">
                             <StatusBadge tone={company.status === 'approved' ? 'success' : 'warning'}>
-                                {company.status}
+                                {formatStatus(company.status)}
                             </StatusBadge>
                             <StatusBadge tone={company.verification_status === 'verified' ? 'success' : 'muted'}>
-                                {company.verification_status}
+                                {formatStatus(company.verification_status)}
                             </StatusBadge>
                         </div>
                     }
@@ -82,7 +85,7 @@ export default function AdminCompanyShow({ company }: Props) {
 
                     <Section title="Tim">
                         {company.members.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Belum ada anggota.</p>
+                            <EmptyState title="Belum ada anggota" description="Anggota tim perusahaan akan muncul di sini." />
                         ) : (
                             <ul className="divide-y">
                                 {company.members.map((m) => (
@@ -102,7 +105,7 @@ export default function AdminCompanyShow({ company }: Props) {
                 <div className="grid gap-6 lg:grid-cols-2">
                     <Section title="Lokasi Kantor">
                         {company.offices.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Belum ada lokasi kantor.</p>
+                            <EmptyState title="Belum ada lokasi kantor" description="Data kantor cabang dan headquarter akan tampil di sini." />
                         ) : (
                             <ul className="space-y-3">
                                 {company.offices.map((office) => (
@@ -125,7 +128,7 @@ export default function AdminCompanyShow({ company }: Props) {
 
                     <Section title="Badge Aktif">
                         {company.badges.filter((badge) => badge.is_active).length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Belum ada badge aktif.</p>
+                            <EmptyState title="Belum ada badge aktif" description="Badge perusahaan yang aktif akan tampil di bagian ini." />
                         ) : (
                             <ul className="space-y-3">
                                 {company.badges
@@ -152,7 +155,7 @@ export default function AdminCompanyShow({ company }: Props) {
 
                 <Section title="Dokumen Verifikasi">
                     {company.verifications.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Belum ada dokumen.</p>
+                        <EmptyState title="Belum ada dokumen" description="Dokumen verifikasi perusahaan akan muncul di sini." />
                     ) : (
                         <ul className="space-y-2">
                             {company.verifications.map((v) => (
@@ -167,7 +170,7 @@ export default function AdminCompanyShow({ company }: Props) {
                                     <StatusBadge
                                         tone={v.status === 'approved' ? 'success' : v.status === 'rejected' ? 'destructive' : 'warning'}
                                     >
-                                        {v.status}
+                                        {formatStatus(v.status)}
                                     </StatusBadge>
                                 </li>
                             ))}
@@ -177,7 +180,7 @@ export default function AdminCompanyShow({ company }: Props) {
 
                 {company.about && (
                     <Section title="Tentang">
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{company.about}</p>
+                        <SafeHtml html={company.about} className="prose-sm text-muted-foreground" />
                     </Section>
                 )}
             </div>

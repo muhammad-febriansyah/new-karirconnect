@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Notifications\PaymentSucceededNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -175,6 +176,8 @@ class BillingService
             OrderItemType::JobBoost => $this->boostJob($order),
             default => null,
         };
+
+        $order->user?->notify(new PaymentSucceededNotification($order));
     }
 
     private function initiateGateway(Order $order): void

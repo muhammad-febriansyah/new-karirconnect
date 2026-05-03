@@ -1,12 +1,15 @@
 import { Head, Link } from '@inertiajs/react';
 import { Briefcase, Building2, ExternalLink, MapPin, Users } from 'lucide-react';
+import { EmptyState } from '@/components/feedback/empty-state';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
+import { SafeHtml } from '@/components/shared/safe-html';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 
 type Props = {
     company: {
@@ -84,25 +87,28 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                     <div className="space-y-6">
                         {company.about && (
                             <Section title="Tentang">
-                                <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{company.about}</p>
+                                <SafeHtml html={company.about} className="prose-sm text-muted-foreground" />
                             </Section>
                         )}
 
                         {company.culture && (
                             <Section title="Budaya">
-                                <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{company.culture}</p>
+                                <SafeHtml html={company.culture} className="prose-sm text-muted-foreground" />
                             </Section>
                         )}
 
                         {company.benefits && (
                             <Section title="Benefit">
-                                <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{company.benefits}</p>
+                                <SafeHtml html={company.benefits} className="prose-sm text-muted-foreground" />
                             </Section>
                         )}
 
                         <Section title={`Lowongan Aktif (${jobs.length})`}>
                             {jobs.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">Belum ada lowongan aktif saat ini.</p>
+                                <EmptyState
+                                    title="Belum ada lowongan aktif"
+                                    description="Perusahaan ini belum mempublikasikan lowongan aktif saat ini."
+                                />
                             ) : (
                                 <div className="space-y-2">
                                     {jobs.map((job) => (
@@ -116,7 +122,7 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                                                         {job.category && <span>{job.category}</span>}
                                                         {job.city && <span className="flex items-center gap-1"><MapPin className="size-3" /> {job.city}</span>}
                                                         {job.employment_type && (
-                                                            <span className="flex items-center gap-1"><Briefcase className="size-3" /> {job.employment_type}</span>
+                                                            <span className="flex items-center gap-1"><Briefcase className="size-3" /> {formatStatus(job.employment_type)}</span>
                                                         )}
                                                         {job.is_salary_visible && job.salary_min && (
                                                             <span className="font-medium text-foreground">

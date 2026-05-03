@@ -1,9 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Bell, Check, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
+import { EmptyState } from '@/components/feedback/empty-state';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
+import { ActionButton, ActionGroup } from '@/components/ui/action-button';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDateTime } from '@/lib/format-date';
 
@@ -31,12 +34,17 @@ type Props = {
 };
 
 export default function NotificationsIndex({ notifications, unreadCount }: Props) {
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
     const markRead = (id: string) => {
         router.post(`/notifications/${id}/read`, {}, { preserveScroll: true });
     };
+
     const remove = (id: string) => {
         router.delete(`/notifications/${id}`, { preserveScroll: true });
+        setDeletingId(null);
     };
+
     const markAll = () => {
         router.post('/notifications/mark-all-read', {}, { preserveScroll: true });
     };
@@ -50,21 +58,20 @@ export default function NotificationsIndex({ notifications, unreadCount }: Props
                     description={`${unreadCount} belum dibaca`}
                     actions={
                         unreadCount > 0 ? (
-                            <Button variant="outline" onClick={markAll}>
+                            <ActionButton intent="approve" onClick={markAll}>
                                 <Check className="size-4" /> Tandai semua dibaca
-                            </Button>
+                            </ActionButton>
                         ) : null
                     }
                 />
 
                 <Section>
                     {notifications.data.length === 0 ? (
-                        <Card>
-                            <CardContent className="flex flex-col items-center gap-2 p-10 text-center text-muted-foreground">
-                                <Bell className="size-8" />
-                                <div>Belum ada notifikasi.</div>
-                            </CardContent>
-                        </Card>
+                        <EmptyState
+                            icon={Bell}
+                            title="Belum ada notifikasi"
+                            description="Notifikasi terbaru dari aktivitas akun Anda akan muncul di sini."
+                        />
                     ) : (
                         <div className="space-y-2">
                             {notifications.data.map((n) => (
@@ -80,21 +87,21 @@ export default function NotificationsIndex({ notifications, unreadCount }: Props
                                                 <div className="text-xs text-muted-foreground">{formatDateTime(n.created_at)}</div>
                                             )}
                                         </div>
-                                        <div className="flex flex-col gap-2 sm:flex-row">
+                                        <ActionGroup className="justify-start sm:justify-end">
                                             {n.action_url && (
-                                                <Button asChild size="sm" variant="outline" onClick={() => markRead(n.id)}>
+                                                <ActionButton asChild intent="detail" onClick={() => markRead(n.id)}>
                                                     <Link href={n.action_url}>Buka</Link>
-                                                </Button>
+                                                </ActionButton>
                                             )}
                                             {!n.read_at && (
-                                                <Button size="sm" variant="ghost" onClick={() => markRead(n.id)}>
-                                                    <Check className="size-4" />
-                                                </Button>
+                                                <ActionButton intent="approve" onClick={() => markRead(n.id)}>
+                                                    <Check className="size-4" /> Tandai Dibaca
+                                                </ActionButton>
                                             )}
-                                            <Button size="sm" variant="ghost" onClick={() => remove(n.id)}>
-                                                <Trash2 className="size-4" />
-                                            </Button>
-                                        </div>
+                                            <ActionButton intent="delete" onClick={() => setDeletingId(n.id)}>
+                                                <Trash2 className="size-4" /> Hapus
+                                            </ActionButton>
+                                        </ActionGroup>
                                     </CardContent>
                                 </Card>
                             ))}
@@ -102,6 +109,17 @@ export default function NotificationsIndex({ notifications, unreadCount }: Props
                     )}
                 </Section>
             </div>
+
+            <ConfirmDialog
+                open={deletingId !== null}
+                onOpenChange={(open) => !open && setDeletingId(null)}
+                title="Hapus notifikasi?"
+                description="Notifikasi ini akan dihapus dari daftar Anda."
+                confirmLabel="Hapus"
+                confirmIcon={Trash2}
+                variant="destructive"
+                onConfirm={() => deletingId && remove(deletingId)}
+            />
         </>
     );
 }

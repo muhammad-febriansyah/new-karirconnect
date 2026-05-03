@@ -4,13 +4,18 @@ use App\Http\Controllers\Employee\AiInterviewController;
 use App\Http\Controllers\Employee\ApplicationController;
 use App\Http\Controllers\Employee\CareerCoachController;
 use App\Http\Controllers\Employee\CertificationController;
+use App\Http\Controllers\Employee\CompanyReviewController as EmployeeCompanyReviewController;
 use App\Http\Controllers\Employee\CvBuilderController;
 use App\Http\Controllers\Employee\CvUploadController;
 use App\Http\Controllers\Employee\EducationController;
 use App\Http\Controllers\Employee\InterviewController;
+use App\Http\Controllers\Employee\JobAlertController;
+use App\Http\Controllers\Employee\JobRecommendationController;
 use App\Http\Controllers\Employee\MessageController;
 use App\Http\Controllers\Employee\ProfileController;
+use App\Http\Controllers\Employee\SalarySubmissionController;
 use App\Http\Controllers\Employee\SavedJobController;
+use App\Http\Controllers\Employee\SkillAssessmentController;
 use App\Http\Controllers\Employee\WorkExperienceController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,11 +62,17 @@ Route::middleware(['auth', 'verified', 'role:employee'])
 
         Route::prefix('ai-interviews')->name('ai-interviews.')->group(function (): void {
             Route::get('/', [AiInterviewController::class, 'index'])->name('index');
-            Route::post('practice', [AiInterviewController::class, 'startPractice'])->name('practice');
             Route::get('{session}/run', [AiInterviewController::class, 'run'])->name('run');
-            Route::post('{session}/questions/{question}/answer', [AiInterviewController::class, 'answer'])->name('answer');
-            Route::post('{session}/complete', [AiInterviewController::class, 'complete'])->name('complete');
             Route::get('{session}/result', [AiInterviewController::class, 'result'])->name('result');
+
+            Route::middleware('throttle:60,1')->group(function (): void {
+                Route::post('practice', [AiInterviewController::class, 'startPractice'])->name('practice');
+                Route::post('{session}/questions/{question}/answer', [AiInterviewController::class, 'answer'])->name('answer');
+                Route::post('{session}/client-secret', [AiInterviewController::class, 'clientSecret'])->name('client-secret');
+                Route::post('{session}/recording', [AiInterviewController::class, 'uploadRecording'])->name('recording');
+                Route::post('{session}/voice-submit', [AiInterviewController::class, 'submitVoice'])->name('voice-submit');
+                Route::post('{session}/complete', [AiInterviewController::class, 'complete'])->name('complete');
+            });
         });
 
         Route::prefix('messages')->name('messages.')->group(function (): void {
@@ -69,11 +80,51 @@ Route::middleware(['auth', 'verified', 'role:employee'])
             Route::post('{message}/reply', [MessageController::class, 'reply'])->name('reply');
         });
 
+        Route::prefix('company-reviews')->name('company-reviews.')->group(function (): void {
+            Route::get('/', [EmployeeCompanyReviewController::class, 'index'])->name('index');
+            Route::get('companies/{company:slug}/create', [EmployeeCompanyReviewController::class, 'create'])->name('create');
+            Route::post('companies/{company:slug}', [EmployeeCompanyReviewController::class, 'store'])->name('store');
+            Route::get('{review}/edit', [EmployeeCompanyReviewController::class, 'edit'])->name('edit');
+            Route::patch('{review}', [EmployeeCompanyReviewController::class, 'update'])->name('update');
+            Route::delete('{review}', [EmployeeCompanyReviewController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('salary-submissions')->name('salary-submissions.')->group(function (): void {
+            Route::get('/', [SalarySubmissionController::class, 'index'])->name('index');
+            Route::get('create', [SalarySubmissionController::class, 'create'])->name('create');
+            Route::post('/', [SalarySubmissionController::class, 'store'])->name('store');
+            Route::delete('{submission}', [SalarySubmissionController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('job-alerts')->name('job-alerts.')->group(function (): void {
+            Route::get('/', [JobAlertController::class, 'index'])->name('index');
+            Route::post('/', [JobAlertController::class, 'store'])->name('store');
+            Route::patch('{alert}', [JobAlertController::class, 'update'])->name('update');
+            Route::delete('{alert}', [JobAlertController::class, 'destroy'])->name('destroy');
+            Route::get('{alert}/preview', [JobAlertController::class, 'preview'])->name('preview');
+            Route::post('{alert}/dispatch', [JobAlertController::class, 'dispatchNow'])->name('dispatch');
+        });
+
+        Route::prefix('recommendations')->name('recommendations.')->group(function (): void {
+            Route::get('/', [JobRecommendationController::class, 'index'])->name('index');
+            Route::post('{job}/dismiss', [JobRecommendationController::class, 'dismiss'])->name('dismiss');
+        });
+
         Route::prefix('career-coach')->name('career-coach.')->group(function (): void {
             Route::get('/', [CareerCoachController::class, 'index'])->name('index');
-            Route::post('/', [CareerCoachController::class, 'store'])->name('store');
             Route::get('{session}', [CareerCoachController::class, 'show'])->name('show');
-            Route::post('{session}/send', [CareerCoachController::class, 'send'])->name('send');
             Route::post('{session}/archive', [CareerCoachController::class, 'archive'])->name('archive');
+
+            Route::middleware('throttle:60,1')->group(function (): void {
+                Route::post('/', [CareerCoachController::class, 'store'])->name('store');
+                Route::post('{session}/send', [CareerCoachController::class, 'send'])->name('send');
+            });
+        });
+
+        Route::prefix('skill-assessments')->name('skill-assessments.')->group(function (): void {
+            Route::get('/', [SkillAssessmentController::class, 'index'])->name('index');
+            Route::post('/', [SkillAssessmentController::class, 'store'])->name('store');
+            Route::get('{skillAssessment}', [SkillAssessmentController::class, 'show'])->name('show');
+            Route::post('{skillAssessment}/submit', [SkillAssessmentController::class, 'submit'])->name('submit');
         });
     });

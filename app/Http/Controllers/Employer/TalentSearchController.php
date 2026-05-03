@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\EmployeeProfile;
 use App\Models\SavedCandidate;
 use App\Models\Skill;
+use App\Services\Audit\AuditLogService;
 use App\Services\Talent\TalentSearchService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +15,10 @@ use Inertia\Response;
 
 class TalentSearchController extends Controller
 {
-    public function __construct(private readonly TalentSearchService $service) {}
+    public function __construct(
+        private readonly TalentSearchService $service,
+        private readonly AuditLogService $audit,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -34,6 +38,8 @@ class TalentSearchController extends Controller
             'results' => $results->through(fn (EmployeeProfile $p) => [
                 'id' => $p->id,
                 'name' => $p->user?->name,
+                'email' => $p->user?->email,
+                'phone' => $p->user?->phone,
                 'avatar_url' => $p->user?->avatar_path ? asset('storage/'.$p->user->avatar_path) : null,
                 'headline' => $p->headline,
                 'current_position' => $p->current_position,
@@ -44,7 +50,9 @@ class TalentSearchController extends Controller
                 'profile_completion' => $p->profile_completion,
                 'province' => $p->province?->name,
                 'city' => $p->city?->name,
-                'skills' => $p->skills->take(6)->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])->values(),
+                'skills' => $p->skills->take(8)->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])->values(),
+                'skills_count' => $p->skills->count(),
+                'linkedin_url' => $p->linkedin_url,
                 'is_saved' => in_array($p->id, $savedIds, true),
             ]),
             'skills' => Skill::query()->orderBy('name')->limit(50)->get(['id', 'name', 'slug']),
@@ -56,6 +64,11 @@ class TalentSearchController extends Controller
         $company = $this->resolveCompany($request);
         abort_unless($company !== null, 404);
         abort_unless(in_array($profile->visibility, ['public', 'employers'], true), 403);
+
+        $this->audit->record('talent_search.profile_viewed', $profile, after: [
+            'company_id' => $company->id,
+            'visibility' => $profile->visibility,
+        ]);
 
         $profile->load([
             'user:id,name,email,avatar_path,phone',
@@ -75,6 +88,7 @@ class TalentSearchController extends Controller
         return Inertia::render('employer/talent-search/show', [
             'profile' => [
                 'id' => $profile->id,
+                'user_id' => $profile->user_id,
                 'name' => $profile->user?->name,
                 'email' => $profile->user?->email,
                 'phone' => $profile->user?->phone,

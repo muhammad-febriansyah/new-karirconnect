@@ -11,6 +11,22 @@ class SettingSeeder extends Seeder
     {
         $now = now();
 
+        Setting::query()
+            ->where('group', 'branding')
+            ->where('key', 'logo_dark_path')
+            ->delete();
+
+        Setting::query()
+            ->where('group', 'email')
+            ->whereIn('key', [
+                'smtp_host',
+                'smtp_port',
+                'smtp_username',
+                'smtp_password',
+                'smtp_encryption',
+            ])
+            ->delete();
+
         $rows = [];
         $sort = 0;
 
@@ -55,8 +71,7 @@ class SettingSeeder extends Seeder
                 'default_locale' => ['label' => 'Bahasa Default', 'value' => 'id', 'is_public' => true],
             ],
             'branding' => [
-                'logo_path' => ['label' => 'Logo (Light)', 'type' => 'file', 'is_public' => true],
-                'logo_dark_path' => ['label' => 'Logo (Dark)', 'type' => 'file', 'is_public' => true],
+                'logo_path' => ['label' => 'Logo', 'type' => 'file', 'is_public' => true],
                 'favicon_path' => ['label' => 'Favicon', 'type' => 'file', 'is_public' => true],
                 'primary_color' => ['label' => 'Warna Utama (HEX)', 'value' => '#0F172A', 'is_public' => true],
                 'login_background_path' => ['label' => 'Background Login', 'type' => 'file', 'is_public' => true],
@@ -80,12 +95,15 @@ class SettingSeeder extends Seeder
                 'google_tag_manager_id' => ['label' => 'Google Tag Manager ID', 'value' => '', 'is_public' => true],
             ],
             'ai' => [
-                'provider' => ['label' => 'Penyedia AI', 'value' => 'openai'],
-                'api_key' => ['label' => 'API Key', 'type' => 'password'],
+                'provider' => ['label' => 'Penyedia AI', 'value' => 'openai', 'description' => 'Pilih: openai (default) atau fake untuk debugging.'],
+                'api_key' => ['label' => 'API Key', 'type' => 'password', 'description' => 'API key dari penyedia (mis. OpenAI). Disimpan terenkripsi.'],
+                'base_url' => ['label' => 'Base URL', 'value' => 'https://api.openai.com/v1', 'description' => 'Override jika pakai OpenAI-compatible endpoint (Azure / proxy).'],
                 'model_chat' => ['label' => 'Model Chat (Career Coach)', 'value' => 'gpt-4o-mini'],
-                'model_interview' => ['label' => 'Model AI Interview', 'value' => 'gpt-4o'],
+                'model_interview' => ['label' => 'Model AI Interview', 'value' => 'gpt-4o-mini'],
                 'model_embed' => ['label' => 'Model Embedding', 'value' => 'text-embedding-3-small'],
-                'max_tokens' => ['label' => 'Max Tokens', 'type' => 'int', 'value' => '2048'],
+                'max_tokens' => ['label' => 'Max Tokens per Request', 'type' => 'int', 'value' => '2048', 'description' => 'Batas token output. Set 0 untuk membiarkan provider menentukan.'],
+                'cost_input_per_1k' => ['label' => 'Cost Input / 1K token (USD)', 'type' => 'float', 'value' => '0.00015', 'description' => 'Untuk audit biaya. Update jika provider mengubah harga.'],
+                'cost_output_per_1k' => ['label' => 'Cost Output / 1K token (USD)', 'type' => 'float', 'value' => '0.0006'],
             ],
             'payment' => [
                 'duitku_merchant_code' => ['label' => 'Duitku Merchant Code'],
@@ -95,23 +113,77 @@ class SettingSeeder extends Seeder
                 'duitku_return_url' => ['label' => 'URL Return'],
             ],
             'email' => [
-                'mail_driver' => ['label' => 'Mail Driver', 'value' => 'log'],
+                'mail_driver' => ['label' => 'Mail Driver', 'value' => 'mailketing', 'description' => 'Pilih: mailketing (default) atau log untuk debugging.'],
                 'mail_from_address' => ['label' => 'From Address', 'value' => 'noreply@karirconnect.test'],
                 'mail_from_name' => ['label' => 'From Name', 'value' => 'KarirConnect'],
-                'smtp_host' => ['label' => 'SMTP Host'],
-                'smtp_port' => ['label' => 'SMTP Port', 'type' => 'int', 'value' => '587'],
-                'smtp_username' => ['label' => 'SMTP Username'],
-                'smtp_password' => ['label' => 'SMTP Password', 'type' => 'password'],
-                'smtp_encryption' => ['label' => 'SMTP Encryption', 'value' => 'tls'],
+                'mailketing_api_token' => ['label' => 'Mailketing API Token', 'type' => 'password', 'description' => 'Diambil dari menu Integration di dashboard Mailketing.'],
+            ],
+            'security' => [
+                'recaptcha_enabled' => ['label' => 'Aktifkan reCAPTCHA v3', 'type' => 'bool', 'value' => '0', 'is_public' => true],
+                'recaptcha_site_key' => ['label' => 'reCAPTCHA Site Key', 'is_public' => true, 'description' => 'Dipakai di frontend untuk render token v3.'],
+                'recaptcha_secret_key' => ['label' => 'reCAPTCHA Secret Key', 'type' => 'password', 'description' => 'Dipakai backend untuk verifikasi token ke Google.'],
+            ],
+            'integrations' => [
+                'google_client_id' => ['label' => 'Google OAuth Client ID', 'description' => 'Untuk integrasi Google Calendar / Meet di interview employer.'],
+                'google_client_secret' => ['label' => 'Google OAuth Client Secret', 'type' => 'password'],
             ],
             'feature_flags' => [
-                'ai_interview_enabled' => ['label' => 'AI Interview', 'type' => 'bool', 'value' => '1', 'is_public' => true],
-                'ai_coach_enabled' => ['label' => 'AI Career Coach', 'type' => 'bool', 'value' => '1', 'is_public' => true],
-                'talent_search_enabled' => ['label' => 'Talent Search', 'type' => 'bool', 'value' => '1', 'is_public' => true],
-                'company_reviews_enabled' => ['label' => 'Company Reviews', 'type' => 'bool', 'value' => '1', 'is_public' => true],
-                'salary_insight_enabled' => ['label' => 'Salary Insight', 'type' => 'bool', 'value' => '1', 'is_public' => true],
-                'cv_builder_enabled' => ['label' => 'CV Builder', 'type' => 'bool', 'value' => '1', 'is_public' => true],
-                'registration_enabled' => ['label' => 'Pendaftaran Terbuka', 'type' => 'bool', 'value' => '1', 'is_public' => true],
+                'ai_interview_enabled' => [
+                    'label' => 'AI Interview',
+                    'type' => 'bool',
+                    'value' => '1',
+                    'is_public' => true,
+                    'description' => 'Mengizinkan kandidat menjalani sesi wawancara berbasis AI untuk lowongan tertentu.',
+                ],
+                'ai_coach_enabled' => [
+                    'label' => 'AI Career Coach',
+                    'type' => 'bool',
+                    'value' => '1',
+                    'is_public' => true,
+                    'description' => 'Membuka chatbot karir berbasis AI di dashboard kandidat.',
+                ],
+                'talent_search_enabled' => [
+                    'label' => 'Talent Search',
+                    'type' => 'bool',
+                    'value' => '1',
+                    'is_public' => true,
+                    'description' => 'Mengaktifkan pencarian kandidat oleh perusahaan dari database CV publik.',
+                ],
+                'company_reviews_enabled' => [
+                    'label' => 'Ulasan Perusahaan',
+                    'type' => 'bool',
+                    'value' => '1',
+                    'is_public' => true,
+                    'description' => 'Mengizinkan kandidat memberi ulasan & rating ke perusahaan.',
+                ],
+                'salary_insight_enabled' => [
+                    'label' => 'Insight Gaji',
+                    'type' => 'bool',
+                    'value' => '1',
+                    'is_public' => true,
+                    'description' => 'Menampilkan halaman insight gaji publik dan menerima submission dari kandidat.',
+                ],
+                'cv_builder_enabled' => [
+                    'label' => 'CV Builder',
+                    'type' => 'bool',
+                    'value' => '1',
+                    'is_public' => true,
+                    'description' => 'Mengaktifkan tool pembuat CV otomatis untuk kandidat.',
+                ],
+                'registration_enabled' => [
+                    'label' => 'Pendaftaran Terbuka',
+                    'type' => 'bool',
+                    'value' => '1',
+                    'is_public' => true,
+                    'description' => 'Jika dimatikan, registrasi user baru akan ditutup sementara.',
+                ],
+                'ai_interview_practice_monthly_limit' => [
+                    'label' => 'Kuota AI Interview Praktik / Bulan (Free)',
+                    'type' => 'int',
+                    'value' => '10',
+                    'is_public' => false,
+                    'description' => 'Jumlah maksimum sesi AI interview praktik yang bisa dijalankan kandidat free per bulan. 0 = tanpa batas.',
+                ],
             ],
             'legal' => [
                 'terms_body' => ['label' => 'Syarat & Ketentuan', 'type' => 'text', 'is_public' => true],

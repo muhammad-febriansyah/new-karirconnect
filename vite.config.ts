@@ -22,4 +22,10 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
+    optimizeDeps: {
+        include: ['react-apexcharts', 'apexcharts', 'apexcharts/client'],
+    },
+    resolve: {
+        dedupe: ['react', 'react-dom'],
+    },
 });

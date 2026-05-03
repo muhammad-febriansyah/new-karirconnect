@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\SettingType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
+use App\Mail\TestSmtpMail;
 use App\Models\Setting;
 use App\Services\Settings\SettingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class SettingController extends Controller
 {
@@ -21,13 +24,12 @@ class SettingController extends Controller
         'ai' => 'AI Provider',
         'payment' => 'Payment Gateway (Duitku)',
         'email' => 'Email & SMTP',
+        'security' => 'Keamanan',
         'feature_flags' => 'Feature Flags',
         'legal' => 'Halaman Legal',
     ];
 
-    public function __construct(private readonly SettingService $settings)
-    {
-    }
+    public function __construct(private readonly SettingService $settings) {}
 
     public function edit(Request $request, ?string $group = null): Response
     {
@@ -48,9 +50,7 @@ class SettingController extends Controller
                     'label' => $setting->label,
                     'description' => $setting->description,
                     'is_public' => $setting->is_public,
-                    'value' => $setting->type === SettingType::Password
-                        ? ($rawValue ? '__keep__' : null)
-                        : $rawValue,
+                    'value' => $rawValue,
                     'value_url' => $setting->type === SettingType::File && is_string($rawValue) && $rawValue !== ''
                         ? asset('storage/'.$rawValue)
                         : null,
@@ -83,6 +83,7 @@ class SettingController extends Controller
                 if ($uploaded !== null) {
                     $this->settings->uploadFile($group, $key, $uploaded, "settings/{$group}");
                 }
+
                 continue;
             }
 
@@ -92,13 +93,28 @@ class SettingController extends Controller
 
             $value = $values[$key];
 
-            if ($setting->type === SettingType::Password && $value === '__keep__') {
-                continue;
-            }
-
             $this->settings->set($group, $key, $value);
         }
 
         return back()->with('success', 'Pengaturan berhasil disimpan.');
+    }
+
+    public function testEmail(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'recipient_email' => ['required', 'email:rfc,dns', 'max:160'],
+        ]);
+
+        try {
+            Mail::to($data['recipient_email'])->send(
+                new TestSmtpMail(sentBy: $request->user()?->name ?? 'Admin'),
+            );
+        } catch (Throwable $throwable) {
+            report($throwable);
+
+            return back()->with('error', 'Test email gagal dikirim. Periksa konfigurasi SMTP/API token Anda.');
+        }
+
+        return back()->with('success', "Test email berhasil dikirim ke {$data['recipient_email']}.");
     }
 }

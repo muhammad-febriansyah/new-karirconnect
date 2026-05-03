@@ -9,7 +9,7 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Poppins', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -59,85 +59,142 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* KarirConnect brand colors — sampled directly from the logo */
+    --color-brand-blue: var(--brand-blue);
+    --color-brand-cyan: var(--brand-cyan);
+    --color-brand-navy: var(--brand-navy);
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
-}
+    color-scheme: light;
+    /* KarirConnect brand palette (sampled from logo)
+       - brand blue   #1080e0  → oklch(0.62 0.18 248)
+       - brand cyan   #10c0e0  → oklch(0.78 0.13 215)
+       - brand navy   #001060  → oklch(0.21 0.15 268) */
+    --brand-blue: oklch(0.62 0.18 248);
+    --brand-cyan: oklch(0.78 0.13 215);
+    --brand-navy: oklch(0.21 0.15 268);
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.18 0.04 260);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.18 0.04 260);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.18 0.04 260);
+    --primary: oklch(0.62 0.18 248);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.97 0.01 248);
+    --secondary-foreground: oklch(0.21 0.15 268);
+    --muted: oklch(0.97 0.008 248);
+    --muted-foreground: oklch(0.5 0.04 258);
+    --accent: oklch(0.95 0.025 240);
+    --accent-foreground: oklch(0.45 0.18 248);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0 0);
+    --border: oklch(0.93 0.01 248);
+    --input: oklch(0.93 0.01 248);
+    --ring: oklch(0.62 0.18 248);
+    --chart-1: oklch(0.62 0.18 248);
+    --chart-2: oklch(0.78 0.13 215);
+    --chart-3: oklch(0.45 0.16 258);
+    --chart-4: oklch(0.7 0.15 200);
+    --chart-5: oklch(0.55 0.2 260);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0.006 248);
+    --sidebar-foreground: oklch(0.21 0.06 260);
+    --sidebar-primary: oklch(0.62 0.18 248);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.94 0.025 240);
+    --sidebar-accent-foreground: oklch(0.4 0.18 248);
+    --sidebar-border: oklch(0.92 0.012 248);
+    --sidebar-ring: oklch(0.62 0.18 248);
 }
 
 @layer base {
+    html,
+    body {
+        color-scheme: light;
+    }
+
     * {
         @apply border-border;
     }
 
     body {
         @apply bg-background text-foreground;
+    }
+
+    input[type='date'],
+    input[type='datetime-local'],
+    input[type='month'],
+    input[type='week'],
+    input[type='time'] {
+        color-scheme: light;
+    }
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes spotlight {
+    0% {
+        opacity: 0;
+        transform: translate(-72%, -62%) scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -40%) scale(1);
+    }
+}
+
+@keyframes aurora {
+    from {
+        background-position: 50% 50%, 50% 50%;
+    }
+    to {
+        background-position: 350% 50%, 350% 50%;
+    }
+}
+
+@keyframes scroll {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(calc(-50% - 0.375rem));
+    }
+}
+
+@theme inline {
+    --animate-marquee:
+        marquee var(--duration) infinite linear;
+    --animate-marquee-vertical:
+        marquee-vertical var(--duration) linear infinite;
+  @keyframes marquee {
+  from {
+    transform:
+        translateX(0);
+        }
+  to {
+    transform:
+        translateX(calc(-100% - var(--gap)));
+        }
+    }
+  @keyframes marquee-vertical {
+  from {
+    transform:
+        translateY(0);
+        }
+  to {
+    transform:
+        translateY(calc(-100% - var(--gap)));
+        }
     }
 }

@@ -53,8 +53,10 @@ class ApplicationController extends Controller
         abort_unless($application->employee_profile_id === $profile->id, 403);
 
         $application->load([
-            'job:id,title,slug,company_id',
+            'job:id,title,slug,company_id,city_id,employment_type,work_arrangement,salary_min,salary_max,is_salary_visible,application_deadline',
+            'job.city:id,name',
             'job.company:id,name,slug,logo_path',
+            'candidateCv:id,label,file_path',
             'statusLogs.changedBy:id,name',
         ]);
 
@@ -71,11 +73,26 @@ class ApplicationController extends Controller
                     'id' => $application->job?->id,
                     'title' => $application->job?->title,
                     'slug' => $application->job?->slug,
+                    'city' => $application->job?->city?->name,
+                    'employment_type' => $application->job?->employment_type?->value,
+                    'work_arrangement' => $application->job?->work_arrangement?->value,
+                    'salary_min' => $application->job?->salary_min,
+                    'salary_max' => $application->job?->salary_max,
+                    'is_salary_visible' => (bool) $application->job?->is_salary_visible,
+                    'application_deadline' => optional($application->job?->application_deadline)->toIso8601String(),
                 ],
                 'company' => [
                     'name' => $application->job?->company?->name,
                     'slug' => $application->job?->company?->slug,
+                    'logo_url' => $application->job?->company?->logo_path
+                        ? asset('storage/'.$application->job->company->logo_path)
+                        : null,
                 ],
+                'cv' => $application->candidateCv ? [
+                    'id' => $application->candidateCv->id,
+                    'label' => $application->candidateCv->label,
+                    'url' => asset('storage/'.$application->candidateCv->file_path),
+                ] : null,
                 'status_logs' => $application->statusLogs->map(fn ($log) => [
                     'id' => $log->id,
                     'from_status' => $log->from_status?->value,

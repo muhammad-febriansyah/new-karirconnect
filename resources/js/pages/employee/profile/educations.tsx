@@ -1,5 +1,6 @@
 import EducationController from '@/actions/App/Http/Controllers/Employee/EducationController';
 import { ProfileRecordPage } from '@/components/employee/profile-record-page';
+import { ProfileTabs } from '@/components/employee/profile-tabs';
 
 type EducationItem = {
     id: number;
@@ -17,6 +18,7 @@ export default function EmployeeEducations({ items }: { items: EducationItem[] }
         <ProfileRecordPage
             title="Pendidikan"
             description="Kelola riwayat pendidikan formal Anda."
+            topContent={<ProfileTabs />}
             items={items}
             actions={EducationController}
             emptyMessage="Belum ada riwayat pendidikan."

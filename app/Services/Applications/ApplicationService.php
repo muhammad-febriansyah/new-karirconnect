@@ -24,8 +24,8 @@ class ApplicationService
             return $application;
         }
 
-        $score = $this->matcher->score($application->job, $application->employeeProfile);
-        $application->forceFill(['ai_match_score' => $score])->save();
+        $cached = $this->matcher->cache($application->job, $application->employeeProfile);
+        $application->forceFill(['ai_match_score' => $cached->score])->save();
 
         return $application;
     }

@@ -1,11 +1,13 @@
 import { Form, Head } from '@inertiajs/react';
 import JobController from '@/actions/App/Http/Controllers/Admin/JobController';
 import { StatusBadge } from '@/components/feedback/status-badge';
+import { EmptyState } from '@/components/feedback/empty-state';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/format-date';
 import { formatSalaryRange } from '@/lib/format-rupiah';
+import { formatStatus } from '@/lib/format-status';
 
 type Props = {
     job: {
@@ -50,7 +52,7 @@ export default function AdminJobShow({ job, statusOptions }: Props) {
                     actions={
                         <div className="flex gap-2">
                             <StatusBadge tone={job.status === 'published' ? 'success' : job.status === 'closed' ? 'warning' : 'secondary'}>
-                                {job.status}
+                                {formatStatus(job.status)}
                             </StatusBadge>
                             {job.is_featured && <StatusBadge tone="primary">Featured</StatusBadge>}
                         </div>
@@ -65,11 +67,11 @@ export default function AdminJobShow({ job, statusOptions }: Props) {
                             <dt className="text-muted-foreground">Diposting oleh</dt>
                             <dd>{job.posted_by?.name ?? '-'}</dd>
                             <dt className="text-muted-foreground">Tipe kerja</dt>
-                            <dd>{job.employment_type ?? '-'}</dd>
+                            <dd>{formatStatus(job.employment_type)}</dd>
                             <dt className="text-muted-foreground">Pengaturan kerja</dt>
-                            <dd>{job.work_arrangement ?? '-'}</dd>
+                            <dd>{formatStatus(job.work_arrangement)}</dd>
                             <dt className="text-muted-foreground">Level</dt>
-                            <dd>{job.experience_level ?? '-'}</dd>
+                            <dd>{formatStatus(job.experience_level)}</dd>
                             <dt className="text-muted-foreground">Lokasi</dt>
                             <dd>{job.city?.name ?? '-'}</dd>
                             <dt className="text-muted-foreground">Deadline</dt>
@@ -122,13 +124,13 @@ export default function AdminJobShow({ job, statusOptions }: Props) {
 
                 <Section title="Pertanyaan Screening">
                     {job.screening_questions.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Belum ada pertanyaan screening.</p>
+                        <EmptyState title="Belum ada pertanyaan screening" description="Pertanyaan screening akan tampil di sini jika sudah ditambahkan." />
                     ) : (
                         <div className="space-y-3">
                             {job.screening_questions.map((question) => (
                                 <div key={question.id} className="rounded-md border p-3">
                                     <div className="font-medium">{question.order_number}. {question.question}</div>
-                                    <div className="text-xs text-muted-foreground">{question.type} • {question.is_required ? 'Wajib' : 'Opsional'}</div>
+                                    <div className="text-xs text-muted-foreground">{formatStatus(question.type)} • {question.is_required ? 'Wajib' : 'Opsional'}</div>
                                 </div>
                             ))}
                         </div>

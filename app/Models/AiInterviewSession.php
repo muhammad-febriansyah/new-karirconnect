@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'template_id',
     'mode',
     'language',
+    'voice',
     'status',
     'invitation_token',
     'invited_at',

@@ -211,6 +211,7 @@ class JobController extends Controller
             'application_deadline' => optional($job->application_deadline)->toDateString(),
             'is_anonymous' => $job->is_anonymous,
             'is_featured' => $job->is_featured,
+            'featured_until' => optional($job->featured_until)->toIso8601String(),
             'views_count' => $job->views_count,
             'applications_count' => $job->applications_count,
             'ai_match_threshold' => $job->ai_match_threshold,

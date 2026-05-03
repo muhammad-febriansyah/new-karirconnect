@@ -59,10 +59,10 @@ class HandleInertiaRequests extends Middleware
                 'contact_email' => $public['general']['contact_email'] ?? null,
                 'contact_phone' => $public['general']['contact_phone'] ?? null,
                 'locale' => $public['general']['default_locale'] ?? 'id',
+                'url' => url('/'),
             ],
             'branding' => [
                 'logo_path' => $this->asset($public['branding']['logo_path'] ?? null),
-                'logo_dark_path' => $this->asset($public['branding']['logo_dark_path'] ?? null),
                 'favicon_path' => $this->asset($public['branding']['favicon_path'] ?? null),
                 'primary_color' => $public['branding']['primary_color'] ?? null,
                 'login_background_path' => $this->asset($public['branding']['login_background_path'] ?? null),

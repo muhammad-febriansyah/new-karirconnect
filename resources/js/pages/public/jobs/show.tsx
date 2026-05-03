@@ -1,13 +1,16 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Bookmark, BookmarkCheck, Briefcase, Building2, Calendar, Eye, MapPin, Sparkles, Star } from 'lucide-react';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
+import { SeoHead } from '@/components/seo-head';
+import { SafeHtml } from '@/components/shared/safe-html';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { formatDate } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 import { destroy as savedJobDestroy, store as savedJobStore } from '@/routes/employee/saved-jobs';
 import type { Auth } from '@/types';
 
@@ -46,9 +49,17 @@ type Job = {
     applications_count: number;
 };
 
+type MatchBreakdown = {
+    skills: number;
+    experience: number;
+    location: number;
+    salary: number;
+};
+
 type Props = {
     job: Job;
     matchScore: number | null;
+    matchBreakdown: MatchBreakdown | null;
     isSaved: boolean;
     similar: Array<{ id: number; slug: string; title: string; company: { name: string; logo_url: string | null }; city: string | null }>;
 };
@@ -58,9 +69,17 @@ function formatRupiah(value: number | null): string {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
 }
 
-export default function PublicJobShow({ job, matchScore, isSaved, similar }: Props) {
+export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved, similar }: Props) {
     const auth = (usePage().props as unknown as { auth?: Auth }).auth;
     const isEmployee = auth?.user?.role === 'employee';
+    const description = [
+        job.is_anonymous ? 'Perusahaan konfidensial' : job.company.name,
+        job.city ?? undefined,
+        job.description?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() ?? undefined,
+    ]
+        .filter(Boolean)
+        .join(' · ')
+        .slice(0, 160);
 
     const toggleSave = () => {
         if (!auth?.user) {
@@ -68,15 +87,15 @@ export default function PublicJobShow({ job, matchScore, isSaved, similar }: Pro
             return;
         }
         if (isSaved) {
-            router.delete(savedJobDestroy(job.id).url, { preserveScroll: true });
+            router.delete(savedJobDestroy(job.slug).url, { preserveScroll: true });
         } else {
-            router.post(savedJobStore(job.id).url, {}, { preserveScroll: true });
+            router.post(savedJobStore(job.slug).url, {}, { preserveScroll: true });
         }
     };
 
     return (
         <>
-            <Head title={job.title} />
+            <SeoHead title={job.title} description={description} canonical={`/jobs/${job.slug}`} type="article" />
 
             <div className="space-y-6">
                 <PageHeader
@@ -102,9 +121,9 @@ export default function PublicJobShow({ job, matchScore, isSaved, similar }: Pro
                         <Section>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1.5"><MapPin className="size-4" /> {job.city ?? '-'}{job.province ? `, ${job.province}` : ''}</span>
-                                <span className="flex items-center gap-1.5"><Briefcase className="size-4" /> {job.employment_type ?? '-'}</span>
-                                {job.work_arrangement && <span>{job.work_arrangement}</span>}
-                                {job.experience_level && <Badge variant="secondary">{job.experience_level}</Badge>}
+                                <span className="flex items-center gap-1.5"><Briefcase className="size-4" /> {formatStatus(job.employment_type)}</span>
+                                {job.work_arrangement && <span>{formatStatus(job.work_arrangement)}</span>}
+                                {job.experience_level && <Badge variant="secondary">{formatStatus(job.experience_level)}</Badge>}
                                 {job.is_featured && <Badge className="gap-1"><Star className="size-3" /> Featured</Badge>}
                                 {job.application_deadline && (
                                     <span className="flex items-center gap-1.5"><Calendar className="size-4" /> Tenggat {formatDate(job.application_deadline)}</span>
@@ -135,22 +154,22 @@ export default function PublicJobShow({ job, matchScore, isSaved, similar }: Pro
 
                         {job.description && (
                             <Section title="Deskripsi">
-                                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: job.description }} />
+                                <SafeHtml html={job.description} className="prose-sm" />
                             </Section>
                         )}
                         {job.responsibilities && (
                             <Section title="Tanggung Jawab">
-                                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: job.responsibilities }} />
+                                <SafeHtml html={job.responsibilities} className="prose-sm" />
                             </Section>
                         )}
                         {job.requirements && (
                             <Section title="Kualifikasi">
-                                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: job.requirements }} />
+                                <SafeHtml html={job.requirements} className="prose-sm" />
                             </Section>
                         )}
                         {job.benefits && (
                             <Section title="Benefit">
-                                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: job.benefits }} />
+                                <SafeHtml html={job.benefits} className="prose-sm" />
                             </Section>
                         )}
                     </div>
@@ -168,6 +187,26 @@ export default function PublicJobShow({ job, matchScore, isSaved, similar }: Pro
                                         <span className="text-xs text-muted-foreground">/ 100</span>
                                     </div>
                                     <Progress value={matchScore} />
+                                    {matchBreakdown && (
+                                        <ul className="space-y-2 pt-1 text-xs">
+                                            {[
+                                                { label: 'Skill', value: matchBreakdown.skills, max: 50 },
+                                                { label: 'Pengalaman', value: matchBreakdown.experience, max: 20 },
+                                                { label: 'Lokasi', value: matchBreakdown.location, max: 15 },
+                                                { label: 'Gaji', value: matchBreakdown.salary, max: 15 },
+                                            ].map((row) => (
+                                                <li key={row.label} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-muted-foreground">
+                                                        <span>{row.label}</span>
+                                                        <span className="tabular-nums">
+                                                            {row.value}<span className="text-muted-foreground/60"> / {row.max}</span>
+                                                        </span>
+                                                    </div>
+                                                    <Progress value={(row.value / row.max) * 100} className="h-1" />
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                     <p className="text-xs text-muted-foreground">
                                         Berdasarkan skill, pengalaman, lokasi, dan ekspektasi gaji Anda.
                                     </p>

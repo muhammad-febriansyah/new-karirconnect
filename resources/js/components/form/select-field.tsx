@@ -30,13 +30,15 @@ export function SelectField({
     label,
     description,
     error,
-    placeholder = 'Pilih…',
+    placeholder,
     required,
     disabled,
     value,
     onValueChange,
     options,
 }: SelectFieldProps) {
+    const resolvedPlaceholder = placeholder ?? (label ? `Pilih ${label.toLowerCase()}` : 'Pilih opsi');
+
     return (
         <FormField
             id={id}
@@ -47,7 +49,7 @@ export function SelectField({
         >
             <Select value={value} onValueChange={onValueChange} disabled={disabled}>
                 <SelectTrigger id={id} className="w-full">
-                    <SelectValue placeholder={placeholder} />
+                    <SelectValue placeholder={resolvedPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                     {options.map((option) => (

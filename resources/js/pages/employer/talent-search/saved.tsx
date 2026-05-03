@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, BookmarkCheck } from 'lucide-react';
+import { EmptyState } from '@/components/feedback/empty-state';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -48,11 +49,10 @@ export default function EmployerSavedCandidates({ saved }: Props) {
 
                 <Section>
                     {saved.data.length === 0 ? (
-                        <Card>
-                            <CardContent className="p-10 text-center text-sm text-muted-foreground">
-                                Belum ada kandidat tersimpan.
-                            </CardContent>
-                        </Card>
+                        <EmptyState
+                            title="Belum ada kandidat tersimpan"
+                            description="Simpan kandidat dari Talent Search untuk melihatnya lagi di sini."
+                        />
                     ) : (
                         <div className="grid gap-3 md:grid-cols-2">
                             {saved.data.map((s) => (

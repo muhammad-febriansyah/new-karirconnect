@@ -26,4 +26,23 @@ class SubmitApplicationRequest extends FormRequest
             'answers.*.answer' => ['nullable'],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'expected_salary' => $this->normalizeRupiah($this->input('expected_salary')),
+            'candidate_cv_id' => $this->filled('candidate_cv_id') ? (int) $this->input('candidate_cv_id') : null,
+        ]);
+    }
+
+    private function normalizeRupiah(mixed $value): ?int
+    {
+        if (! filled($value)) {
+            return null;
+        }
+
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+
+        return $digits === '' ? null : (int) $digits;
+    }
 }

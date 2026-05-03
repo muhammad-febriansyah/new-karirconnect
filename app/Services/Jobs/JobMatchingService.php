@@ -3,6 +3,7 @@
 namespace App\Services\Jobs;
 
 use App\Enums\ExperienceLevel;
+use App\Models\AiMatchScore;
 use App\Models\EmployeeProfile;
 use App\Models\Job;
 use Illuminate\Support\Collection;
@@ -21,6 +22,17 @@ class JobMatchingService
 {
     public function score(Job $job, EmployeeProfile $profile): int
     {
+        return $this->breakdown($job, $profile)['score'];
+    }
+
+    /**
+     * Compute the score plus per-component breakdown. Used by the cache writer
+     * and by employer-facing UI that needs to explain the score.
+     *
+     * @return array{score:int, breakdown:array{skills:int,experience:int,location:int,salary:int}}
+     */
+    public function breakdown(Job $job, EmployeeProfile $profile): array
+    {
         $job->loadMissing('skills:id', 'city:id,province_id');
         $profile->loadMissing('skills:id', 'city:id,province_id');
 
@@ -29,7 +41,33 @@ class JobMatchingService
         $loc = $this->scoreLocation($job, $profile);
         $sal = $this->scoreSalary($job, $profile);
 
-        return min(100, $skill + $exp + $loc + $sal);
+        return [
+            'score' => min(100, $skill + $exp + $loc + $sal),
+            'breakdown' => [
+                'skills' => $skill,
+                'experience' => $exp,
+                'location' => $loc,
+                'salary' => $sal,
+            ],
+        ];
+    }
+
+    /**
+     * Compute and persist to ai_match_scores. Used to seed talent search and
+     * employer dashboards without recomputing on every visit (Blueprint §25.2).
+     */
+    public function cache(Job $job, EmployeeProfile $profile): AiMatchScore
+    {
+        $payload = $this->breakdown($job, $profile);
+
+        return AiMatchScore::query()->updateOrCreate(
+            ['job_id' => $job->id, 'candidate_profile_id' => $profile->id],
+            [
+                'score' => $payload['score'],
+                'breakdown' => $payload['breakdown'],
+                'computed_at' => now(),
+            ],
+        );
     }
 
     /**

@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Bot, Loader2, MapPin, Save, Video } from 'lucide-react';
-import { type FormEvent } from 'react';
+import type {FormEvent} from 'react';
 import { InputField } from '@/components/form/input-field';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
@@ -114,7 +114,7 @@ export default function InterviewCreate({ application, options }: Props) {
                             <div>
                                 <Label className="mb-1 block">Tahap</Label>
                                 <Select value={form.data.stage} onValueChange={(v) => form.setData('stage', v)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Pilih tahap interview" /></SelectTrigger>
                                     <SelectContent>
                                         {options.stages.map((s) => (
                                             <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>

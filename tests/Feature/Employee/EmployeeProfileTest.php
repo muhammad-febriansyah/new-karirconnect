@@ -110,6 +110,8 @@ test('employee can update profile fields with city dropdown', function () {
             'headline' => 'Senior Engineer',
             'province_id' => $province->id,
             'city_id' => $city->id,
+            'expected_salary_min' => 'Rp 8.000.000',
+            'expected_salary_max' => 'Rp 12.000.000',
             'experience_level' => 'senior',
             'is_open_to_work' => true,
             'visibility' => 'public',
@@ -119,4 +121,6 @@ test('employee can update profile fields with city dropdown', function () {
     $profile = $employee->employeeProfile()->first();
     expect($profile->city_id)->toBe($city->id);
     expect($profile->headline)->toBe('Senior Engineer');
+    expect($profile->expected_salary_min)->toBe(8000000);
+    expect($profile->expected_salary_max)->toBe(12000000);
 });

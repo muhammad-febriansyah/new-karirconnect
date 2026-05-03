@@ -204,6 +204,26 @@ test('candidate can request reschedule with proposed slots', function () {
     expect($request->proposed_slots)->toHaveCount(2);
 });
 
+test('candidate can view interview detail with company relation loaded', function () {
+    ['owner' => $owner, 'application' => $application, 'candidate' => $candidate, 'company' => $company, 'job' => $job] = makeInterviewContext();
+
+    $interview = Interview::factory()->create([
+        'application_id' => $application->id,
+        'scheduled_by_user_id' => $owner->id,
+        'title' => 'Final Interview',
+    ]);
+
+    $this->actingAs($candidate)
+        ->get(route('employee.interviews.show', ['interview' => $interview->id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('employee/interviews/show')
+            ->where('interview.title', 'Final Interview')
+            ->where('interview.job.title', $job->title)
+            ->where('interview.company.name', $company->name)
+        );
+});
+
 test('candidate cannot view interview belonging to someone else', function () {
     ['owner' => $owner, 'application' => $application] = makeInterviewContext();
     $otherEmployee = User::factory()->employee()->create();
@@ -308,4 +328,33 @@ test('reschedule approval moves interview and notifies candidate', function () {
     expect($interview->scheduled_at->format('Y-m-d H:i'))->toBe(now()->addDays(5)->setTime(13, 0)->format('Y-m-d H:i'));
 
     Notification::assertSentTo($candidate, InterviewRescheduledNotification::class);
+});
+
+test('employer can move interview between stages via the kanban endpoint', function () {
+    ['owner' => $owner, 'application' => $application] = makeInterviewContext();
+
+    $interview = Interview::factory()->create([
+        'application_id' => $application->id,
+        'scheduled_by_user_id' => $owner->id,
+        'stage' => 'screening',
+    ]);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.stage', ['interview' => $interview->id]), ['stage' => 'final'])
+        ->assertRedirect();
+
+    expect($interview->fresh()->stage->value)->toBe('final');
+});
+
+test('changeStage rejects an unknown stage value', function () {
+    ['owner' => $owner, 'application' => $application] = makeInterviewContext();
+    $interview = Interview::factory()->create([
+        'application_id' => $application->id,
+        'scheduled_by_user_id' => $owner->id,
+        'stage' => 'hr',
+    ]);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.stage', ['interview' => $interview->id]), ['stage' => 'not-real-stage'])
+        ->assertSessionHasErrors('stage');
 });

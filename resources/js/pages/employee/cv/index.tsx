@@ -1,11 +1,18 @@
 import { Form, Head } from '@inertiajs/react';
+import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import CvUploadController from '@/actions/App/Http/Controllers/Employee/CvUploadController';
+import { EmptyState } from '@/components/feedback/empty-state';
 import { FileUploadField } from '@/components/form/file-upload-field';
 import { InputField } from '@/components/form/input-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -15,6 +22,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatDateTime } from '@/lib/format-date';
 
 type CvItem = {
     id: number;
@@ -33,6 +42,72 @@ export default function EmployeeCvIndex({
     items: CvItem[];
     primaryResumeId: number | null;
 }) {
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [globalFilter, setGlobalFilter] = useState('');
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+    const columns: ColumnDef<CvItem>[] = [
+        {
+            accessorKey: 'label',
+            header: 'Label CV',
+            cell: ({ row }) => (
+                <div className="space-y-1">
+                    <div className="font-medium">{row.original.label}</div>
+                    <div className="text-xs text-muted-foreground">Sumber: {row.original.source === 'upload' ? 'Upload' : row.original.source}</div>
+                </div>
+            ),
+        },
+        {
+            accessorKey: 'is_active',
+            header: 'Status',
+            cell: ({ row }) => (
+                row.original.is_active && primaryResumeId === row.original.id ? <Badge>Resume Utama</Badge> : <Badge variant="outline">Sekunder</Badge>
+            ),
+        },
+        {
+            accessorKey: 'file_url',
+            header: 'File',
+            cell: ({ row }) => row.original.file_url ? (
+                <a href={row.original.file_url} target="_blank" rel="noreferrer" className="text-sm text-primary underline-offset-4 hover:underline">Lihat file</a>
+            ) : <span className="text-sm text-muted-foreground">-</span>,
+        },
+        {
+            accessorKey: 'created_at',
+            header: 'Dibuat',
+            cell: ({ row }) => <span className="text-sm text-muted-foreground">{formatDateTime(row.original.created_at)}</span>,
+        },
+        {
+            id: 'actions',
+            enableHiding: false,
+            header: () => <div className="text-right">Aksi</div>,
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-2">
+                    <EditCvDialog item={row.original} />
+                    <DeleteCvDialog item={row.original} />
+                </div>
+            ),
+        },
+    ];
+
+    const table = useReactTable({
+        data: items,
+        columns,
+        state: { sorting, globalFilter, columnVisibility },
+        onSortingChange: setSorting,
+        onGlobalFilterChange: setGlobalFilter,
+        onColumnVisibilityChange: setColumnVisibility,
+        globalFilterFn: (row, _id, filterValue) => {
+            const keyword = String(filterValue).toLowerCase().trim();
+            if (keyword === '') return true;
+            return [row.original.label, row.original.source, row.original.file_path ?? ''].join(' ').toLowerCase().includes(keyword);
+        },
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        initialState: { pagination: { pageSize: 10 } },
+    });
+
     return (
         <>
             <Head title="CV Saya" />
@@ -46,44 +121,51 @@ export default function EmployeeCvIndex({
 
                 <Section>
                     {items.length === 0 ? (
-                        <div className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
-                            Belum ada CV yang diunggah.
+                        <div className="rounded-lg border border-dashed p-6">
+                            <EmptyState
+                                title="Belum ada CV yang diunggah"
+                                description="Unggah CV pertama Anda untuk mulai melamar pekerjaan."
+                            />
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {items.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="flex flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm md:flex-row md:items-start md:justify-between"
-                                >
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <h2 className="font-medium">{item.label}</h2>
-                                            {item.is_active && primaryResumeId === item.id && (
-                                                <Badge>Resume Utama</Badge>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            Sumber: {item.source === 'upload' ? 'Upload' : item.source}
-                                        </p>
-                                        {item.file_url && (
-                                            <a
-                                                href={item.file_url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="text-sm text-primary underline-offset-4 hover:underline"
-                                            >
-                                                Lihat file
-                                            </a>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <Input className="sm:max-w-sm" placeholder="Cari label CV..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild><Button variant="outline">Kolom <ChevronDown className="ml-2 size-4" /></Button></DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {table.getAllColumns().filter((column) => column.getCanHide()).map((column) => (
+                                            <DropdownMenuCheckboxItem key={column.id} checked={column.getIsVisible()} onCheckedChange={(v) => column.toggleVisibility(Boolean(v))}>
+                                                {column.id}
+                                            </DropdownMenuCheckboxItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            <div className="rounded-md border">
+                                <Table className="min-w-[920px]">
+                                    <TableHeader>
+                                        {table.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {table.getRowModel().rows.length > 0 ? table.getRowModel().rows.map((row) => (
+                                            <TableRow key={row.id}>
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow><TableCell colSpan={columns.length} className="h-20 text-center text-muted-foreground">Tidak ada data.</TableCell></TableRow>
                                         )}
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <EditCvDialog item={item} />
-                                        <DeleteCvDialog item={item} />
-                                    </div>
-                                </div>
-                            ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
                     )}
                 </Section>

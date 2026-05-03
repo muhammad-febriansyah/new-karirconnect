@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Public;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Billing\BillingService;
@@ -45,7 +46,8 @@ class PaymentCallbackController extends Controller
 
     /**
      * Browser return URL after the user finishes the gateway flow. We just
-     * bounce them back into the order detail page.
+     * bounce them back into the order detail page with a status toast so the
+     * user gets immediate feedback even before the webhook lands.
      */
     public function return(Request $request): RedirectResponse
     {
@@ -60,6 +62,14 @@ class PaymentCallbackController extends Controller
             return redirect()->route('home');
         }
 
-        return redirect()->route('employer.billing.show', ['order' => $order->reference]);
+        $redirect = redirect()->route('employer.billing.show', ['order' => $order->reference]);
+
+        return match ($order->status) {
+            OrderStatus::Paid => $redirect->with('success', 'Pembayaran berhasil. Berlangganan Anda sudah aktif.'),
+            OrderStatus::Failed => $redirect->with('error', 'Pembayaran gagal. Silakan coba lagi atau gunakan metode lain.'),
+            OrderStatus::Expired => $redirect->with('error', 'Pembayaran kedaluwarsa. Silakan buat pesanan baru.'),
+            OrderStatus::Cancelled => $redirect->with('warning', 'Pembayaran dibatalkan.'),
+            default => $redirect->with('info', 'Pembayaran sedang diproses. Status akan diperbarui otomatis dalam beberapa saat.'),
+        };
     }
 }

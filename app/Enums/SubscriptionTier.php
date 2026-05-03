@@ -18,4 +18,15 @@ enum SubscriptionTier: string
             self::Enterprise => 'Enterprise',
         };
     }
+
+    /**
+     * @return array<int, array{value: string, label: string}>
+     */
+    public static function selectItems(): array
+    {
+        return array_map(
+            fn (self $case) => ['value' => $case->value, 'label' => $case->label()],
+            self::cases(),
+        );
+    }
 }

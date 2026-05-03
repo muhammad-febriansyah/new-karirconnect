@@ -177,6 +177,23 @@ test('employee can run practice session end-to-end via controller', function () 
     expect($session->fresh()->analysis)->not->toBeNull();
 });
 
+test('practice session blocked when monthly free quota exhausted', function () {
+    ['candidate' => $candidate, 'profile' => $profile] = makeAiInterviewContext();
+
+    AiInterviewSession::factory()->count(10)->create([
+        'candidate_profile_id' => $profile->id,
+        'is_practice' => true,
+        'created_at' => now()->startOfMonth()->addDay(),
+    ]);
+
+    $this->actingAs($candidate)
+        ->post(route('employee.ai-interviews.practice'))
+        ->assertSessionHasErrors('quota');
+
+    expect(AiInterviewSession::query()->where('candidate_profile_id', $profile->id)->where('is_practice', true)->count())
+        ->toBe(10);
+});
+
 test('employee cannot view another candidate ai interview session', function () {
     ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
     $session = AiInterviewSession::factory()->inProgress()->create([

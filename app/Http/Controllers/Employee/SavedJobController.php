@@ -15,15 +15,32 @@ class SavedJobController extends Controller
 {
     public function index(Request $request): Response
     {
+        $search = $request->string('search')->toString();
+
         $items = $request->user()
             ->savedJobs()
             ->with(['job.company:id,name', 'job.category:id,name', 'job.city:id,name'])
+            ->whereHas('job', function ($query) use ($search): void {
+                if ($search === '') {
+                    return;
+                }
+
+                $query->where(function ($subQuery) use ($search): void {
+                    $subQuery
+                        ->where('title', 'like', "%{$search}%")
+                        ->orWhereHas('company', fn ($companyQuery) => $companyQuery->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('category', fn ($categoryQuery) => $categoryQuery->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('city', fn ($cityQuery) => $cityQuery->where('name', 'like', "%{$search}%"));
+                });
+            })
             ->latest('id')
-            ->get()
-            ->map(fn (SavedJob $savedJob) => [
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (SavedJob $savedJob) => [
                 'id' => $savedJob->id,
                 'job' => [
                     'id' => $savedJob->job->id,
+                    'slug' => $savedJob->job->slug,
                     'title' => $savedJob->job->title,
                     'status' => $savedJob->job->status?->value,
                     'employment_type' => $savedJob->job->employment_type?->value,
@@ -34,10 +51,12 @@ class SavedJobController extends Controller
                     'application_deadline' => optional($savedJob->job->application_deadline)->toDateString(),
                 ],
                 'saved_at' => optional($savedJob->created_at)->toIso8601String(),
-            ])
-            ->values();
+            ]);
 
         return Inertia::render('employee/saved-jobs/index', [
+            'filters' => [
+                'search' => $search,
+            ],
             'items' => $items,
         ]);
     }

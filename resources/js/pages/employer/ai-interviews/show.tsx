@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Bot, Sparkles } from 'lucide-react';
+import { ArrowLeft, Bot, Download, Sparkles } from 'lucide-react';
+import { InterviewRadarChart } from '@/components/charts/interview-radar';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { formatDateTime } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 
 type Analysis = {
     overall_score: number;
@@ -54,11 +56,18 @@ export default function EmployerAiInterviewShow({ session, analysis, responses }
                     title={`Hasil AI Interview: ${session.candidate_name ?? '-'}`}
                     description={`${session.job_title ?? '-'} · ${session.candidate_email ?? ''}`}
                     actions={
-                        <Button asChild variant="outline">
-                            <Link href="/employer/ai-interviews">
-                                <ArrowLeft className="size-4" /> Kembali
-                            </Link>
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button asChild variant="outline">
+                                <a href={`/employer/ai-interviews/${session.id}/report`}>
+                                    <Download className="size-4" /> Unduh PDF
+                                </a>
+                            </Button>
+                            <Button asChild variant="outline">
+                                <Link href="/employer/ai-interviews">
+                                    <ArrowLeft className="size-4" /> Kembali
+                                </Link>
+                            </Button>
+                        </div>
                     }
                 />
 
@@ -84,10 +93,21 @@ export default function EmployerAiInterviewShow({ session, analysis, responses }
                             <Card>
                                 <CardContent className="space-y-2 p-4">
                                     <div className="text-sm font-semibold">Rekomendasi</div>
-                                    <Badge className="text-sm">{analysis.recommendation.replace('_', ' ')}</Badge>
+                                    <Badge className="text-sm">{formatStatus(analysis.recommendation)}</Badge>
                                 </CardContent>
                             </Card>
                         </div>
+
+                        <Section title="Profil Skor">
+                            <InterviewRadarChart
+                                scores={{
+                                    technical: analysis.technical_score,
+                                    communication: analysis.communication_score,
+                                    problem_solving: analysis.problem_solving_score,
+                                    culture_fit: analysis.culture_fit_score,
+                                }}
+                            />
+                        </Section>
 
                         <Section title="Ringkasan">
                             <p className="text-sm leading-relaxed text-muted-foreground">{analysis.summary}</p>

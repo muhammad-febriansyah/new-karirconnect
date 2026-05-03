@@ -1,6 +1,9 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Save, Star, Trash2 } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
+import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import { ChevronDown, Pencil, Plus, Save, Star, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { InputField } from '@/components/form/input-field';
@@ -9,9 +12,11 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type Option = { value: string; label: string };
 
@@ -37,6 +42,9 @@ type Props = {
 export default function AiInterviewTemplatesIndex({ templates, jobOptions, modeOptions }: Props) {
     const [editing, setEditing] = useState<Template | null>(null);
     const [deleting, setDeleting] = useState<Template | null>(null);
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [globalFilter, setGlobalFilter] = useState('');
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
     const form = useForm({
         name: '',
@@ -83,7 +91,10 @@ export default function AiInterviewTemplatesIndex({ templates, jobOptions, modeO
 
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
-        if (!editing) return;
+
+        if (!editing) {
+return;
+}
 
         if (editing.id === 0) {
             form.post('/employer/ai-interview-templates', {
@@ -99,12 +110,80 @@ export default function AiInterviewTemplatesIndex({ templates, jobOptions, modeO
     };
 
     const handleDelete = () => {
-        if (!deleting) return;
+        if (!deleting) {
+return;
+}
+
         router.delete(`/employer/ai-interview-templates/${deleting.id}`, {
             preserveScroll: true,
             onFinish: () => setDeleting(null),
         });
     };
+
+    const columns: ColumnDef<Template>[] = [
+        {
+            accessorKey: 'name',
+            header: 'Template',
+            cell: ({ row }) => (
+                <div>
+                    <div className="flex items-center gap-2 font-semibold">
+                        {row.original.name}
+                        {row.original.is_default && <Badge><Star className="mr-1 size-3" /> Default</Badge>}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{row.original.description ?? '-'}</div>
+                </div>
+            ),
+        },
+        {
+            id: 'mode',
+            header: 'Mode',
+            cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.mode} · {row.original.language}</span>,
+        },
+        {
+            id: 'setup',
+            header: 'Konfigurasi',
+            cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.duration_minutes} mnt · {row.original.question_count} pertanyaan</span>,
+        },
+        {
+            id: 'job',
+            header: 'Lowongan',
+            cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.job?.title ?? '-'}</span>,
+        },
+        {
+            id: 'actions',
+            enableHiding: false,
+            header: () => <div className="text-right">Aksi</div>,
+            cell: ({ row }) => (
+                <div className="flex justify-end gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => startEdit(row.original)} aria-label={`Edit template ${row.original.name}`}>
+                        <Pencil className="size-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setDeleting(row.original)} aria-label={`Hapus template ${row.original.name}`}>
+                        <Trash2 className="size-4" />
+                    </Button>
+                </div>
+            ),
+        },
+    ];
+
+    const table = useReactTable({
+        data: templates,
+        columns,
+        state: { sorting, globalFilter, columnVisibility },
+        onSortingChange: setSorting,
+        onGlobalFilterChange: setGlobalFilter,
+        onColumnVisibilityChange: setColumnVisibility,
+        globalFilterFn: (row, _id, filterValue) => {
+            const keyword = String(filterValue).toLowerCase().trim();
+            if (keyword === '') return true;
+            return [row.original.name, row.original.description ?? '', row.original.mode, row.original.language, row.original.job?.title ?? ''].join(' ').toLowerCase().includes(keyword);
+        },
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        initialState: { pagination: { pageSize: 10 } },
+    });
 
     return (
         <>
@@ -128,29 +207,42 @@ export default function AiInterviewTemplatesIndex({ templates, jobOptions, modeO
                             description="Mulai dengan membuat template default untuk peran-peran yang sering Anda interview."
                         />
                     ) : (
-                        <div className="grid gap-3 md:grid-cols-2">
-                            {templates.map((t) => (
-                                <Card key={t.id} className="transition hover:shadow-sm">
-                                    <CardContent className="space-y-2 p-4">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <h3 className="font-semibold">{t.name}</h3>
-                                                <p className="text-xs text-muted-foreground">{t.mode} · {t.language} · {t.duration_minutes} mnt · {t.question_count} pertanyaan</p>
-                                            </div>
-                                            {t.is_default && <Badge><Star className="mr-1 size-3" /> Default</Badge>}
-                                        </div>
-                                        {t.description && <p className="text-sm text-muted-foreground">{t.description}</p>}
-                                        <div className="flex justify-end gap-1">
-                                            <Button size="sm" variant="ghost" onClick={() => startEdit(t)}>
-                                                <Pencil className="size-4" />
-                                            </Button>
-                                            <Button size="sm" variant="ghost" onClick={() => setDeleting(t)}>
-                                                <Trash2 className="size-4" />
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                        <div className="space-y-4">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <Input className="sm:max-w-sm" placeholder="Cari template, mode, bahasa, lowongan..." value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild><Button variant="outline">Kolom <ChevronDown className="ml-2 size-4" /></Button></DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {table.getAllColumns().filter((column) => column.getCanHide()).map((column) => (
+                                            <DropdownMenuCheckboxItem key={column.id} checked={column.getIsVisible()} onCheckedChange={(v) => column.toggleVisibility(Boolean(v))}>{column.id}</DropdownMenuCheckboxItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            <div className="rounded-md border">
+                                <Table className="min-w-[1000px]">
+                                    <TableHeader>
+                                        {table.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {table.getRowModel().rows.length > 0 ? table.getRowModel().rows.map((row) => (
+                                            <TableRow key={row.id}>
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow><TableCell colSpan={columns.length} className="h-20 text-center text-muted-foreground">Tidak ada data.</TableCell></TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
                     )}
                 </Section>
@@ -168,7 +260,7 @@ export default function AiInterviewTemplatesIndex({ templates, jobOptions, modeO
                             <div>
                                 <Label className="mb-1 block">Tipe</Label>
                                 <Select value={form.data.mode} onValueChange={(v) => form.setData('mode', v)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Pilih tipe interview" /></SelectTrigger>
                                     <SelectContent>
                                         {modeOptions.map((m) => (
                                             <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
@@ -197,7 +289,7 @@ export default function AiInterviewTemplatesIndex({ templates, jobOptions, modeO
                             <div>
                                 <Label className="mb-1 block">Bahasa</Label>
                                 <Select value={form.data.language} onValueChange={(v) => form.setData('language', v)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Pilih bahasa interview" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="id">Bahasa Indonesia</SelectItem>
                                         <SelectItem value="en">English</SelectItem>

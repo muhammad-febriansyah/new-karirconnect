@@ -1,6 +1,8 @@
 import { Head, useForm } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Employee/ProfileController';
+import { ProfileTabs } from '@/components/employee/profile-tabs';
 import { InputField } from '@/components/form/input-field';
+import { MoneyInput } from '@/components/form/money-input';
 import { SelectField } from '@/components/form/select-field';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
@@ -87,6 +89,7 @@ export default function EmployeeProfileEdit({
                     title="Profil Kandidat"
                     description="Lengkapi profil dasar agar lamaran dan talent profile Anda lebih mudah ditemukan recruiter."
                 />
+                <ProfileTabs />
 
                 <Section>
                     <form
@@ -158,21 +161,19 @@ export default function EmployeeProfileEdit({
                             error={form.errors.city_id}
                         />
 
-                        <InputField
+                        <MoneyInput
                             label="Ekspektasi Gaji Minimum"
-                            type="number"
                             value={form.data.expected_salary_min}
-                            onChange={(event) => form.setData('expected_salary_min', event.target.value)}
+                            onChange={(value) => form.setData('expected_salary_min', value === null ? '' : String(value))}
                             error={form.errors.expected_salary_min}
-                            placeholder="6000000"
+                            placeholder="Rp 6.000.000"
                         />
-                        <InputField
+                        <MoneyInput
                             label="Ekspektasi Gaji Maksimum"
-                            type="number"
                             value={form.data.expected_salary_max}
-                            onChange={(event) => form.setData('expected_salary_max', event.target.value)}
+                            onChange={(value) => form.setData('expected_salary_max', value === null ? '' : String(value))}
                             error={form.errors.expected_salary_max}
-                            placeholder="10000000"
+                            placeholder="Rp 10.000.000"
                         />
 
                         <SelectField

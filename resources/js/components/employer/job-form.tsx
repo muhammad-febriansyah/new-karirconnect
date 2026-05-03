@@ -1,12 +1,15 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Loader2, Save } from 'lucide-react';
-import type { RouteDefinition } from '@/wayfinder';
+import { useState } from 'react';
 import { InputField } from '@/components/form/input-field';
+import { MoneyInput } from '@/components/form/money-input';
 import { SelectField } from '@/components/form/select-field';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Button } from '@/components/ui/button';
+import { slugify } from '@/lib/slugify';
+import type { RouteDefinition } from '@/wayfinder';
 
 type SelectOption = {
     value: string;
@@ -64,6 +67,7 @@ type Props = {
 };
 
 export function EmployerJobForm({ headTitle, title, description, submitLabel, action, options, job = null }: Props) {
+    const [slugTouched, setSlugTouched] = useState(Boolean(job));
     const form = useForm({
         job_category_id: job?.job_category_id ? String(job.job_category_id) : '',
         title: job?.title ?? '',
@@ -114,13 +118,23 @@ export function EmployerJobForm({ headTitle, title, description, submitLabel, ac
                                 label="Judul Lowongan"
                                 required
                                 value={form.data.title}
-                                onChange={(event) => form.setData('title', event.target.value)}
+                                onChange={(event) => {
+                                    const nextTitle = event.target.value;
+                                    form.setData('title', nextTitle);
+
+                                    if (!slugTouched) {
+                                        form.setData('slug', slugify(nextTitle));
+                                    }
+                                }}
                                 error={form.errors.title}
                             />
                             <InputField
                                 label="Slug"
                                 value={form.data.slug}
-                                onChange={(event) => form.setData('slug', event.target.value)}
+                                onChange={(event) => {
+                                    form.setData('slug', event.target.value);
+                                    setSlugTouched(true);
+                                }}
                                 error={form.errors.slug}
                             />
                             <SelectField
@@ -217,19 +231,19 @@ export function EmployerJobForm({ headTitle, title, description, submitLabel, ac
 
                     <Section title="Lokasi & Kompensasi">
                         <div className="grid gap-5 md:grid-cols-2">
-                            <InputField
+                            <MoneyInput
                                 label="Gaji Minimum"
-                                type="number"
                                 value={form.data.salary_min}
-                                onChange={(event) => form.setData('salary_min', event.target.value)}
+                                onChange={(value) => form.setData('salary_min', value === null ? '' : String(value))}
                                 error={form.errors.salary_min}
+                                placeholder="Rp 6.000.000"
                             />
-                            <InputField
+                            <MoneyInput
                                 label="Gaji Maksimum"
-                                type="number"
                                 value={form.data.salary_max}
-                                onChange={(event) => form.setData('salary_max', event.target.value)}
+                                onChange={(value) => form.setData('salary_max', value === null ? '' : String(value))}
                                 error={form.errors.salary_max}
+                                placeholder="Rp 10.000.000"
                             />
                             <SelectField
                                 label="Provinsi"

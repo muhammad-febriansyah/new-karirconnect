@@ -31,6 +31,7 @@ class FakeAiClient implements AiClient
             'evaluation' => $this->evaluationFixture(),
             'analysis' => $this->analysisFixture(),
             'coach' => $this->coachFixture(end($messages)['content'] ?? ''),
+            'assessment_questions' => $this->assessmentQuestionsFixture($count, (string) ($options['type'] ?? 'multiple_choice')),
             default => ['message' => 'ok'],
         };
 
@@ -132,5 +133,25 @@ class FakeAiClient implements AiClient
             'reply' => 'Berdasarkan pertanyaan Anda "'.mb_substr($userInput, 0, 80).'", saran saya: identifikasi 3 prioritas utama untuk minggu ini, lalu eksekusi satu per satu dengan deadline yang jelas. Apakah Anda ingin saya bantu memecah tugas pertama menjadi langkah konkret?',
             'recommendations' => ['Set goal mingguan', 'Tracking harian dengan jurnal singkat'],
         ];
+    }
+
+    /**
+     * @return array{questions: array<int, array<string, mixed>>}
+     */
+    private function assessmentQuestionsFixture(int $count, string $type): array
+    {
+        $questions = [];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $questions[] = [
+                'question' => "Soal assessment #{$i}: Apa konsep utama yang perlu dipahami kandidat?",
+                'options' => $type === 'multiple_choice'
+                    ? ['Konsep A', 'Konsep B', 'Konsep C', 'Konsep D']
+                    : [],
+                'answer' => $type === 'multiple_choice' ? 'Konsep A' : 'Kandidat menjelaskan konsep utama dengan contoh yang relevan.',
+            ];
+        }
+
+        return ['questions' => $questions];
     }
 }

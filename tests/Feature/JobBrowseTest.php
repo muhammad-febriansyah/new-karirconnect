@@ -89,6 +89,149 @@ test('public job show increments views and renders detail', function () {
     expect($job->fresh()->views_count)->toBe(1);
 });
 
+test('public job browse page includes seo metadata in initial html', function () {
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+
+    Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+        'title' => 'SEO Engineer',
+    ]);
+
+    $response = $this->get(route('public.jobs.index'));
+
+    $response->assertOk();
+
+    $content = $response->getContent();
+
+    expect($content)
+        ->toContain('>Lowongan Kerja - KarirConnect</title>')
+        ->toContain('name="description"')
+        ->toContain('rel="canonical" href="'.route('public.jobs.index').'"')
+        ->toContain('name="robots" content="index,follow"');
+});
+
+test('public job show page includes seo metadata and structured data', function () {
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id, 'name' => 'PT SEO Maju']);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+    $job = Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+        'title' => 'Technical SEO Specialist',
+        'description' => '<p>Mengelola technical SEO untuk portal lowongan.</p>',
+        'salary_min' => 12000000,
+        'salary_max' => 18000000,
+        'is_salary_visible' => true,
+    ]);
+
+    $response = $this->get(route('public.jobs.show', ['job' => $job->slug]));
+
+    $response->assertOk();
+
+    $content = $response->getContent();
+
+    expect($content)
+        ->toContain('>Technical SEO Specialist - KarirConnect</title>')
+        ->toContain('rel="canonical" href="'.route('public.jobs.show', ['job' => $job->slug]).'"')
+        ->toContain('property="og:title" content="Technical SEO Specialist - KarirConnect"')
+        ->toContain('data-inertia="structured-data"')
+        ->toContain('JobPosting')
+        ->toContain('PT SEO Maju');
+});
+
+test('public job show exposes match breakdown for the signed-in employee', function () {
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+    $skills = Skill::query()->limit(2)->get();
+    if ($skills->count() < 2) {
+        $skills = collect([
+            Skill::query()->updateOrCreate(['slug' => 'breakdown-skill-a'], ['name' => 'Breakdown Skill A', 'category' => 'Backend', 'is_active' => true]),
+            Skill::query()->updateOrCreate(['slug' => 'breakdown-skill-b'], ['name' => 'Breakdown Skill B', 'category' => 'Backend', 'is_active' => true]),
+        ]);
+    }
+
+    $job = Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+        'salary_min' => 10_000_000,
+        'salary_max' => 15_000_000,
+    ]);
+    $job->skills()->sync($skills->pluck('id')->mapWithKeys(fn ($id) => [$id => ['proficiency' => 'mid', 'is_required' => false]])->all());
+
+    $employee = User::factory()->employee()->create();
+    $profile = $employee->employeeProfile()->create([
+        'visibility' => 'public',
+        'is_open_to_work' => true,
+        'expected_salary_min' => 11_000_000,
+        'expected_salary_max' => 14_000_000,
+        'experience_level' => 'mid',
+    ]);
+    $profile->skills()->sync($skills->pluck('id'));
+
+    $this->actingAs($employee)
+        ->get(route('public.jobs.show', ['job' => $job->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('public/jobs/show')
+            ->where('job.title', $job->title)
+            ->has('matchScore')
+            ->has('matchBreakdown.skills')
+            ->has('matchBreakdown.experience')
+            ->has('matchBreakdown.location')
+            ->has('matchBreakdown.salary'));
+});
+
+test('public job show returns null match breakdown for guests', function () {
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+    $job = Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+    ]);
+
+    $this->get(route('public.jobs.show', ['job' => $job->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('matchScore', null)
+            ->where('matchBreakdown', null));
+});
+
+test('public job show renders similar jobs without missing company verification status', function () {
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+
+    $job = Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+        'title' => 'Backend Engineer',
+    ]);
+
+    Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+        'title' => 'Senior Backend Engineer',
+    ]);
+
+    $this->get(route('public.jobs.show', ['job' => $job->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('public/jobs/show')
+            ->where('job.title', 'Backend Engineer')
+            ->where('similar.0.title', 'Senior Backend Engineer'));
+});
+
 test('draft jobs are not accessible via public show', function () {
     $owner = User::factory()->employer()->create();
     $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);

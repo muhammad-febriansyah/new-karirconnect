@@ -31,7 +31,7 @@ class TalentSearchFilter
     {
         $query = EmployeeProfile::query()
             ->with([
-                'user:id,name,email,avatar_path,is_active',
+                'user:id,name,email,phone,avatar_path,is_active',
                 'province:id,name',
                 'city:id,name,province_id',
                 'skills:id,name,slug',

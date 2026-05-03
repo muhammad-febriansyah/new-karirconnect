@@ -2,17 +2,22 @@
 
 namespace App\Actions\Applications;
 
+use App\Enums\AiInterviewMode;
+use App\Enums\AiInterviewStatus;
 use App\Enums\ApplicationStatus;
 use App\Enums\JobStatus;
+use App\Models\AiInterviewSession;
 use App\Models\Application;
 use App\Models\ApplicationScreeningAnswer;
 use App\Models\ApplicationStatusLog;
 use App\Models\EmployeeProfile;
 use App\Models\Job;
+use App\Notifications\AiInterviewInvitationNotification;
 use App\Notifications\ApplicationSubmittedNotification;
 use App\Services\Applications\ApplicationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SubmitApplicationAction
@@ -42,6 +47,12 @@ class SubmitApplicationAction
 
         if ($profile->user_id === $job->company?->owner_id) {
             throw new AuthorizationException('Anda tidak dapat melamar lowongan dari perusahaan sendiri.');
+        }
+
+        if ((int) ($profile->profile_completion ?? 0) < 60) {
+            throw ValidationException::withMessages([
+                'profile' => 'Profil Anda belum lengkap (minimal 60%). Lengkapi profil sebelum melamar.',
+            ]);
         }
 
         return DB::transaction(function () use ($job, $profile, $data): Application {
@@ -80,7 +91,41 @@ class SubmitApplicationAction
             $employer = $job->postedBy ?? $job->company?->owner;
             $employer?->notify(new ApplicationSubmittedNotification($application->fresh()));
 
+            $this->maybeAutoInviteAiInterview($application, $job, $profile);
+
             return $application->fresh(['statusLogs', 'screeningAnswers']);
         });
+    }
+
+    /**
+     * Trigger AI Interview invite when employer set auto_invite_ai_interview
+     * and the candidate's match score crosses the threshold (or none set).
+     */
+    private function maybeAutoInviteAiInterview(Application $application, Job $job, EmployeeProfile $profile): void
+    {
+        if (! $job->auto_invite_ai_interview) {
+            return;
+        }
+
+        $score = $application->ai_match_score ?? 0;
+        $threshold = $job->ai_match_threshold ?? 0;
+        if ($threshold > 0 && $score < $threshold) {
+            return;
+        }
+
+        $session = AiInterviewSession::query()->create([
+            'application_id' => $application->id,
+            'candidate_profile_id' => $profile->id,
+            'job_id' => $job->id,
+            'mode' => AiInterviewMode::Text,
+            'language' => 'id',
+            'status' => AiInterviewStatus::Invited,
+            'invitation_token' => Str::random(40),
+            'invited_at' => now(),
+            'expires_at' => now()->addDays(7),
+            'is_practice' => false,
+        ]);
+
+        $profile->user?->notify(new AiInterviewInvitationNotification($session->fresh(['job'])));
     }
 }

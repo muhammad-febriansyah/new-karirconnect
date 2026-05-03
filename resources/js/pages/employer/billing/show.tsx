@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 
 type Order = {
     reference: string;
@@ -58,7 +59,7 @@ export default function EmployerBillingShow({ order, transactions }: Props) {
                     <CardContent className="grid gap-4 p-4 md:grid-cols-3">
                         <div>
                             <div className="text-sm text-muted-foreground">Status</div>
-                            <Badge className="capitalize">{order.status.replace('_', ' ')}</Badge>
+                            <Badge>{formatStatus(order.status)}</Badge>
                         </div>
                         <div>
                             <div className="text-sm text-muted-foreground">Jumlah</div>
@@ -66,7 +67,7 @@ export default function EmployerBillingShow({ order, transactions }: Props) {
                         </div>
                         <div>
                             <div className="text-sm text-muted-foreground">Tipe</div>
-                            <Badge variant="secondary" className="capitalize">{order.item_type.replace('_', ' ')}</Badge>
+                            <Badge variant="secondary">{formatStatus(order.item_type)}</Badge>
                         </div>
                         <div>
                             <div className="text-sm text-muted-foreground">Dibuat</div>
@@ -100,35 +101,33 @@ export default function EmployerBillingShow({ order, transactions }: Props) {
                 )}
 
                 <Section title="Transaksi">
-                    <Card>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Provider</TableHead>
-                                    <TableHead>Referensi Gateway</TableHead>
-                                    <TableHead>Metode</TableHead>
-                                    <TableHead>Jumlah</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Settled</TableHead>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Provider</TableHead>
+                                <TableHead>Referensi Gateway</TableHead>
+                                <TableHead>Metode</TableHead>
+                                <TableHead>Jumlah</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Settled</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {transactions.length === 0 && (
+                                <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground">Belum ada transaksi.</TableCell></TableRow>
+                            )}
+                            {transactions.map((t, i) => (
+                                <TableRow key={i}>
+                                    <TableCell className="capitalize">{t.provider}</TableCell>
+                                    <TableCell className="font-mono text-xs">{t.gateway_reference ?? '-'}</TableCell>
+                                    <TableCell>{t.payment_method ?? '-'}</TableCell>
+                                    <TableCell>{idr(t.amount_idr)}</TableCell>
+                                    <TableCell><Badge variant="secondary">{formatStatus(t.status)}</Badge></TableCell>
+                                    <TableCell className="text-xs text-muted-foreground">{t.settled_at ? formatDateTime(t.settled_at) : '-'}</TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {transactions.length === 0 && (
-                                    <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground">Belum ada transaksi.</TableCell></TableRow>
-                                )}
-                                {transactions.map((t, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell className="capitalize">{t.provider}</TableCell>
-                                        <TableCell className="font-mono text-xs">{t.gateway_reference ?? '-'}</TableCell>
-                                        <TableCell>{t.payment_method ?? '-'}</TableCell>
-                                        <TableCell>{idr(t.amount_idr)}</TableCell>
-                                        <TableCell><Badge variant="secondary" className="capitalize">{t.status ?? '-'}</Badge></TableCell>
-                                        <TableCell className="text-xs text-muted-foreground">{t.settled_at ? formatDateTime(t.settled_at) : '-'}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </Section>
             </div>
         </>

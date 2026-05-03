@@ -1,13 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Eye, FileCheck, Loader2, Upload } from 'lucide-react';
-import { type FormEvent } from 'react';
+import type { FormEvent } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { FileUploadField } from '@/components/form/file-upload-field';
 import { SelectField } from '@/components/form/select-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
-import { Button } from '@/components/ui/button';
+import { ActionButton } from '@/components/ui/action-button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/format-date';
 import { store as verificationStore } from '@/routes/employer/company/verification';
@@ -107,10 +107,10 @@ export default function VerificationPage({ company, documents }: Props) {
                             error={form.errors.file}
                         />
                         <div className="flex justify-end">
-                            <Button type="submit" disabled={form.processing}>
+                            <ActionButton type="submit" intent="create" disabled={form.processing}>
                                 {form.processing ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
                                 Unggah Dokumen
-                            </Button>
+                            </ActionButton>
                         </div>
                     </form>
                 </Section>
@@ -150,11 +150,11 @@ export default function VerificationPage({ company, documents }: Props) {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             {doc.file_url && (
-                                                <Button asChild variant="ghost" size="sm">
+                                                <ActionButton asChild intent="view">
                                                     <a href={doc.file_url} target="_blank" rel="noreferrer">
                                                         <Eye className="size-4" /> Lihat
                                                     </a>
-                                                </Button>
+                                                </ActionButton>
                                             )}
                                         </TableCell>
                                     </TableRow>

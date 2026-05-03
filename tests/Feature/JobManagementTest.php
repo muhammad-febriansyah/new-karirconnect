@@ -48,8 +48,8 @@ test('employer can manage jobs and screening questions', function () {
             'work_arrangement' => 'hybrid',
             'experience_level' => 'senior',
             'min_education' => 's1',
-            'salary_min' => 12000000,
-            'salary_max' => 18000000,
+            'salary_min' => 'Rp 12.000.000',
+            'salary_max' => 'Rp 18.000.000',
             'is_salary_visible' => true,
             'province_id' => 1,
             'city_id' => 1,
@@ -117,8 +117,8 @@ test('employer can manage jobs and screening questions', function () {
             'work_arrangement' => 'remote',
             'experience_level' => 'lead',
             'min_education' => 's1',
-            'salary_min' => 15000000,
-            'salary_max' => 22000000,
+            'salary_min' => 'Rp 15.000.000',
+            'salary_max' => 'Rp 22.000.000',
             'is_salary_visible' => true,
             'province_id' => 1,
             'city_id' => 1,
@@ -136,6 +136,8 @@ test('employer can manage jobs and screening questions', function () {
 
     expect($job->slug)->toBe('lead-laravel-engineer')
         ->and($job->status)->toBe(JobStatus::Closed)
+        ->and($job->salary_min)->toBe(15000000)
+        ->and($job->salary_max)->toBe(22000000)
         ->and($job->closed_at)->not->toBeNull();
 
     expect($job->skills()->count())->toBe(1);
@@ -166,7 +168,7 @@ test('employee can save and remove published jobs', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('employee/saved-jobs/index')
-            ->has('items', 1));
+            ->has('items.data', 1));
 
     $this->actingAs($employee)
         ->delete(route('employee.saved-jobs.destroy', $job))

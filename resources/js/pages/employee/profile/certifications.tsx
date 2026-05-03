@@ -1,5 +1,6 @@
 import CertificationController from '@/actions/App/Http/Controllers/Employee/CertificationController';
 import { ProfileRecordPage } from '@/components/employee/profile-record-page';
+import { ProfileTabs } from '@/components/employee/profile-tabs';
 
 type CertificationItem = {
     id: number;
@@ -16,6 +17,7 @@ export default function EmployeeCertifications({ items }: { items: Certification
         <ProfileRecordPage
             title="Sertifikasi"
             description="Kelola sertifikasi, lisensi, atau credential profesional Anda."
+            topContent={<ProfileTabs />}
             items={items}
             actions={CertificationController}
             emptyMessage="Belum ada sertifikasi."

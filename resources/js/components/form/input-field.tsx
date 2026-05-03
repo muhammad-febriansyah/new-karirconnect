@@ -1,4 +1,5 @@
-import { forwardRef, type InputHTMLAttributes } from 'react';
+import { forwardRef  } from 'react';
+import type {InputHTMLAttributes} from 'react';
 import { Input } from '@/components/ui/input';
 import { FormField } from './form-field';
 
@@ -9,7 +10,10 @@ type InputFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-    ({ label, description, error, id, required, ...props }, ref) => {
+    ({ label, description, error, id, required, placeholder, ...props }, ref) => {
+        const resolvedPlaceholder =
+            placeholder ?? (label ? `Masukkan ${label.toLowerCase()}` : 'Masukkan nilai');
+
         return (
             <FormField
                 id={id}
@@ -18,7 +22,13 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
                 error={error}
                 required={required}
             >
-                <Input id={id} ref={ref} required={required} {...props} />
+                <Input
+                    id={id}
+                    ref={ref}
+                    required={required}
+                    placeholder={resolvedPlaceholder}
+                    {...props}
+                />
             </FormField>
         );
     },

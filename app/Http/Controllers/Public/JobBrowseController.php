@@ -17,6 +17,7 @@ use App\Models\Skill;
 use App\Services\Jobs\JobMatchingService;
 use App\Services\Jobs\JobService;
 use App\Services\Jobs\SavedJobService;
+use App\Services\Seo\SeoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,6 +29,7 @@ class JobBrowseController extends Controller
         private readonly JobService $jobs,
         private readonly JobMatchingService $matcher,
         private readonly SavedJobService $savedJobs,
+        private readonly SeoService $seo,
     ) {}
 
     public function index(Request $request): Response
@@ -42,6 +44,8 @@ class JobBrowseController extends Controller
             'jobs' => $paginator,
             'filters' => $filters,
             'options' => $this->browseOptions(),
+        ])->withViewData([
+            'meta' => $this->seo->jobIndex($request, $filters, $paginator->total()),
         ]);
     }
 
@@ -50,7 +54,7 @@ class JobBrowseController extends Controller
         abort_unless($job->status === JobStatus::Published, 404);
 
         $job->load([
-            'company:id,name,slug,logo_path,about,verification_status',
+            'company:id,name,slug,logo_path,about,verification_status,website',
             'category:id,name,slug',
             'province:id,name',
             'city:id,name,province_id',
@@ -69,17 +73,24 @@ class JobBrowseController extends Controller
         ]);
 
         $matchScore = null;
+        $matchBreakdown = null;
         $isSaved = false;
         if ($user = $request->user()) {
             $isSaved = $this->savedJobs->isSaved($user, $job);
             $profile = $user->employeeProfile()->with(['skills:id', 'city:id,province_id'])->first();
             if ($profile) {
-                $matchScore = $this->matcher->score($job, $profile);
+                $payload = $this->matcher->breakdown($job, $profile);
+                $matchScore = $payload['score'];
+                $matchBreakdown = $payload['breakdown'];
             }
         }
 
         $similar = Job::query()
-            ->with(['company:id,name,slug,logo_path', 'city:id,name'])
+            ->with([
+                'company:id,name,slug,logo_path,verification_status',
+                'city:id,name',
+                'category:id,name',
+            ])
             ->where('id', '!=', $job->id)
             ->where('status', JobStatus::Published)
             ->where('job_category_id', $job->job_category_id)
@@ -91,8 +102,11 @@ class JobBrowseController extends Controller
         return Inertia::render('public/jobs/show', [
             'job' => $this->detailPayload($job),
             'matchScore' => $matchScore,
+            'matchBreakdown' => $matchBreakdown,
             'isSaved' => $isSaved,
             'similar' => $similar,
+        ])->withViewData([
+            'meta' => $this->seo->jobShow($job),
         ]);
     }
 

@@ -41,7 +41,22 @@ class ProfileUpdateRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'province_id' => $this->filled('province_id') ? (int) $this->input('province_id') : null,
+            'city_id' => $this->filled('city_id') ? (int) $this->input('city_id') : null,
+            'expected_salary_min' => $this->normalizeRupiah($this->input('expected_salary_min')),
+            'expected_salary_max' => $this->normalizeRupiah($this->input('expected_salary_max')),
             'is_open_to_work' => $this->boolean('is_open_to_work'),
         ]);
+    }
+
+    private function normalizeRupiah(mixed $value): ?int
+    {
+        if (! filled($value)) {
+            return null;
+        }
+
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+
+        return $digits === '' ? null : (int) $digits;
     }
 }

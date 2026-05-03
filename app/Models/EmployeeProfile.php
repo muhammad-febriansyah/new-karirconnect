@@ -136,4 +136,12 @@ class EmployeeProfile extends Model
     {
         return $this->hasMany(Application::class);
     }
+
+    /**
+     * @return HasMany<SkillAssessment, $this>
+     */
+    public function skillAssessments(): HasMany
+    {
+        return $this->hasMany(SkillAssessment::class);
+    }
 }

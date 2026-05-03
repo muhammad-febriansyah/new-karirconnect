@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { CheckCircle2, Loader2, Send } from 'lucide-react';
 import { type FormEvent } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
+import { MoneyInput } from '@/components/form/money-input';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
@@ -117,11 +118,10 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                     </Section>
 
                     <Section title="Ekspektasi Gaji">
-                        <Input
-                            type="number"
-                            placeholder="Contoh: 12000000"
+                        <MoneyInput
                             value={form.data.expected_salary}
-                            onChange={(e) => form.setData('expected_salary', e.target.value)}
+                            onChange={(value) => form.setData('expected_salary', value ?? '')}
+                            placeholder="Rp 12.000.000"
                         />
                         {form.errors.expected_salary && (
                             <p className="mt-1 text-xs text-destructive">{form.errors.expected_salary}</p>

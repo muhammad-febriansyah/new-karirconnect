@@ -7,8 +7,8 @@ type MoneyInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'on
     label?: string;
     description?: string;
     error?: string;
-    value?: number | null;
-    onChange?: (value: number) => void;
+    value?: number | string | null;
+    onChange?: (value: number | null) => void;
 };
 
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
@@ -33,7 +33,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
                     inputMode="numeric"
                     autoComplete="off"
                     value={display}
-                    onChange={(event) => onChange?.(parseRupiah(event.target.value))}
+                    onChange={(event) => onChange?.(event.target.value.trim() === '' ? null : parseRupiah(event.target.value))}
                     placeholder={placeholder}
                     required={required}
                     {...props}

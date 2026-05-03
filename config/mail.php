@@ -79,6 +79,11 @@ return [
             'transport' => 'array',
         ],
 
+        'mailketing' => [
+            'transport' => 'mailketing',
+            'api_token' => env('MAILKETING_API_TOKEN'),
+        ],
+
         'failover' => [
             'transport' => 'failover',
             'mailers' => [

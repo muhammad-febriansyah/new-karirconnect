@@ -82,7 +82,8 @@ test('mark-read endpoint sets read_at and decrements unread', function () {
 
     $this->actingAs($owner)
         ->post(route('notifications.read', ['notification' => $notification->id]))
-        ->assertRedirect();
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Notifikasi ditandai sebagai sudah dibaca.');
 
     expect($owner->fresh()->unreadNotifications()->count())->toBe(0);
     expect($notification->fresh()->read_at)->not->toBeNull();
@@ -102,7 +103,8 @@ test('mark-all-read clears unread count', function () {
 
     $this->actingAs($owner)
         ->post(route('notifications.read-all'))
-        ->assertRedirect();
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Semua notifikasi berhasil ditandai sebagai sudah dibaca.');
 
     expect($owner->fresh()->unreadNotifications()->count())->toBe(0);
 });
@@ -136,7 +138,8 @@ test('destroy endpoint removes the notification', function () {
 
     $this->actingAs($owner)
         ->delete(route('notifications.destroy', ['notification' => $notification->id]))
-        ->assertRedirect();
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Notifikasi berhasil dihapus.');
 
     expect($owner->fresh()->notifications()->count())->toBe(0);
 });

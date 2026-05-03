@@ -4,6 +4,7 @@ namespace App\Services\Settings;
 
 use App\Enums\SettingType;
 use App\Models\Setting;
+use App\Services\Audit\AuditLogService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 class SettingService
 {
     private const CACHE_KEY = 'settings.all';
+
+    public function __construct(private readonly AuditLogService $audit) {}
 
     /**
      * Read setting by full dot-key (e.g. "branding.logo_path").
@@ -65,10 +68,22 @@ class SettingService
             ->where('key', $key)
             ->firstOrFail();
 
+        $previousRaw = $setting->value;
         $setting->value = $this->encodeValue($setting->type, $value);
         $setting->save();
 
         $this->flush();
+
+        // Blueprint §24 #13 — every settings change is sensitive and must be auditable.
+        // We never log password-type values (api keys, smtp passwords) to avoid leaking
+        // secrets into the audit table. For all other types we keep before/after.
+        $shouldRedact = $setting->type === SettingType::Password;
+        $this->audit->record(
+            action: 'settings.update',
+            subject: $setting,
+            before: ['value' => $shouldRedact ? '[redacted]' : $this->decodeValue($setting->type, $previousRaw)],
+            after: ['value' => $shouldRedact ? '[redacted]' : $this->decodeValue($setting->type, $setting->value)],
+        );
 
         return $setting;
     }

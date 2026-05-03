@@ -18,6 +18,7 @@ use App\Services\Interviews\InterviewService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,6 +36,7 @@ class InterviewController extends Controller
         abort_unless($company !== null, 404);
 
         $statusFilter = $request->string('status')->toString();
+        $groupBy = $request->string('group_by')->toString() === 'status' ? 'status' : 'stage';
 
         $interviews = Interview::query()
             ->with([
@@ -49,19 +51,29 @@ class InterviewController extends Controller
             ->get()
             ->map(fn (Interview $i) => $this->cardPayload($i));
 
-        $byStatus = $interviews->groupBy('status');
+        $columns = $groupBy === 'status'
+            ? $this->groupByStatus($interviews)
+            : $this->groupByStage($interviews);
 
         return Inertia::render('employer/interviews/index', [
-            'columns' => [
-                ['key' => 'scheduled', 'label' => 'Terjadwal', 'items' => $byStatus->get('scheduled', collect())->values()],
-                ['key' => 'rescheduled', 'label' => 'Rescheduled', 'items' => $byStatus->get('rescheduled', collect())->values()],
-                ['key' => 'ongoing', 'label' => 'Berlangsung', 'items' => $byStatus->get('ongoing', collect())->values()],
-                ['key' => 'completed', 'label' => 'Selesai', 'items' => $byStatus->get('completed', collect())->values()],
-                ['key' => 'cancelled', 'label' => 'Batal/No-Show', 'items' => $byStatus->get('cancelled', collect())->merge($byStatus->get('no_show', collect()))->values()],
-            ],
-            'filters' => ['status' => $statusFilter],
+            'columns' => $columns,
+            'filters' => ['status' => $statusFilter, 'group_by' => $groupBy],
             'statusOptions' => InterviewStatus::selectItems(),
+            'stageOptions' => InterviewStage::selectItems(),
         ]);
+    }
+
+    public function changeStage(Request $request, Interview $interview): RedirectResponse
+    {
+        $this->authorizeInterview($request, $interview);
+
+        $data = $request->validate([
+            'stage' => ['required', 'string', 'in:'.implode(',', array_column(InterviewStage::cases(), 'value'))],
+        ]);
+
+        $interview->forceFill(['stage' => $data['stage']])->save();
+
+        return back()->with('success', 'Tahap interview diperbarui.');
     }
 
     public function create(Request $request): Response
@@ -257,12 +269,47 @@ class InterviewController extends Controller
             'id' => $i->id,
             'title' => $i->title,
             'stage' => $i->stage?->value,
+            'stage_label' => $i->stage?->label(),
             'mode' => $i->mode?->value,
             'status' => $i->status?->value,
             'scheduled_at' => optional($i->scheduled_at)->toIso8601String(),
             'candidate_name' => $i->application?->employeeProfile?->user?->name,
             'job_title' => $i->application?->job?->title,
             'job_slug' => $i->application?->job?->slug,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, array<string, mixed>>  $interviews
+     * @return array<int, array{key:string, label:string, items:array<int, array<string, mixed>>}>
+     */
+    private function groupByStage($interviews): array
+    {
+        $byStage = $interviews->groupBy('stage');
+
+        return collect(InterviewStage::cases())
+            ->map(fn (InterviewStage $stage) => [
+                'key' => $stage->value,
+                'label' => $stage->label(),
+                'items' => $byStage->get($stage->value, collect())->values()->all(),
+            ])
+            ->all();
+    }
+
+    /**
+     * @param  Collection<int, array<string, mixed>>  $interviews
+     * @return array<int, array{key:string, label:string, items:array<int, array<string, mixed>>}>
+     */
+    private function groupByStatus($interviews): array
+    {
+        $byStatus = $interviews->groupBy('status');
+
+        return [
+            ['key' => 'scheduled', 'label' => 'Terjadwal', 'items' => $byStatus->get('scheduled', collect())->values()->all()],
+            ['key' => 'rescheduled', 'label' => 'Rescheduled', 'items' => $byStatus->get('rescheduled', collect())->values()->all()],
+            ['key' => 'ongoing', 'label' => 'Berlangsung', 'items' => $byStatus->get('ongoing', collect())->values()->all()],
+            ['key' => 'completed', 'label' => 'Selesai', 'items' => $byStatus->get('completed', collect())->values()->all()],
+            ['key' => 'cancelled', 'label' => 'Batal/No-Show', 'items' => $byStatus->get('cancelled', collect())->merge($byStatus->get('no_show', collect()))->values()->all()],
         ];
     }
 }

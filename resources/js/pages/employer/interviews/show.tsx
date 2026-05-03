@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Calendar, CheckCircle2, Download, ExternalLink, MapPin, Save, Video, X } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
+import {  useState } from 'react';
+import type {FormEvent} from 'react';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { TextareaField } from '@/components/form/textarea-field';
@@ -12,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 
 type Participant = {
     id: number;
@@ -129,7 +131,7 @@ export default function InterviewShow({ interview, myScorecard }: Props) {
                     description={`Untuk ${interview.application.candidate_name} — ${interview.application.job_title}`}
                     actions={
                         <div className="flex flex-wrap gap-2">
-                            <StatusBadge tone={statusTone(interview.status) as never}>{interview.status}</StatusBadge>
+                            <StatusBadge tone={statusTone(interview.status) as never}>{formatStatus(interview.status)}</StatusBadge>
                             <Button asChild variant="outline" size="sm">
                                 <a href={`/employer/interviews/${interview.id}/ics`}>
                                     <Download className="size-4" /> .ics
@@ -161,11 +163,11 @@ export default function InterviewShow({ interview, myScorecard }: Props) {
                                 <dt className="text-muted-foreground">Durasi</dt>
                                 <dd>{interview.duration_minutes} menit</dd>
                                 <dt className="text-muted-foreground">Tahap</dt>
-                                <dd>{interview.stage}</dd>
+                                <dd>{formatStatus(interview.stage)}</dd>
                                 <dt className="text-muted-foreground">Mode</dt>
                                 <dd className="flex items-center gap-1">
                                     {interview.mode === 'online' ? <Video className="size-4" /> : interview.mode === 'onsite' ? <MapPin className="size-4" /> : null}
-                                    {interview.mode}
+                                    {formatStatus(interview.mode)}
                                 </dd>
                             </dl>
                         </Section>
@@ -213,7 +215,7 @@ export default function InterviewShow({ interview, myScorecard }: Props) {
                                         <li key={r.id} className="rounded-md border p-3 text-sm">
                                             <div className="flex items-center justify-between">
                                                 <span className="font-medium">{r.requested_by}</span>
-                                                <Badge variant={r.status === 'approved' ? 'default' : 'secondary'}>{r.status}</Badge>
+                                                <Badge variant={r.status === 'approved' ? 'default' : 'secondary'}>{formatStatus(r.status)}</Badge>
                                             </div>
                                             <p className="mt-1 text-muted-foreground">{r.reason}</p>
                                             <div className="mt-2 text-xs text-muted-foreground">
@@ -234,7 +236,7 @@ export default function InterviewShow({ interview, myScorecard }: Props) {
                                             value={String(scorecard.data.overall_score)}
                                             onValueChange={(v) => scorecard.setData('overall_score', Number(v))}
                                         >
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="Pilih skor keseluruhan" /></SelectTrigger>
                                             <SelectContent>
                                                 {[1, 2, 3, 4, 5].map((n) => (
                                                     <SelectItem key={n} value={String(n)}>{n}</SelectItem>
@@ -248,15 +250,15 @@ export default function InterviewShow({ interview, myScorecard }: Props) {
                                             value={scorecard.data.recommendation}
                                             onValueChange={(v) => scorecard.setData('recommendation', v)}
                                         >
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="Pilih rekomendasi" /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="strong_yes">Strong Yes</SelectItem>
-                                                <SelectItem value="yes">Yes</SelectItem>
-                                                <SelectItem value="no">No</SelectItem>
-                                                <SelectItem value="strong_no">Strong No</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                                                    <SelectItem value="strong_yes">Strong Yes</SelectItem>
+                                                    <SelectItem value="yes">Yes</SelectItem>
+                                                    <SelectItem value="no">No</SelectItem>
+                                                    <SelectItem value="strong_no">Strong No</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                 </div>
                                 <TextareaField
                                     label="Komentar"

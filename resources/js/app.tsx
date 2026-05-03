@@ -1,23 +1,53 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { initializeTheme } from '@/hooks/use-appearance';
 import AdminLayout from '@/layouts/admin-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import EmployeeLayout from '@/layouts/employee-layout';
 import EmployerLayout from '@/layouts/employer-layout';
+import HomeLayout from '@/layouts/home-layout';
 import PublicLayout from '@/layouts/public-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'KarirConnect';
+function resolveAppName(): string {
+    if (typeof document === 'undefined') {
+        return 'KarirConnect';
+    }
+
+    const pageScript = document.querySelector<HTMLScriptElement>('script[data-page]');
+
+    if (pageScript?.textContent) {
+        try {
+            const page = JSON.parse(pageScript.textContent) as { props?: { app?: { name?: string } } };
+
+            if (page.props?.app?.name) {
+                return page.props.app.name;
+            }
+        } catch {
+            // Ignore malformed page data and keep fallback below.
+        }
+    }
+
+    return import.meta.env.VITE_APP_NAME || 'KarirConnect';
+}
+
+const appName = resolveAppName();
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => {
+        if (!title) {
+            return appName;
+        }
+        if (title === appName || title.endsWith(` - ${appName}`)) {
+            return title;
+        }
+        return `${title} - ${appName}`;
+    },
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
-                return null;
+                return HomeLayout;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
@@ -47,6 +77,3 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
-
-// This will set light / dark mode on load...
-initializeTheme();

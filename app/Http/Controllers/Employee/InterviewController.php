@@ -23,13 +23,26 @@ class InterviewController extends Controller
     public function index(Request $request): Response
     {
         $profile = $this->profiles->ensureProfile($request->user());
+        $search = $request->string('search')->toString();
 
         $interviews = Interview::query()
             ->with(['application.job:id,title,slug,company_id', 'application.job.company:id,name,slug', 'scheduledBy:id,name'])
             ->whereHas('application', fn ($q) => $q->where('employee_profile_id', $profile->id))
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($subQuery) use ($search): void {
+                    $subQuery
+                        ->where('title', 'like', "%{$search}%")
+                        ->orWhere('stage', 'like', "%{$search}%")
+                        ->orWhere('mode', 'like', "%{$search}%")
+                        ->orWhere('status', 'like', "%{$search}%")
+                        ->orWhereHas('application.job', fn ($jobQuery) => $jobQuery->where('title', 'like', "%{$search}%"))
+                        ->orWhereHas('application.job.company', fn ($companyQuery) => $companyQuery->where('name', 'like', "%{$search}%"));
+                });
+            })
             ->orderBy('scheduled_at')
-            ->get()
-            ->map(fn (Interview $i) => [
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Interview $i) => [
                 'id' => $i->id,
                 'title' => $i->title,
                 'stage' => $i->stage?->value,
@@ -49,6 +62,9 @@ class InterviewController extends Controller
             ]);
 
         return Inertia::render('employee/interviews/index', [
+            'filters' => [
+                'search' => $search,
+            ],
             'interviews' => $interviews,
         ]);
     }
@@ -58,7 +74,7 @@ class InterviewController extends Controller
         $this->authorizeAsCandidate($request, $interview);
 
         $interview->load([
-            'application.job:id,title,slug',
+            'application.job:id,title,slug,company_id',
             'application.job.company:id,name,slug',
             'participants.user:id,name,email',
             'rescheduleRequests',
@@ -81,12 +97,15 @@ class InterviewController extends Controller
                 'location_address' => $interview->location_address,
                 'location_map_url' => $interview->location_map_url,
                 'candidate_instructions' => $interview->candidate_instructions,
+                'application_id' => $interview->application?->id,
+                'scheduled_by' => $interview->scheduledBy?->name,
                 'job' => [
                     'title' => $interview->application?->job?->title,
                     'slug' => $interview->application?->job?->slug,
                 ],
                 'company' => [
                     'name' => $interview->application?->job?->company?->name,
+                    'slug' => $interview->application?->job?->company?->slug,
                 ],
                 'reschedule_requests' => $interview->rescheduleRequests->map(fn ($r) => [
                     'id' => $r->id,
