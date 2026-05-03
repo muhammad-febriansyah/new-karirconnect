@@ -998,12 +998,12 @@ class DemoDataSeeder extends Seeder
         }
 
         $legal = [
-            ['slug' => 'terms', 'title' => 'Syarat & Ketentuan', 'body' => 'Dengan menggunakan KarirConnect, Anda menyetujui ketentuan ini...'],
-            ['slug' => 'privacy', 'title' => 'Kebijakan Privasi', 'body' => 'Kami menghargai privasi Anda dan berkomitmen melindungi data...'],
-            ['slug' => 'cookies', 'title' => 'Kebijakan Cookies', 'body' => 'Situs ini menggunakan cookies untuk meningkatkan pengalaman Anda...'],
+            ['slug' => 'terms', 'title' => 'Syarat & Ketentuan', 'body' => $this->termsBody()],
+            ['slug' => 'privacy', 'title' => 'Kebijakan Privasi', 'body' => $this->privacyBody()],
+            ['slug' => 'cookies', 'title' => 'Kebijakan Cookies', 'body' => $this->cookiesBody()],
         ];
         foreach ($legal as $l) {
-            LegalPage::query()->firstOrCreate(['slug' => $l['slug']], $l);
+            LegalPage::query()->updateOrCreate(['slug' => $l['slug']], $l);
         }
 
         $skill = Skill::query()->first();
@@ -1116,5 +1116,234 @@ class DemoDataSeeder extends Seeder
                 array_merge($s, ['ip' => '127.0.0.1', 'status' => 'new']),
             );
         }
+    }
+
+    private function termsBody(): string
+    {
+        return <<<'HTML'
+<blockquote>
+    <p><strong>Ringkasan singkat.</strong> Dengan menggunakan KarirConnect, Anda setuju untuk menggunakan layanan secara wajar, jujur dalam mengisi data, dan menghormati pengguna lain. Konten Anda tetap milik Anda; kami hanya mendapat lisensi untuk menampilkannya di platform.</p>
+</blockquote>
+
+<h2 id="pendahuluan">1. Pendahuluan</h2>
+<p>Selamat datang di <strong>KarirConnect</strong>. Syarat &amp; Ketentuan ini ("Ketentuan") adalah perjanjian yang mengikat secara hukum antara Anda dengan PT KarirConnect Indonesia ("KarirConnect", "kami") sebagai operator platform yang dapat diakses melalui <code>karirconnect.id</code> dan aplikasi terkait.</p>
+<p>Dengan membuat akun, mengakses, atau menggunakan layanan, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh Ketentuan ini. Apabila Anda tidak setuju, mohon tidak menggunakan layanan kami.</p>
+
+<h2 id="definisi">2. Definisi</h2>
+<ul>
+    <li><strong>Layanan</strong> berarti seluruh fitur KarirConnect, termasuk papan lowongan, profil kandidat, AI Coach, AI Interview, dan layanan terkait.</li>
+    <li><strong>Pengguna</strong> berarti setiap individu atau entitas yang menggunakan Layanan, baik sebagai Pencari Kerja maupun Pemberi Kerja.</li>
+    <li><strong>Konten</strong> berarti seluruh data, teks, gambar, dan informasi yang diunggah ke Layanan.</li>
+</ul>
+
+<h2 id="akun">3. Akun &amp; Pendaftaran</h2>
+<p>Untuk menggunakan sebagian besar fitur, Anda harus mendaftarkan akun. Anda berkewajiban:</p>
+<ul>
+    <li>Memberikan informasi yang akurat, terbaru, dan lengkap saat pendaftaran.</li>
+    <li>Menjaga kerahasiaan kata sandi dan menyetujui bahwa setiap aktivitas pada akun Anda menjadi tanggung jawab Anda.</li>
+    <li>Memberi tahu kami segera apabila terdapat dugaan akses tidak sah atau pelanggaran keamanan.</li>
+    <li>Berusia minimal 17 tahun atau telah memperoleh persetujuan dari orang tua/wali sah.</li>
+</ul>
+
+<h2 id="layanan-pencari-kerja">4. Ketentuan untuk Pencari Kerja</h2>
+<h3 id="profil-cv">4.1 Profil &amp; CV</h3>
+<p>Anda bertanggung jawab atas keakuratan profil dan CV yang Anda unggah. Pemalsuan riwayat, kualifikasi, atau dokumen pendukung dapat berakibat pada penangguhan atau penghapusan akun.</p>
+
+<h3 id="lamaran">4.2 Lamaran</h3>
+<p>Saat melamar, Anda mengizinkan KarirConnect meneruskan profil dan dokumen Anda kepada Pemberi Kerja yang relevan. Keputusan rekrutmen sepenuhnya berada di tangan Pemberi Kerja, bukan KarirConnect.</p>
+
+<h2 id="layanan-pemberi-kerja">5. Ketentuan untuk Pemberi Kerja</h2>
+<ul>
+    <li>Setiap lowongan harus mencerminkan posisi yang benar-benar dibuka, tidak menyesatkan, dan tidak mengandung diskriminasi atas dasar SARA, gender, usia, atau disabilitas.</li>
+    <li>Pemberi Kerja dilarang memungut biaya apa pun dari kandidat dalam proses rekrutmen yang dimulai dari KarirConnect.</li>
+    <li>Pemberi Kerja wajib mematuhi peraturan ketenagakerjaan Republik Indonesia dan kebijakan privasi terhadap data kandidat.</li>
+</ul>
+
+<h2 id="konten-pengguna">6. Konten Pengguna</h2>
+<p>Anda tetap menjadi pemilik atas seluruh Konten yang Anda unggah. Dengan mengunggah Konten, Anda memberi KarirConnect lisensi non-eksklusif, di seluruh dunia, dan bebas royalti untuk menggunakan, menampilkan, dan mendistribusikan Konten tersebut sebatas yang diperlukan untuk menjalankan Layanan.</p>
+<p>Anda dilarang mengunggah Konten yang melanggar hukum, hak kekayaan intelektual pihak lain, mengandung malware, atau bersifat menyesatkan.</p>
+
+<h2 id="layanan-ai">7. Layanan Berbasis AI</h2>
+<p>KarirConnect menyediakan fitur AI Coach, AI Interview, dan rekomendasi pekerjaan yang menggunakan teknologi kecerdasan buatan. Hasil dari fitur AI bersifat <strong>indikatif</strong> dan tidak dapat dijamin sempurna. Anda memahami bahwa:</p>
+<ul>
+    <li>AI dapat menghasilkan keluaran yang tidak akurat atau bias; gunakan sebagai panduan, bukan keputusan akhir.</li>
+    <li>Data yang Anda masukkan ke fitur AI dapat diproses oleh penyedia model pihak ketiga (mis. OpenAI) dengan standar keamanan yang setara.</li>
+    <li>Kami tidak menjamin keberhasilan rekrutmen, kelulusan interview, atau penawaran gaji tertentu berdasarkan hasil AI.</li>
+</ul>
+
+<h2 id="pembayaran">8. Pembayaran &amp; Langganan</h2>
+<p>Layanan untuk Pencari Kerja sepenuhnya gratis. Pemberi Kerja dapat berlangganan paket berbayar yang ketentuannya diuraikan terpisah pada halaman harga. Pembayaran tidak dapat dikembalikan kecuali diatur lain dalam paket terkait.</p>
+
+<h2 id="penangguhan">9. Penangguhan &amp; Pemutusan</h2>
+<p>Kami berhak menangguhkan atau menghentikan akses Anda apabila Anda melanggar Ketentuan ini, terdapat indikasi penyalahgunaan, atau atas perintah pejabat yang berwenang. Anda dapat menutup akun kapan saja melalui pengaturan akun.</p>
+
+<h2 id="batasan-tanggung-jawab">10. Batasan Tanggung Jawab</h2>
+<p>Sejauh diizinkan oleh hukum, KarirConnect tidak bertanggung jawab atas kerugian tidak langsung, kehilangan peluang kerja, atau kehilangan keuntungan yang timbul dari penggunaan Layanan. Tanggung jawab maksimal kami terbatas pada jumlah biaya berlangganan yang Anda bayarkan dalam 12 bulan terakhir.</p>
+
+<h2 id="perubahan">11. Perubahan Ketentuan</h2>
+<p>Kami dapat memperbarui Ketentuan ini dari waktu ke waktu. Perubahan material akan diumumkan melalui email atau notifikasi platform paling lambat 14 hari sebelum berlaku. Penggunaan layanan setelah tanggal efektif dianggap sebagai persetujuan terhadap versi terbaru.</p>
+
+<h2 id="hukum">12. Hukum yang Berlaku</h2>
+<p>Ketentuan ini tunduk pada hukum Republik Indonesia. Setiap perselisihan akan diselesaikan terlebih dahulu secara musyawarah, dan jika tidak tercapai, melalui Pengadilan Negeri Jakarta Selatan.</p>
+
+<h2 id="kontak-terms">13. Kontak</h2>
+<p>Pertanyaan tentang Ketentuan ini dapat dikirim ke <a href="mailto:legal@karirconnect.id">legal@karirconnect.id</a>.</p>
+HTML;
+    }
+
+    private function privacyBody(): string
+    {
+        return <<<'HTML'
+<blockquote>
+    <p><strong>Ringkasan singkat.</strong> Kami hanya mengumpulkan data yang benar-benar dibutuhkan untuk membantu Anda mendapat pekerjaan. Anda dapat melihat, memperbarui, atau menghapus data Anda kapan saja melalui dashboard. Kami tidak menjual data Anda kepada pihak ketiga.</p>
+</blockquote>
+
+<h2 id="pendahuluan-privacy">1. Pendahuluan</h2>
+<p>Kebijakan Privasi ini menjelaskan bagaimana <strong>KarirConnect</strong> mengumpulkan, menggunakan, mengungkap, dan melindungi informasi pribadi Anda saat Anda menggunakan layanan kami. Kami berkomitmen mematuhi UU Pelindungan Data Pribadi (UU PDP) Republik Indonesia dan praktik terbaik perlindungan data internasional.</p>
+
+<h2 id="data-yang-dikumpulkan">2. Data yang Kami Kumpulkan</h2>
+
+<h3 id="data-langsung">2.1 Data yang Anda Berikan</h3>
+<ul>
+    <li><strong>Identitas dasar</strong>: nama, email, nomor telepon, foto profil.</li>
+    <li><strong>Profil profesional</strong>: riwayat pendidikan, pengalaman kerja, skill, ekspektasi gaji, dan CV.</li>
+    <li><strong>Konten lamaran</strong>: cover letter, jawaban pre-screening, dan dokumen pendukung.</li>
+    <li><strong>Informasi pembayaran</strong> (khusus Pemberi Kerja): kami tidak menyimpan nomor kartu — pembayaran ditangani gateway tepercaya.</li>
+</ul>
+
+<h3 id="data-otomatis">2.2 Data yang Terkumpul Otomatis</h3>
+<ul>
+    <li>Alamat IP, jenis perangkat, browser, dan halaman yang dikunjungi.</li>
+    <li>Cookie dan teknologi serupa (lihat Kebijakan Cookies).</li>
+    <li>Riwayat interaksi dengan fitur AI (untuk meningkatkan kualitas saran).</li>
+</ul>
+
+<h3 id="data-pihak-ketiga">2.3 Data dari Pihak Ketiga</h3>
+<p>Apabila Anda mendaftar via Google atau LinkedIn, kami menerima nama, email, dan foto profil sesuai izin yang Anda berikan pada penyedia tersebut.</p>
+
+<h2 id="penggunaan-data">3. Bagaimana Kami Menggunakan Data</h2>
+<ul>
+    <li>Menyediakan, mengoperasikan, dan memelihara Layanan.</li>
+    <li>Memproses lamaran dan menghubungkan Anda dengan Pemberi Kerja yang relevan.</li>
+    <li>Memberikan rekomendasi pekerjaan, saran AI Coach, dan latihan AI Interview.</li>
+    <li>Mengirim notifikasi penting, update produk, dan pemasaran (Anda dapat berhenti berlangganan kapan saja).</li>
+    <li>Mendeteksi dan mencegah penipuan, penyalahgunaan, atau aktivitas yang melanggar hukum.</li>
+    <li>Memenuhi kewajiban hukum dan menanggapi permintaan resmi dari otoritas yang berwenang.</li>
+</ul>
+
+<h2 id="pembagian-data">4. Pembagian Data</h2>
+<p>Kami <strong>tidak menjual</strong> data pribadi Anda. Kami hanya membagikan data dalam keadaan berikut:</p>
+<ul>
+    <li><strong>Pemberi Kerja</strong>: profil dan dokumen lamaran yang Anda kirim akan diteruskan ke perusahaan terkait.</li>
+    <li><strong>Penyedia layanan</strong>: hosting (cloud), email, analitik, dan model AI (mis. OpenAI), dengan kontrak perlindungan data.</li>
+    <li><strong>Otoritas hukum</strong>: bila diwajibkan oleh hukum, perintah pengadilan, atau permintaan resmi.</li>
+    <li><strong>Penerus bisnis</strong>: dalam hal merger, akuisisi, atau penjualan aset, dengan pemberitahuan kepada Anda.</li>
+</ul>
+
+<h2 id="penyimpanan">5. Penyimpanan &amp; Keamanan</h2>
+<p>Data disimpan di pusat data dengan sertifikasi industri (ISO 27001 atau setara). Kami menerapkan enkripsi saat transit (TLS 1.2+) dan saat penyimpanan untuk data sensitif. Akses internal dibatasi berdasarkan prinsip least privilege.</p>
+<p>Data akun aktif disimpan selama akun Anda ada. Setelah penghapusan akun, sebagian data dapat tetap disimpan hingga maksimal 24 bulan untuk kepentingan audit dan kepatuhan hukum.</p>
+
+<h2 id="hak-anda">6. Hak Anda sebagai Subjek Data</h2>
+<p>Sesuai UU PDP, Anda berhak untuk:</p>
+<ul>
+    <li>Mengakses dan memperoleh salinan data pribadi Anda.</li>
+    <li>Memperbarui atau memperbaiki data yang tidak akurat.</li>
+    <li>Menghapus akun beserta data terkait (right to be forgotten).</li>
+    <li>Membatasi atau menolak pemrosesan untuk tujuan tertentu (mis. pemasaran).</li>
+    <li>Memindahkan data ke layanan lain dalam format umum.</li>
+</ul>
+<p>Permintaan dapat dikirim ke <a href="mailto:dpo@karirconnect.id">dpo@karirconnect.id</a> dan akan kami tindaklanjuti dalam 14 hari kerja.</p>
+
+<h2 id="ai-privasi">7. Pemrosesan oleh AI</h2>
+<p>Saat Anda menggunakan AI Coach atau AI Interview, isi percakapan dapat dikirim ke penyedia model AI pihak ketiga untuk menghasilkan respons. Kami memilih penyedia yang berkomitmen <strong>tidak menggunakan data Anda untuk melatih model</strong> dan menghapus data input setelah pemrosesan.</p>
+
+<h2 id="cookies-privacy">8. Cookies</h2>
+<p>Penggunaan cookies dijelaskan terpisah dalam <a href="/legal/cookies">Kebijakan Cookies</a>.</p>
+
+<h2 id="anak">9. Anak di Bawah Umur</h2>
+<p>Layanan tidak ditujukan untuk anak di bawah 17 tahun. Kami tidak secara sengaja mengumpulkan data dari anak. Bila Anda mengetahui bahwa anak telah memberikan data, mohon hubungi kami untuk dihapus.</p>
+
+<h2 id="perubahan-privacy">10. Perubahan Kebijakan</h2>
+<p>Kebijakan ini dapat diperbarui sewaktu-waktu. Perubahan material akan diberitahukan melalui email atau notifikasi platform setidaknya 14 hari sebelum berlaku.</p>
+
+<h2 id="kontak-privacy">11. Hubungi DPO</h2>
+<p>Untuk pertanyaan, keluhan, atau permintaan terkait privasi, hubungi Data Protection Officer kami di <a href="mailto:dpo@karirconnect.id">dpo@karirconnect.id</a>.</p>
+HTML;
+    }
+
+    private function cookiesBody(): string
+    {
+        return <<<'HTML'
+<blockquote>
+    <p><strong>Ringkasan singkat.</strong> Kami menggunakan cookies untuk menjaga Anda tetap login, memahami cara platform digunakan, dan menampilkan pengalaman yang sesuai. Anda dapat menonaktifkan cookies non-esensial kapan saja melalui pengaturan browser.</p>
+</blockquote>
+
+<h2 id="apa-itu-cookies">1. Apa itu Cookies?</h2>
+<p>Cookies adalah berkas teks kecil yang disimpan di perangkat Anda saat mengunjungi sebuah situs. Cookies membantu situs mengingat preferensi Anda, status login, dan aktivitas sebelumnya untuk memberi pengalaman yang lebih baik.</p>
+<p>Selain cookies, kami juga menggunakan teknologi serupa seperti <em>local storage</em>, <em>session storage</em>, dan piksel pelacak untuk tujuan yang dijelaskan di bawah.</p>
+
+<h2 id="jenis-cookies">2. Jenis Cookies yang Kami Gunakan</h2>
+
+<h3 id="cookies-esensial">2.1 Cookies Esensial</h3>
+<p>Cookies ini wajib agar layanan dapat berjalan. Tanpa cookies ini, fitur seperti login, pengiriman lamaran, dan keamanan tidak akan berfungsi.</p>
+<ul>
+    <li><code>laravel_session</code> — menjaga sesi pengguna agar tetap login.</li>
+    <li><code>XSRF-TOKEN</code> — perlindungan terhadap serangan cross-site request forgery.</li>
+    <li><code>remember_web_*</code> — opsi "ingat saya" pada halaman login.</li>
+</ul>
+
+<h3 id="cookies-fungsional">2.2 Cookies Fungsional</h3>
+<p>Membantu kami menyimpan preferensi seperti bahasa, filter pencarian terakhir, dan tampilan dashboard.</p>
+<ul>
+    <li><code>kc_filter_preferences</code> — preferensi filter pencarian lowongan.</li>
+    <li><code>kc_theme</code> — preferensi tampilan (saat ini hanya light).</li>
+</ul>
+
+<h3 id="cookies-analitik">2.3 Cookies Analitik</h3>
+<p>Membantu kami memahami bagaimana pengguna berinteraksi dengan platform agar dapat terus diperbaiki. Data dikumpulkan secara agregat dan tidak digunakan untuk mengidentifikasi individu.</p>
+<ul>
+    <li><strong>Plausible Analytics</strong> — analitik yang menghormati privasi, tanpa cross-site tracking.</li>
+    <li><strong>Sentry</strong> — pelacakan error untuk meningkatkan stabilitas (tidak melacak perilaku pengguna).</li>
+</ul>
+
+<h3 id="cookies-pemasaran">2.4 Cookies Pemasaran</h3>
+<p>Hanya aktif jika Anda memberikan persetujuan. Membantu menampilkan kampanye yang relevan di platform pihak ketiga.</p>
+<ul>
+    <li><strong>Meta Pixel</strong> — kampanye di Facebook/Instagram untuk audiens yang relevan.</li>
+    <li><strong>LinkedIn Insight</strong> — kampanye B2B untuk perusahaan rekrutmen.</li>
+</ul>
+
+<h2 id="cookies-pihak-ketiga">3. Cookies Pihak Ketiga</h2>
+<p>Beberapa cookies disetel oleh layanan pihak ketiga yang kami integrasikan. Cookie-cookie ini tunduk pada kebijakan privasi masing-masing penyedia. Pihak ketiga utama yang kami gunakan:</p>
+<ul>
+    <li><strong>Google</strong> (untuk login Google &amp; reCAPTCHA).</li>
+    <li><strong>LinkedIn</strong> (untuk login &amp; tombol profesional).</li>
+    <li><strong>Cloudflare</strong> (untuk keamanan &amp; pengiriman konten).</li>
+</ul>
+
+<h2 id="kelola-cookies">4. Cara Mengelola Cookies</h2>
+<p>Anda dapat mengelola cookies dengan beberapa cara:</p>
+<ul>
+    <li><strong>Banner persetujuan</strong>: muncul saat kunjungan pertama; pilih "Hanya esensial" untuk menolak yang lain.</li>
+    <li><strong>Pengaturan akun</strong>: ubah preferensi di menu Privasi &amp; Cookies.</li>
+    <li><strong>Pengaturan browser</strong>: blokir atau hapus cookies via pengaturan browser Anda.</li>
+    <li><strong>Mode penyamaran</strong>: gunakan jendela private/incognito untuk membatasi cookies persisten.</li>
+</ul>
+<p><strong>Catatan:</strong> menolak cookies esensial akan membuat sebagian fitur tidak berfungsi (mis. login dan lamaran).</p>
+
+<h2 id="masa-berlaku">5. Masa Berlaku Cookies</h2>
+<ul>
+    <li><strong>Session cookies</strong>: dihapus saat browser ditutup.</li>
+    <li><strong>Persistent cookies</strong>: bertahan 30 hari hingga 12 bulan tergantung jenisnya.</li>
+    <li><strong>Cookie "ingat saya"</strong>: maksimal 60 hari.</li>
+</ul>
+
+<h2 id="perubahan-cookies">6. Perubahan Kebijakan</h2>
+<p>Kebijakan Cookies ini dapat diperbarui mengikuti perkembangan fitur dan regulasi. Tanggal perubahan terakhir tercatat di bagian atas halaman ini.</p>
+
+<h2 id="kontak-cookies">7. Pertanyaan?</h2>
+<p>Jika Anda memiliki pertanyaan tentang penggunaan cookies, silakan hubungi <a href="mailto:privacy@karirconnect.id">privacy@karirconnect.id</a>.</p>
+HTML;
     }
 }

@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { Activity, Building2, CheckCircle2, Crown, Search, XCircle } from 'lucide-react';
+import { Activity, ArrowRight, Building2, CheckCircle2, Crown, Eye, Search, XCircle } from 'lucide-react';
 import { type FormEvent } from 'react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
@@ -150,8 +150,19 @@ export default function AdminSubscriptionsIndex({ subscriptions, filters, status
             enableHiding: false,
             header: () => <div className="text-right">Aksi</div>,
             cell: ({ row }) => (
-                <div className="text-right">
-                    {row.original.company.slug && <Button asChild size="sm" variant="ghost"><Link href={`/admin/companies/${row.original.company.slug}`}>Detail</Link></Button>}
+                <div className="flex justify-end">
+                    <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1.5 rounded-lg border-brand-blue/30 bg-brand-blue/5 px-3 text-brand-blue hover:bg-brand-blue/10 hover:text-brand-blue"
+                    >
+                        <Link href={`/admin/subscriptions/${row.original.id}`}>
+                            <Eye className="size-3.5" />
+                            Detail
+                            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                    </Button>
                 </div>
             ),
         },

@@ -44,6 +44,7 @@ class CareerResourceController extends Controller
                 'reading_minutes' => $resource->reading_minutes,
                 'views_count' => $resource->views_count,
                 'published_at' => optional($resource->published_at)->toIso8601String(),
+                'thumbnail' => $resource->thumbnail_path ? asset('storage/'.$resource->thumbnail_path) : null,
             ]),
         ]);
     }
@@ -66,6 +67,7 @@ class CareerResourceController extends Controller
                 'reading_minutes' => $careerResource->reading_minutes,
                 'views_count' => $careerResource->views_count + 1,
                 'published_at' => optional($careerResource->published_at)->toIso8601String(),
+                'thumbnail' => $careerResource->thumbnail_path ? asset('storage/'.$careerResource->thumbnail_path) : null,
             ],
             'related' => CareerResource::query()
                 ->where('is_published', true)
@@ -73,7 +75,15 @@ class CareerResourceController extends Controller
                 ->when($careerResource->category, fn ($query) => $query->where('category', $careerResource->category))
                 ->latest('published_at')
                 ->limit(3)
-                ->get(['id', 'title', 'slug', 'category', 'reading_minutes']),
+                ->get()
+                ->map(fn (CareerResource $r): array => [
+                    'id' => $r->id,
+                    'title' => $r->title,
+                    'slug' => $r->slug,
+                    'category' => $r->category,
+                    'reading_minutes' => $r->reading_minutes,
+                    'thumbnail' => $r->thumbnail_path ? asset('storage/'.$r->thumbnail_path) : null,
+                ]),
         ]);
     }
 }

@@ -5,7 +5,6 @@ import {
     Briefcase,
     Building2,
     ChevronDown,
-    ChevronRight,
     Clock,
     Flame,
     GraduationCap,
@@ -13,7 +12,6 @@ import {
     MapPin,
     Megaphone,
     Search,
-    Sparkles,
     TrendingUp,
     Wallet,
     type LucideIcon,
@@ -276,8 +274,8 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
             />
 
             <div className="space-y-8">
-            {/* ===== Page Header ===== */}
-            <header className="space-y-3">
+            {/* ===== Clean Page Header (combined title + search) ===== */}
+            <header className="space-y-6">
                 <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
@@ -291,193 +289,152 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                            Lowongan Kerja
-                        </h1>
-                        <p className="mt-1 max-w-2xl text-sm text-muted-foreground sm:text-base">
-                            Telusuri {jobs.total.toLocaleString('id-ID')}+ lowongan terbaru dari perusahaan
-                            terverifikasi di seluruh Indonesia. Temukan peran yang sesuai dengan keahlian dan
-                            tujuan karirmu.
-                        </p>
-                    </div>
-                </div>
-            </header>
 
-            {/* ===== Hero / Job Fair banner ===== */}
-            <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue text-white shadow-xl shadow-brand-navy/10">
-                {/* Decorative grid pattern */}
-                <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 opacity-30"
-                    style={{
-                        backgroundImage:
-                            'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)',
-                        backgroundSize: '28px 28px',
-                        maskImage:
-                            'radial-gradient(ellipse at 50% 30%, black 0%, transparent 75%)',
-                        WebkitMaskImage:
-                            'radial-gradient(ellipse at 50% 30%, black 0%, transparent 75%)',
-                    }}
-                />
-                {/* Soft glow blob */}
-                <div
-                    aria-hidden
-                    className="pointer-events-none absolute -top-32 left-1/2 size-[640px] -translate-x-1/2 rounded-full bg-brand-cyan/30 blur-3xl"
-                />
-
-                <div className="relative px-4 py-10 sm:px-8 sm:py-14">
-                    <div className="text-center">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-white/90 backdrop-blur">
-                            <Sparkles className="size-3.5" /> KarirConnect Job Fair
+                <div className="flex flex-col gap-3">
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-brand-blue/15 bg-brand-blue/5 px-2.5 py-1 text-xs font-medium text-brand-blue">
+                        <span className="relative flex size-1.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-blue/60" />
+                            <span className="relative inline-flex size-1.5 rounded-full bg-brand-blue" />
                         </span>
-                        <h2 className="mx-auto mt-4 max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-                            Karir Impian Anda Mulai dari Sini{' '}
-                            <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent">
-                                #JalanKarirmu
-                            </span>
-                        </h2>
-                        <p className="mx-auto mt-3 max-w-2xl text-sm text-white/80 sm:text-base">
-                            Bursa kerja online dengan {jobs.total.toLocaleString('id-ID')}+ lowongan dari perusahaan
-                            terverifikasi di seluruh Indonesia.
-                        </p>
-                    </div>
+                        {jobs.total.toLocaleString('id-ID')}+ lowongan aktif hari ini
+                    </span>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                        Lowongan Kerja
+                    </h1>
+                    <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+                        Telusuri lowongan terbaru dari perusahaan terverifikasi di seluruh Indonesia.
+                        Temukan peran yang sesuai dengan keahlian dan tujuan karirmu.
+                    </p>
+                </div>
 
-                    {/* Quick picks */}
-                    <div className="mx-auto mt-8 grid max-w-5xl grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
-                        {QUICK_PICKS.map((q) => {
-                            const active = q.isActive(filters);
-                            return (
-                                <button
-                                    key={q.key}
-                                    type="button"
-                                    onClick={() => apply(q.next)}
+                {/* Quick picks — chip style on plain background */}
+                <div className="-mx-1 flex flex-wrap gap-2 px-1">
+                    {QUICK_PICKS.map((q) => {
+                        const active = q.isActive(filters);
+                        return (
+                            <button
+                                key={q.key}
+                                type="button"
+                                onClick={() => apply(q.next)}
+                                className={cn(
+                                    'group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all sm:text-sm',
+                                    active
+                                        ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-sm'
+                                        : 'border-border/70 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
+                                )}
+                            >
+                                <span
                                     className={cn(
-                                        'group flex items-center justify-between gap-2 rounded-xl border bg-white/95 px-3 py-3 text-left text-sm font-semibold text-brand-navy shadow-sm backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-lg',
-                                        active
-                                            ? 'border-brand-blue/60 ring-2 ring-brand-blue/40'
-                                            : 'border-white/30',
+                                        'flex size-5 items-center justify-center rounded-full transition-colors',
+                                        active ? 'bg-brand-blue text-white' : q.color,
                                     )}
                                 >
-                                    <span className="flex min-w-0 items-center gap-2">
-                                        <span
-                                            className={cn(
-                                                'flex size-8 shrink-0 items-center justify-center rounded-lg',
-                                                q.color,
-                                            )}
-                                        >
-                                            <q.icon className="size-4" />
-                                        </span>
-                                        <span className="truncate">{q.label}</span>
-                                    </span>
-                                    <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-blue" />
-                                </button>
-                            );
-                        })}
-                    </div>
+                                    <q.icon className="size-3" />
+                                </span>
+                                {q.label}
+                            </button>
+                        );
+                    })}
+                </div>
 
-                    {/* Search panel */}
-                    <div className="mx-auto mt-5 max-w-5xl">
-                        <div className="rounded-2xl border border-white/30 bg-white/95 p-3 shadow-2xl shadow-brand-navy/30 backdrop-blur sm:p-4">
-                            <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <div className="relative flex-1">
-                                    <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Cari posisi, perusahaan, atau skill…"
-                                        className="h-12 rounded-xl border-transparent bg-muted/30 pl-10 text-base focus-visible:bg-background"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button type="submit" size="lg" className="h-12 flex-1 rounded-xl px-6 sm:flex-none">
-                                        <Search className="size-4" /> Cari
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="lg"
-                                        variant="outline"
-                                        asChild
-                                        className="h-12 rounded-xl border-brand-blue/20 bg-brand-blue/5 text-brand-navy hover:bg-brand-blue/10"
-                                    >
-                                        <Link href={savedHref}>
-                                            <Bookmark className="size-4" /> <span className="hidden sm:inline">Tersimpan</span>
-                                        </Link>
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="lg"
-                                        variant="outline"
-                                        asChild
-                                        className="h-12 rounded-xl border-brand-blue/20 bg-brand-blue/5 text-brand-navy hover:bg-brand-blue/10"
-                                    >
-                                        <Link href={applicationsHref}>
-                                            <BadgeCheck className="size-4" /> <span className="hidden sm:inline">Lamaran</span>
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </form>
+                {/* Search panel — clean white card */}
+                <div className="rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-4">
+                    <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <div className="relative flex-1">
+                            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Cari posisi, perusahaan, atau skill…"
+                                className="h-11 rounded-xl border-border/60 bg-background pl-10 text-sm sm:h-12 sm:text-base"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <Button type="submit" className="h-11 flex-1 rounded-xl px-5 sm:h-12 sm:flex-none">
+                                <Search className="size-4" /> Cari
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                asChild
+                                className="h-11 rounded-xl border-border/60 sm:h-12"
+                            >
+                                <Link href={savedHref}>
+                                    <Bookmark className="size-4" />
+                                    <span className="hidden sm:inline">Tersimpan</span>
+                                </Link>
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                asChild
+                                className="h-11 rounded-xl border-border/60 sm:h-12"
+                            >
+                                <Link href={applicationsHref}>
+                                    <BadgeCheck className="size-4" />
+                                    <span className="hidden sm:inline">Lamaran</span>
+                                </Link>
+                            </Button>
+                        </div>
+                    </form>
 
-                            {/* Filter dropdown row */}
-                            <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3 text-sm">
-                                <FilterSelect
-                                    placeholder="Level"
-                                    value={filters.experience_level}
-                                    options={options.experience_levels}
-                                    onChange={(v) => apply({ experience_level: v })}
-                                />
-                                <FilterSelect
-                                    placeholder="Jenis"
-                                    value={filters.employment_type}
-                                    options={options.employment_types}
-                                    onChange={(v) => apply({ employment_type: v })}
-                                />
-                                <FilterSelect
-                                    placeholder="Tipe"
-                                    value={filters.work_arrangement}
-                                    options={options.work_arrangements}
-                                    onChange={(v) => apply({ work_arrangement: v })}
-                                />
-                                <FilterSelect
-                                    placeholder="Lokasi"
-                                    value={filters.province_id !== null ? String(filters.province_id) : null}
-                                    options={options.provinces}
-                                    onChange={(v) => apply({ province_id: v ? Number(v) : null })}
-                                />
-                                <FilterSelect
-                                    placeholder="Gaji"
-                                    value={filters.salary_min !== null ? String(filters.salary_min) : null}
-                                    options={SALARY_BANDS}
-                                    onChange={(v) => apply({ salary_min: v ? Number(v) : null })}
-                                />
-                                <div className="ml-auto flex items-center gap-2">
-                                    <span className="hidden text-xs text-muted-foreground sm:inline">Urutkan</span>
-                                    <FilterSelect
-                                        placeholder="Terbaru"
-                                        value={filters.sort && filters.sort !== 'latest' ? filters.sort : null}
-                                        options={SORT_OPTIONS}
-                                        onChange={(v) => apply({ sort: v ?? 'latest' })}
-                                        defaultLabel="Terbaru"
-                                    />
-                                </div>
-                            </div>
-
-                            {hasActiveFilters && (
-                                <div className="mt-2 flex justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={resetFilters}
-                                        className="text-xs font-medium text-brand-blue hover:underline"
-                                    >
-                                        Reset semua filter
-                                    </button>
-                                </div>
-                            )}
+                    {/* Filter dropdown row */}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3 text-sm">
+                        <FilterSelect
+                            placeholder="Level"
+                            value={filters.experience_level}
+                            options={options.experience_levels}
+                            onChange={(v) => apply({ experience_level: v })}
+                        />
+                        <FilterSelect
+                            placeholder="Jenis"
+                            value={filters.employment_type}
+                            options={options.employment_types}
+                            onChange={(v) => apply({ employment_type: v })}
+                        />
+                        <FilterSelect
+                            placeholder="Tipe"
+                            value={filters.work_arrangement}
+                            options={options.work_arrangements}
+                            onChange={(v) => apply({ work_arrangement: v })}
+                        />
+                        <FilterSelect
+                            placeholder="Lokasi"
+                            value={filters.province_id !== null ? String(filters.province_id) : null}
+                            options={options.provinces}
+                            onChange={(v) => apply({ province_id: v ? Number(v) : null })}
+                        />
+                        <FilterSelect
+                            placeholder="Gaji"
+                            value={filters.salary_min !== null ? String(filters.salary_min) : null}
+                            options={SALARY_BANDS}
+                            onChange={(v) => apply({ salary_min: v ? Number(v) : null })}
+                        />
+                        <div className="ml-auto flex items-center gap-2">
+                            <span className="hidden text-xs text-muted-foreground sm:inline">Urutkan</span>
+                            <FilterSelect
+                                placeholder="Terbaru"
+                                value={filters.sort && filters.sort !== 'latest' ? filters.sort : null}
+                                options={SORT_OPTIONS}
+                                onChange={(v) => apply({ sort: v ?? 'latest' })}
+                                defaultLabel="Terbaru"
+                            />
                         </div>
                     </div>
+
+                    {hasActiveFilters && (
+                        <div className="mt-2 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                                className="text-xs font-medium text-brand-blue hover:underline"
+                            >
+                                Reset semua filter
+                            </button>
+                        </div>
+                    )}
                 </div>
-            </section>
+            </header>
 
             {/* ===== Body ===== */}
             <div className="space-y-6">

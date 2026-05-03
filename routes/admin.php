@@ -123,6 +123,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->parameters(['pricing-plans' => 'plan']);
 
         Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('subscriptions/{subscription}', [AdminSubscriptionController::class, 'show'])->name('subscriptions.show');
         Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
 
         Route::prefix('ai-audit-logs')

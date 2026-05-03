@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\UserRole;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceTokenController;
@@ -18,8 +20,37 @@ use App\Http\Controllers\Public\PaymentCallbackController;
 use App\Http\Controllers\Public\SalaryInsightController;
 use App\Http\Controllers\Public\SitemapController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', HomeController::class.'@index')->name('home');
+
+Route::middleware('guest')->group(function (): void {
+    Route::get('register/jobseeker', fn () => Inertia::render('auth/register', [
+        'mode' => 'form',
+        'role' => UserRole::Employee->value,
+        'roleLabel' => UserRole::Employee->label(),
+        'title' => 'Daftar sebagai Jobseeker',
+        'description' => 'Bangun profil profesional, lamar lowongan, dan akses fitur AI untuk karier Anda.',
+        'googleUrl' => route('auth.google.register', ['audience' => 'jobseeker']),
+        'loginUrl' => route('login'),
+    ]))->name('register.jobseeker');
+
+    Route::get('register/perusahaan', fn () => Inertia::render('auth/register', [
+        'mode' => 'form',
+        'role' => UserRole::Employer->value,
+        'roleLabel' => UserRole::Employer->label(),
+        'title' => 'Daftar sebagai Perusahaan',
+        'description' => 'Mulai posting lowongan, kelola kandidat, dan percepat proses rekrutmen tim Anda.',
+        'googleUrl' => route('auth.google.register', ['audience' => 'perusahaan']),
+        'loginUrl' => route('login'),
+    ]))->name('register.company');
+
+    Route::prefix('auth/google')->name('auth.google.')->group(function (): void {
+        Route::get('login', [GoogleAuthController::class, 'login'])->name('login');
+        Route::get('register/{audience}', [GoogleAuthController::class, 'register'])->name('register');
+        Route::get('callback', [GoogleAuthController::class, 'callback'])->name('callback');
+    });
+});
 
 Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('robots.txt', function () {

@@ -1,5 +1,6 @@
-import { Form, Head } from '@inertiajs/react';
-import { ArrowRight, AtSign, KeyRound } from 'lucide-react';
+import { Form, Head, Link } from '@inertiajs/react';
+import { ArrowRight, AtSign, BriefcaseBusiness, KeyRound, UserRoundSearch } from 'lucide-react';
+import GoogleMark from '@/components/google-mark';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -17,12 +18,19 @@ type Props = {
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
+    googleLoginUrl: string;
+    registerLinks: {
+        jobseeker: string;
+        company: string;
+    };
 };
 
 export default function Login({
     status,
     canResetPassword,
     canRegister,
+    googleLoginUrl,
+    registerLinks,
 }: Props) {
     return (
         <>
@@ -84,14 +92,14 @@ export default function Login({
                                         <TextLink
                                             href={request()}
                                             className="text-xs font-medium text-brand-blue hover:text-brand-blue/80"
-                                            tabIndex={5}
+                                            tabIndex={6}
                                         >
                                             Lupa kata sandi?
                                         </TextLink>
                                     )}
                                 </div>
                                 <div className="relative">
-                                    <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                                    <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground/70" />
                                     <PasswordInput
                                         id="password"
                                         name="password"
@@ -161,6 +169,18 @@ export default function Login({
                                     </>
                                 )}
                             </Button>
+
+                            <a
+                                href={googleLoginUrl}
+                                className={cn(
+                                    'flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border/70 bg-background text-sm font-semibold text-brand-navy shadow-sm transition-all',
+                                    'hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue',
+                                )}
+                            >
+                                <GoogleMark className="size-4" />
+                                <span>Masuk dengan Google</span>
+                            </a>
+                            <InputError message={errors.google} />
                         </div>
 
                         {canRegister && (
@@ -172,16 +192,29 @@ export default function Login({
                                     </span>
                                     <span className="h-px flex-1 bg-border/60" />
                                 </div>
-                                <p className="text-center text-sm text-muted-foreground">
-                                    Belum punya akun?{' '}
-                                    <TextLink
-                                        href={register()}
-                                        className="font-semibold text-brand-blue hover:text-brand-blue/80"
-                                        tabIndex={5}
-                                    >
-                                        Daftar sekarang
-                                    </TextLink>
-                                </p>
+                                <div className="space-y-3">
+                                    <p className="text-center text-sm text-muted-foreground">
+                                        Belum punya akun? Pilih jenis akun Anda.
+                                    </p>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        <Link
+                                            href={registerLinks.jobseeker}
+                                            className="flex items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 py-3 text-sm font-semibold text-brand-navy shadow-sm transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
+                                            tabIndex={7}
+                                        >
+                                            <UserRoundSearch className="size-4" />
+                                            <span>Daftar Jobseeker</span>
+                                        </Link>
+                                        <Link
+                                            href={registerLinks.company}
+                                            className="flex items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 py-3 text-sm font-semibold text-brand-navy shadow-sm transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
+                                            tabIndex={8}
+                                        >
+                                            <BriefcaseBusiness className="size-4" />
+                                            <span>Daftar Perusahaan</span>
+                                        </Link>
+                                    </div>
+                                </div>
                             </>
                         )}
                     </>

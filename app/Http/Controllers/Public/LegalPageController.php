@@ -11,8 +11,14 @@ class LegalPageController extends Controller
 {
     public function show(LegalPage $legalPage): Response
     {
+        $relatedPages = LegalPage::query()
+            ->where('id', '!=', $legalPage->id)
+            ->orderBy('title')
+            ->get(['slug', 'title']);
+
         return Inertia::render('public/legal/show', [
             'page' => $legalPage,
+            'relatedPages' => $relatedPages,
         ]);
     }
 }

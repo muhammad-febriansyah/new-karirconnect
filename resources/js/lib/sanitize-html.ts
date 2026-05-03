@@ -9,6 +9,6 @@ export function sanitizeHtml(html: string | null | undefined): string {
         return '';
     }
     return DOMPurify.sanitize(html, {
-        ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'width', 'height'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'width', 'height', 'id', 'class'],
     });
 }

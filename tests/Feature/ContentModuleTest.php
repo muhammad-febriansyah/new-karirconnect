@@ -105,9 +105,19 @@ test('public can browse published content and submit contact message', function 
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('public/faq'));
 
+    LegalPage::factory()->create([
+        'slug' => 'privacy',
+        'title' => 'Kebijakan Privasi',
+    ]);
+
     $this->get(route('public.legal.show', 'terms'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('public/legal/show'));
+        ->assertInertia(fn ($page) => $page
+            ->component('public/legal/show')
+            ->where('page.slug', 'terms')
+            ->has('relatedPages', 1)
+            ->where('relatedPages.0.slug', 'privacy')
+        );
 
     $this->post(route('public.contact.store'), [
         'name' => 'Budi',

@@ -1,11 +1,38 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowRight, ChevronDown, FileQuestion, HelpCircle, Info, Mail, MapPin, Menu, Phone, ShieldCheck, X } from 'lucide-react';
+import {
+    ArrowRight,
+    ChevronDown,
+    Cookie,
+    FileQuestion,
+    Heart,
+    HelpCircle,
+    Info,
+    Mail,
+    MapPin,
+    Menu,
+    Phone,
+    ScrollText,
+    Shield,
+    ShieldCheck,
+    Sparkles,
+    X,
+} from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { dashboard, login, register } from '@/routes';
+import {
+    about as aboutRoute,
+    contact as contactRoute,
+    faq as faqRoute,
+    salaryInsight as salaryInsightRoute,
+} from '@/routes/public';
+import { index as jobsIndex } from '@/routes/public/jobs';
+import { index as companiesIndex } from '@/routes/public/companies';
+import { index as careerResourcesIndex } from '@/routes/public/career-resources';
+import { show as legalShow } from '@/routes/public/legal';
 import type { Auth, FeatureFlags } from '@/types';
 import type { AppMeta, Branding } from '@/types/shared';
 
@@ -182,7 +209,12 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                                             : 'bg-muted text-brand-navy',
                                                     )}
                                                 >
-                                                    <item.icon className="size-4" />
+                                                    <item.icon
+                                                        className={cn(
+                                                            'size-4',
+                                                            active ? 'text-white' : 'text-brand-navy',
+                                                        )}
+                                                    />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="text-sm font-semibold text-brand-navy">{item.label}</div>
@@ -201,36 +233,37 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                     {/* Auth buttons */}
                     <div className="ml-auto flex items-center gap-2 lg:ml-0">
                         {auth?.user ? (
-                            <Button
-                                asChild
-                                className="h-10 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105 hover:shadow-lg hover:shadow-brand-blue/30"
+                            <Link
+                                href={dashboard()}
+                                prefetch
+                                className="group/dash hidden h-10 items-center gap-1.5 rounded-full bg-brand-navy px-5 text-sm font-semibold text-white transition-all hover:bg-brand-blue hover:shadow-lg hover:shadow-brand-blue/30 sm:inline-flex"
                             >
-                                <Link href={dashboard()} prefetch>
-                                    Dashboard
-                                    <ArrowRight className="size-4" />
-                                </Link>
-                            </Button>
+                                Dashboard
+                                <ArrowRight className="size-3.5 transition-transform group-hover/dash:translate-x-0.5" />
+                            </Link>
                         ) : (
                             <>
-                                <Button
-                                    asChild
-                                    variant="ghost"
-                                    className="hidden h-10 rounded-xl px-4 text-sm font-semibold text-brand-navy hover:bg-brand-blue/8 hover:text-brand-blue sm:inline-flex"
+                                <Link
+                                    href={login()}
+                                    prefetch
+                                    className="hidden h-10 items-center rounded-full px-4 text-sm font-semibold text-brand-navy transition-colors hover:text-brand-blue sm:inline-flex"
                                 >
-                                    <Link href={login()} prefetch>
-                                        Masuk
-                                    </Link>
-                                </Button>
+                                    Masuk
+                                </Link>
                                 {features.registration_enabled !== false && (
-                                    <Button
-                                        asChild
-                                        className="hidden h-10 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan px-4 text-sm font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105 hover:shadow-lg hover:shadow-brand-blue/30 sm:inline-flex"
+                                    <Link
+                                        href={register()}
+                                        prefetch
+                                        className="group/cta relative hidden h-10 items-center gap-1.5 overflow-hidden rounded-full bg-brand-navy px-5 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-lg hover:shadow-brand-blue/30 sm:inline-flex"
                                     >
-                                        <Link href={register()} prefetch>
-                                            Daftar Gratis
-                                            <ArrowRight className="size-4" />
-                                        </Link>
-                                    </Button>
+                                        {/* Animated gradient sheen on hover */}
+                                        <span
+                                            aria-hidden
+                                            className="absolute inset-0 -z-0 bg-gradient-to-r from-brand-blue to-brand-cyan opacity-0 transition-opacity duration-300 group-hover/cta:opacity-100"
+                                        />
+                                        <span className="relative z-10">Daftar Gratis</span>
+                                        <ArrowRight className="relative z-10 size-3.5 transition-transform group-hover/cta:translate-x-0.5" />
+                                    </Link>
                                 )}
                             </>
                         )}
@@ -327,20 +360,22 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
 
                         {!auth?.user && (
                             <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
-                                <Button asChild variant="outline" className="h-11 rounded-xl">
-                                    <Link href={login()} prefetch>
-                                        Masuk
-                                    </Link>
-                                </Button>
+                                <Link
+                                    href={login()}
+                                    prefetch
+                                    className="inline-flex h-11 items-center justify-center rounded-full border border-border/60 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
+                                >
+                                    Masuk
+                                </Link>
                                 {features.registration_enabled !== false && (
-                                    <Button
-                                        asChild
-                                        className="h-11 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-md shadow-brand-blue/20"
+                                    <Link
+                                        href={register()}
+                                        prefetch
+                                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-brand-navy text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-blue hover:shadow-md"
                                     >
-                                        <Link href={register()} prefetch>
-                                            Daftar Gratis
-                                        </Link>
-                                    </Button>
+                                        Daftar Gratis
+                                        <ArrowRight className="size-3.5" />
+                                    </Link>
                                 )}
                             </div>
                         )}
@@ -352,7 +387,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
             <main className="flex-1">{children}</main>
 
             {/* ===== Footer ===== */}
-            <footer className="relative mt-16 overflow-hidden border-t bg-gradient-to-b from-background to-muted/30">
+            <footer className="relative mt-20 overflow-hidden border-t bg-gradient-to-b from-background via-background to-muted/40">
                 {/* Decorative brand wash */}
                 <div
                     aria-hidden
@@ -360,17 +395,17 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                 />
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute -left-32 top-10 h-64 w-64 rounded-full bg-brand-blue/5 blur-3xl"
+                    className="pointer-events-none absolute -left-40 top-10 h-72 w-72 rounded-full bg-brand-blue/5 blur-3xl"
                 />
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-brand-cyan/5 blur-3xl"
+                    className="pointer-events-none absolute -right-40 bottom-0 h-80 w-80 rounded-full bg-brand-cyan/5 blur-3xl"
                 />
 
-                <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-8">
+                <div className="relative mx-auto grid w-full max-w-7xl gap-12 px-4 py-16 sm:grid-cols-2 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-8">
                     {/* Brand col */}
-                    <div className="space-y-4 lg:col-span-4">
-                        <Link href="/" className="flex items-center gap-2.5" prefetch>
+                    <div className="space-y-5 sm:col-span-2 lg:col-span-4">
+                        <Link href="/" className="inline-flex items-center gap-2.5" prefetch>
                             {logoPath ? (
                                 <img src={logoPath} alt={appName} className="h-10 w-auto" />
                             ) : (
@@ -378,168 +413,256 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                     <AppLogoIcon className="size-5 fill-current text-white" />
                                 </div>
                             )}
-                            <div className="flex flex-col leading-none">
-                                <span className="text-base font-bold tracking-tight text-brand-navy">
-                                    {appName}
-                                </span>
-                                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-brand-blue/70">
-                                    Career Platform
-                                </span>
-                            </div>
+                            <span className="text-base font-bold tracking-tight text-foreground">
+                                {appName}
+                            </span>
                         </Link>
                         <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-                            Platform karier all-in-one yang mempertemukan kandidat dengan perusahaan terbaik,
-                            didukung AI Coach, AI Interview, dan insight gaji riil dari ribuan posisi.
+                            Platform karier all-in-one yang mempertemukan kandidat dengan perusahaan
+                            terbaik, didukung AI Coach, AI Interview, dan insight gaji riil dari
+                            ribuan posisi.
                         </p>
-                        <div className="flex flex-col gap-2 pt-1 text-xs text-muted-foreground">
-                            <span className="inline-flex items-center gap-2">
-                                <Mail className="size-3.5 text-brand-blue" />
+                        <div className="flex flex-col gap-2.5 pt-1 text-xs text-muted-foreground">
+                            <a
+                                href="mailto:halo@karirconnect.id"
+                                className="group inline-flex items-center gap-2 transition-colors hover:text-brand-blue"
+                            >
+                                <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue transition-colors group-hover:bg-brand-blue/15">
+                                    <Mail className="size-3.5" />
+                                </span>
                                 halo@karirconnect.id
-                            </span>
+                            </a>
                             <span className="inline-flex items-center gap-2">
-                                <MapPin className="size-3.5 text-brand-blue" />
+                                <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
+                                    <MapPin className="size-3.5" />
+                                </span>
                                 Jakarta, Indonesia
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/15 bg-brand-blue/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-blue">
+                                <Sparkles className="size-3" />
+                                Made in Indonesia
                             </span>
                         </div>
                     </div>
 
                     {/* Link columns */}
-                    <div className="space-y-3 lg:col-span-2">
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-brand-navy">
+                    <div className="space-y-4 lg:col-span-2">
+                        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-navy">
+                            <span className="size-1 rounded-full bg-brand-blue" />
                             Perusahaan
                         </h3>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
+                        <ul className="space-y-2.5 text-sm text-muted-foreground">
                             <li>
-                                <Link href="/tentang-kami" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={aboutRoute().url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Tentang Kami
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/contact" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={contactRoute().url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Kontak
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/career-resources" className="transition-colors hover:text-brand-blue">
-                                    Sumber Daya Karier
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/faq" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={faqRoute().url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     FAQ
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href={careerResourcesIndex().url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
+                                    Tips Karier
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                         </ul>
                     </div>
 
-                    <div className="space-y-3 lg:col-span-2">
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-brand-navy">
+                    <div className="space-y-4 lg:col-span-2">
+                        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-navy">
+                            <span className="size-1 rounded-full bg-brand-cyan" />
                             Cari Kerja
                         </h3>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
+                        <ul className="space-y-2.5 text-sm text-muted-foreground">
                             <li>
-                                <Link href="/jobs" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={jobsIndex().url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Lowongan
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/companies" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={companiesIndex().url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Perusahaan
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/salary-insight" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={salaryInsightRoute().url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Insight Gaji
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
-                            <li>
-                                <Link href="/company-reviews" className="transition-colors hover:text-brand-blue">
-                                    Review Perusahaan
-                                </Link>
-                            </li>
+                            {!auth?.user && features.registration_enabled !== false && (
+                                <li>
+                                    <Link
+                                        href={register().url}
+                                        className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                    >
+                                        Buat Akun
+                                        <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                                    </Link>
+                                </li>
+                            )}
                         </ul>
                     </div>
 
-                    <div className="space-y-3 lg:col-span-2">
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-brand-navy">
+                    <div className="space-y-4 lg:col-span-2">
+                        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-navy">
+                            <span className="size-1 rounded-full bg-amber-400" />
                             Legal
                         </h3>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
+                        <ul className="space-y-2.5 text-sm text-muted-foreground">
                             <li>
-                                <Link href="/legal/terms" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={legalShow('terms').url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Syarat & Ketentuan
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/legal/privacy" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={legalShow('privacy').url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Kebijakan Privasi
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/legal/cookies" className="transition-colors hover:text-brand-blue">
+                                <Link
+                                    href={legalShow('cookies').url}
+                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                                >
                                     Kebijakan Cookies
+                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                                 </Link>
                             </li>
                         </ul>
                     </div>
 
                     {/* CTA card */}
-                    <div className="lg:col-span-2">
-                        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan p-5 text-white shadow-lg shadow-brand-blue/20">
+                    <div className="sm:col-span-2 lg:col-span-2">
+                        <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan p-5 text-white shadow-lg shadow-brand-blue/20">
                             <div
                                 aria-hidden
-                                className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-white/10 blur-2xl"
+                                className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-white/15 blur-2xl"
                             />
-                            <h4 className="text-sm font-bold leading-tight">
-                                Siap melangkah lebih jauh?
-                            </h4>
-                            <p className="mt-1.5 text-xs leading-relaxed text-white/80">
-                                Bergabung gratis dan dapatkan AI Coach pribadi.
-                            </p>
-                            {!auth?.user && features.registration_enabled !== false && (
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className="mt-3 h-9 w-full rounded-lg bg-white text-brand-blue hover:bg-white/95"
-                                >
-                                    <Link href={register()} prefetch>
-                                        Mulai Sekarang
-                                    </Link>
-                                </Button>
-                            )}
-                            {auth?.user && (
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className="mt-3 h-9 w-full rounded-lg bg-white text-brand-blue hover:bg-white/95"
-                                >
-                                    <Link href={dashboard()} prefetch>
-                                        Buka Dashboard
-                                    </Link>
-                                </Button>
-                            )}
+                            <div
+                                aria-hidden
+                                className="pointer-events-none absolute inset-0 opacity-15"
+                                style={{
+                                    backgroundImage:
+                                        'radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px)',
+                                    backgroundSize: '20px 20px',
+                                }}
+                            />
+                            <div className="relative">
+                                <span className="inline-flex size-8 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur">
+                                    <Sparkles className="size-4" />
+                                </span>
+                                <h4 className="mt-3 text-sm font-bold leading-tight">
+                                    Siap melangkah lebih jauh?
+                                </h4>
+                                <p className="mt-1.5 text-xs leading-relaxed text-white/80">
+                                    Bergabung gratis dan dapatkan AI Coach pribadi.
+                                </p>
+                                {!auth?.user && features.registration_enabled !== false && (
+                                    <Button
+                                        asChild
+                                        size="sm"
+                                        className="mt-3 h-9 w-full rounded-lg bg-white text-brand-blue hover:bg-white/95"
+                                    >
+                                        <Link href={register()} prefetch>
+                                            Mulai Sekarang
+                                            <ArrowRight className="size-3.5" />
+                                        </Link>
+                                    </Button>
+                                )}
+                                {auth?.user && (
+                                    <Button
+                                        asChild
+                                        size="sm"
+                                        className="mt-3 h-9 w-full rounded-lg bg-white text-brand-blue hover:bg-white/95"
+                                    >
+                                        <Link href={dashboard()} prefetch>
+                                            Buka Dashboard
+                                            <ArrowRight className="size-3.5" />
+                                        </Link>
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="relative border-t border-border/60">
-                    <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-                        <div>
-                            © {new Date().getFullYear()} {appName}. Semua hak dilindungi.
+                    <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+                        <div className="flex items-center gap-1.5">
+                            <span>© {new Date().getFullYear()} {appName}. Dibuat dengan</span>
+                            <Heart className="size-3.5 fill-rose-500 text-rose-500" />
+                            <span>untuk Indonesia.</span>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <Link href="/legal/terms" className="transition-colors hover:text-brand-blue">
+                        <nav className="flex items-center gap-3" aria-label="Tautan legal">
+                            <Link
+                                href={legalShow('terms').url}
+                                className="inline-flex items-center gap-1.5 transition-colors hover:text-brand-blue"
+                            >
+                                <ScrollText className="size-3.5" />
                                 Terms
                             </Link>
                             <span className="text-border">·</span>
-                            <Link href="/legal/privacy" className="transition-colors hover:text-brand-blue">
+                            <Link
+                                href={legalShow('privacy').url}
+                                className="inline-flex items-center gap-1.5 transition-colors hover:text-brand-blue"
+                            >
+                                <Shield className="size-3.5" />
                                 Privacy
                             </Link>
                             <span className="text-border">·</span>
-                            <Link href="/legal/cookies" className="transition-colors hover:text-brand-blue">
+                            <Link
+                                href={legalShow('cookies').url}
+                                className="inline-flex items-center gap-1.5 transition-colors hover:text-brand-blue"
+                            >
+                                <Cookie className="size-3.5" />
                                 Cookies
                             </Link>
-                        </div>
+                        </nav>
                     </div>
                 </div>
             </footer>

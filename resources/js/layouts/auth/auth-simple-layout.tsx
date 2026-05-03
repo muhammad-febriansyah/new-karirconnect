@@ -82,12 +82,6 @@ export default function AuthSimpleLayout({
                             <span className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/0 via-white/15 to-white/30" />
                         </div>
                     )}
-                    <div className="flex flex-col leading-tight">
-                        <span className="text-base font-bold tracking-tight">{appName}</span>
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70">
-                            Career Platform
-                        </span>
-                    </div>
                 </Link>
 
                 {/* Middle: hero copy */}
@@ -181,7 +175,6 @@ export default function AuthSimpleLayout({
                             <AppLogoIcon className="size-5 fill-current text-white" />
                         </div>
                     )}
-                    <span className="text-base font-bold tracking-tight text-brand-navy">{appName}</span>
                 </Link>
 
                 <div className="relative z-10 w-full max-w-md">
