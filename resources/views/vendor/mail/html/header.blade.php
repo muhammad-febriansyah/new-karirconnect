@@ -8,7 +8,10 @@
         $logoPath = null;
         $appName = (string) config('app.name');
     }
-    $logoUrl = $logoPath ? asset('storage/'.ltrim((string) $logoPath, '/')) : null;
+    $appBaseUrl = rtrim((string) config('app.url'), '/');
+    $logoUrl = $logoPath
+        ? $appBaseUrl.'/storage/'.ltrim((string) $logoPath, '/')
+        : null;
 @endphp
 <tr>
 <td class="header">

@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { ArrowLeft, ChevronDown, ChevronsUpDown, Eye, Loader2, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronsUpDown, Eye, Layers, Loader2, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import AssessmentQuestionController from '@/actions/App/Http/Controllers/Admin/AssessmentQuestionController';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
@@ -75,6 +75,7 @@ type GenerateFormShape = {
     topic: string;
     time_limit_seconds: number;
 };
+
 
 const defaultForm: FormShape = {
     skill_id: '',
@@ -348,6 +349,14 @@ export default function AssessmentQuestionIndex({ items = [], skills, selectedSk
                                 <Sparkles className="size-4" />
                                 Generate AI
                             </Button>
+                            {isSkillDetail && (
+                                <Button type="button" variant="outline" asChild>
+                                    <Link href={`/admin/assessment-questions/skills/${selectedSkill.id}/bulk`}>
+                                        <Layers className="size-4" />
+                                        Tambah Banyak Soal
+                                    </Link>
+                                </Button>
+                            )}
                             <ActionButton intent="create" onClick={openCreate}>
                                 <Plus className="size-4" />
                                 Tambah Soal

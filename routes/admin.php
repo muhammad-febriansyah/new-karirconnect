@@ -65,8 +65,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->only(['index', 'store', 'update', 'destroy']);
         Route::get('assessment-questions/skills/{skill}', [AssessmentQuestionController::class, 'showSkill'])
             ->name('assessment-questions.skill');
+        Route::get('assessment-questions/skills/{skill}/bulk', [AssessmentQuestionController::class, 'bulkCreate'])
+            ->name('assessment-questions.bulk-create');
         Route::post('assessment-questions/generate', [AssessmentQuestionController::class, 'generate'])
             ->name('assessment-questions.generate');
+        Route::post('assessment-questions/bulk', [AssessmentQuestionController::class, 'bulkStore'])
+            ->name('assessment-questions.bulk');
 
         Route::resource('announcements', AnnouncementController::class)
             ->only(['index', 'store', 'update', 'destroy']);

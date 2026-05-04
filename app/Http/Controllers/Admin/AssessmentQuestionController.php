@@ -54,6 +54,67 @@ class AssessmentQuestionController extends Controller
         return to_route('admin.assessment-questions.skill', $request->validated('skill_id'));
     }
 
+    public function bulkCreate(Skill $skill): Response
+    {
+        return Inertia::render('admin/assessment-questions/bulk', [
+            'skill' => [
+                'id' => $skill->id,
+                'name' => $skill->name,
+                'category' => $skill->category,
+            ],
+        ]);
+    }
+
+    public function bulkStore(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'skill_id' => ['required', 'integer', 'exists:skills,id'],
+            'type' => ['required', Rule::in(['multiple_choice', 'text'])],
+            'difficulty' => ['required', Rule::in(['easy', 'medium', 'hard'])],
+            'time_limit_seconds' => ['required', 'integer', 'between:30,3600'],
+            'is_active' => ['required', 'boolean'],
+            'questions' => ['required', 'array', 'min:1'],
+            'questions.*.question' => ['required', 'string'],
+            'questions.*.options' => [Rule::when(
+                $request->input('type') === 'multiple_choice',
+                ['required', 'array', 'min:2'],
+                ['nullable', 'array'],
+            )],
+            'questions.*.options.*' => ['nullable', 'string', 'max:255'],
+            'questions.*.correct_answer' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $created = 0;
+
+        foreach ($data['questions'] as $question) {
+            $options = collect($question['options'] ?? [])
+                ->map(static fn (mixed $value): string => trim((string) $value))
+                ->filter()
+                ->values()
+                ->all();
+
+            AssessmentQuestion::query()->create([
+                'skill_id' => $data['skill_id'],
+                'type' => $data['type'],
+                'question' => trim($question['question']),
+                'options' => $data['type'] === 'multiple_choice' ? $options : [],
+                'correct_answer' => ['value' => trim($question['correct_answer'])],
+                'difficulty' => $data['difficulty'],
+                'time_limit_seconds' => $data['time_limit_seconds'],
+                'is_active' => $data['is_active'],
+            ]);
+
+            $created++;
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $created.' soal assessment berhasil ditambahkan.',
+        ]);
+
+        return to_route('admin.assessment-questions.skill', $data['skill_id']);
+    }
+
     public function update(AssessmentQuestionRequest $request, AssessmentQuestion $assessmentQuestion): RedirectResponse
     {
         $assessmentQuestion->update($request->validated());

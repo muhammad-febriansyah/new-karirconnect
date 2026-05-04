@@ -114,6 +114,85 @@ test('admin can generate multiple assessment questions with ai', function () {
         ->and($question->correct_answer['value'])->toBe('Konsep A');
 });
 
+test('admin can view bulk add page for a skill', function () {
+    $admin = User::factory()->admin()->create(['email_verified_at' => now()]);
+    $skill = Skill::factory()->create(['name' => 'Laravel', 'is_active' => true]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.assessment-questions.bulk-create', $skill))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/assessment-questions/bulk')
+            ->where('skill.id', $skill->id)
+            ->where('skill.name', 'Laravel')
+        );
+});
+
+test('admin can bulk add assessment questions in one request', function () {
+    $admin = User::factory()->admin()->create(['email_verified_at' => now()]);
+    $skill = Skill::factory()->create(['name' => 'Laravel', 'is_active' => true]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.assessment-questions.bulk'), [
+            'skill_id' => $skill->id,
+            'type' => 'multiple_choice',
+            'difficulty' => 'medium',
+            'time_limit_seconds' => 180,
+            'is_active' => true,
+            'questions' => [
+                [
+                    'question' => 'Apa kepanjangan dari MVC?',
+                    'options' => ['Model View Controller', 'Most Valued Code', 'Multiple Visual Component', 'Mixed Variable Class'],
+                    'correct_answer' => 'Model View Controller',
+                ],
+                [
+                    'question' => 'Eloquent adalah ORM milik framework apa?',
+                    'options' => ['Symfony', 'Laravel', 'CodeIgniter', 'Yii'],
+                    'correct_answer' => 'Laravel',
+                ],
+                [
+                    'question' => 'Artisan adalah?',
+                    'options' => ['Web server', 'CLI tool Laravel', 'Database', 'Template engine'],
+                    'correct_answer' => 'CLI tool Laravel',
+                ],
+            ],
+        ])
+        ->assertRedirect(route('admin.assessment-questions.skill', $skill));
+
+    expect(AssessmentQuestion::query()->where('skill_id', $skill->id)->count())->toBe(3);
+
+    $sample = AssessmentQuestion::query()->where('skill_id', $skill->id)->first();
+    expect($sample->type)->toBe('multiple_choice')
+        ->and($sample->difficulty)->toBe('medium')
+        ->and($sample->time_limit_seconds)->toBe(180)
+        ->and($sample->is_active)->toBeTrue()
+        ->and($sample->options)->toHaveCount(4);
+});
+
+test('bulk add validates each row needs question and answer', function () {
+    $admin = User::factory()->admin()->create(['email_verified_at' => now()]);
+    $skill = Skill::factory()->create(['name' => 'Laravel', 'is_active' => true]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.assessment-questions.bulk'), [
+            'skill_id' => $skill->id,
+            'type' => 'multiple_choice',
+            'difficulty' => 'medium',
+            'time_limit_seconds' => 180,
+            'is_active' => true,
+            'questions' => [
+                [
+                    'question' => '',
+                    'options' => ['A', 'B'],
+                    'correct_answer' => 'A',
+                ],
+            ],
+        ])
+        ->assertSessionHasErrors('questions.0.question');
+
+    expect(AssessmentQuestion::query()->count())->toBe(0);
+});
+
 test('employee can start and submit a skill assessment', function () {
     $employee = User::factory()->employee()->create(['email_verified_at' => now()]);
     $profile = EmployeeProfile::factory()->for($employee)->create();
