@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { TextareaField } from '@/components/form/textarea-field';
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { Section } from '@/components/layout/section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -267,6 +268,40 @@ type TranscriptLine = { speaker: 'ai' | 'user'; text: string; questionIndex: num
 
 type CheckState = 'idle' | 'testing' | 'ok' | 'fail';
 
+/**
+ * Score how closely an AI utterance matches one of the listed interview
+ * questions by significant-word overlap. Words shorter than 4 chars are
+ * skipped (filler), and we ignore case + punctuation. Returns the index of
+ * the best-matching question if score is >= 40%, otherwise -1.
+ */
+function findQuestionByContent(utterance: string, questions: Question[]): number {
+    const normalize = (input: string) =>
+        input
+            .toLowerCase()
+            .replace(/[.,?!:;"'()[\]{}]/g, ' ')
+            .split(/\s+/)
+            .filter((word) => word.length >= 4);
+
+    const utteranceWords = new Set(normalize(utterance));
+    if (utteranceWords.size === 0) return -1;
+
+    let bestIdx = -1;
+    let bestScore = 0;
+
+    questions.forEach((question, idx) => {
+        const qWords = normalize(question.question);
+        if (qWords.length === 0) return;
+        const matched = qWords.filter((word) => utteranceWords.has(word)).length;
+        const score = matched / qWords.length;
+        if (score > bestScore) {
+            bestScore = score;
+            bestIdx = idx;
+        }
+    });
+
+    return bestScore >= 0.4 ? bestIdx : -1;
+}
+
 function VoiceRun({ session, questions }: Props) {
     const [connecting, setConnecting] = useState(false);
     const [connected, setConnected] = useState(false);
@@ -275,6 +310,7 @@ function VoiceRun({ session, questions }: Props) {
     const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
     const [currentQIndex, setCurrentQIndex] = useState<number | null>(null);
     const [finishing, setFinishing] = useState(false);
+    const [confirmEndOpen, setConfirmEndOpen] = useState(false);
     const [aiSpeaking, setAiSpeaking] = useState(false);
     const [micLevel, setMicLevel] = useState(0);
     const [elapsedSec, setElapsedSec] = useState(0);
@@ -526,14 +562,49 @@ function VoiceRun({ session, questions }: Props) {
                 const text = String(data.transcript).trim();
                 if (!text) return;
 
-                const match = text.match(/^Q(\d+)/i);
-                if (match) {
-                    const qNum = Number(match[1]);
+                // Detect which question the AI is currently asking. Order of
+                // strategies (most reliable first):
+                //  1. Explicit "Q\d:" prefix from the system prompt.
+                //  2. Fuzzy match: count significant-word overlap with each
+                //     listed question; pick the best if >= 40% overlap.
+                //  3. Heuristic advance: if AI emits a question-like utterance
+                //     ("?" + decent length) but no match, assume it's the next
+                //     unasked one — first question if we haven't started, else
+                //     the next index after the current.
+                let nextIdx: number | null = null;
+
+                const prefixMatch = text.match(/^Q(\d+)/i);
+                if (prefixMatch) {
+                    const qNum = Number(prefixMatch[1]);
                     const idx = questions.findIndex((q) => q.order_number === qNum);
                     if (idx >= 0) {
-                        currentQRef.current = idx;
-                        setCurrentQIndex(idx);
+                        nextIdx = idx;
                     }
+                }
+
+                if (nextIdx === null) {
+                    const fuzzy = findQuestionByContent(text, questions);
+                    if (fuzzy >= 0) {
+                        nextIdx = fuzzy;
+                    }
+                }
+
+                if (
+                    nextIdx === null &&
+                    text.includes('?') &&
+                    text.length > 25 &&
+                    questions.length > 0
+                ) {
+                    if (currentQRef.current === null) {
+                        nextIdx = 0;
+                    } else if (currentQRef.current < questions.length - 1) {
+                        nextIdx = currentQRef.current + 1;
+                    }
+                }
+
+                if (nextIdx !== null) {
+                    currentQRef.current = nextIdx;
+                    setCurrentQIndex(nextIdx);
                 }
 
                 setTranscript((prev) => [...prev, { speaker: 'ai', text, questionIndex: currentQRef.current }]);
@@ -824,11 +895,13 @@ function VoiceRun({ session, questions }: Props) {
                                     </div>
 
                                     {/* AI status caption */}
-                                    <div className="mt-6 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 backdrop-blur">
+                                    <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-white/90 ring-1 ring-white/15 backdrop-blur">
                                         <span
-                                            className={`size-1.5 rounded-full ${aiSpeaking ? 'animate-pulse bg-[color:#10C0E0]' : 'bg-emerald-400'}`}
+                                            className={`size-1.5 shrink-0 rounded-full ${aiSpeaking ? 'animate-pulse bg-[color:#10C0E0]' : 'bg-emerald-400'}`}
                                         />
-                                        {aiSpeaking ? 'AI sedang bicara…' : 'Giliranmu menjawab'}
+                                        <span className="leading-none">
+                                            {aiSpeaking ? 'AI sedang bicara…' : 'Giliranmu menjawab'}
+                                        </span>
                                     </div>
 
                                     {/* Current question caption (Zoom-like) */}
@@ -889,7 +962,7 @@ function VoiceRun({ session, questions }: Props) {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={finish}
+                                        onClick={() => setConfirmEndOpen(true)}
                                         disabled={finishing}
                                         className="flex h-12 items-center gap-2 rounded-full bg-rose-500 px-5 font-semibold text-white shadow-lg transition hover:bg-rose-600 disabled:opacity-60"
                                     >
@@ -902,6 +975,42 @@ function VoiceRun({ session, questions }: Props) {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Closing banner — appears when all questions have been asked */}
+                            {currentQIndex !== null && currentQIndex >= questions.length - 1 && (
+                                <Card className="border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/40">
+                                    <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                                <CheckCircle2 className="size-5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-semibold text-slate-900">
+                                                    Semua pertanyaan sudah ditanyakan
+                                                </div>
+                                                <p className="text-xs text-slate-600">
+                                                    AI akan segera menutup sesi. Tunggu sapaan penutup, lalu klik{' '}
+                                                    <strong>Akhiri Sesi</strong> untuk melihat hasil analisis lengkap.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={() => setConfirmEndOpen(true)}
+                                            disabled={finishing}
+                                            className="shrink-0"
+                                        >
+                                            {finishing ? (
+                                                <Loader2 className="size-4 animate-spin" />
+                                            ) : (
+                                                <CheckCircle2 className="size-4" />
+                                            )}
+                                            Selesaikan & Lihat Hasil
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             {/* Live transcript */}
                             <Card className="border-slate-200/70 shadow-sm">
@@ -1026,6 +1135,22 @@ function VoiceRun({ session, questions }: Props) {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                open={confirmEndOpen}
+                onOpenChange={(open) => !finishing && setConfirmEndOpen(open)}
+                title="Akhiri sesi sekarang?"
+                description={
+                    currentQIndex !== null && currentQIndex >= questions.length - 1
+                        ? 'Semua pertanyaan sudah ditanyakan. AI akan menganalisis jawabanmu — proses sekitar 30 detik. Lanjutkan?'
+                        : 'Beberapa pertanyaan belum dijawab. AI tetap akan menganalisis jawaban yang ada. Yakin akhiri sekarang?'
+                }
+                confirmLabel={finishing ? 'Menganalisis…' : 'Akhiri & Lihat Hasil'}
+                confirmIcon={finishing ? Loader2 : CheckCircle2}
+                onConfirm={async () => {
+                    await finish();
+                }}
+            />
         </>
     );
 }

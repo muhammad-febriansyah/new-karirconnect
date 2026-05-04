@@ -29,17 +29,25 @@ class AiQuestionGeneratorService
         $client = $this->factory->make();
         $job = $session->job;
         $count = $session->template?->question_count ?? 6;
+        $isEnglish = ($session->language ?? 'id') === 'en';
 
         $systemPrompt = $session->system_prompt_snapshot ?: $this->buildSystemPrompt($session);
 
+        $userPrompt = $isEnglish
+            ? sprintf(
+                'Generate %d interview questions IN ENGLISH for the role "%s". Every question text MUST be written in English. Return JSON shaped {"questions":[{"order_number":1,"category":"opening|technical|behavioral|situational|culture|closing","question":"...","expected_keywords":[...],"max_duration_seconds":120}]}.',
+                $count,
+                $job?->title ?? 'general role',
+            )
+            : sprintf(
+                'Buat %d pertanyaan wawancara DALAM BAHASA INDONESIA untuk posisi "%s". Setiap teks "question" WAJIB ditulis dalam Bahasa Indonesia natural — jangan campur Bahasa Inggris. Kategori tetap pakai kunci bahasa Inggris (opening, technical, behavioral, situational, culture, closing) untuk konsistensi mesin. Kembalikan JSON: {"questions":[{"order_number":1,"category":"opening|technical|behavioral|situational|culture|closing","question":"...","expected_keywords":[...],"max_duration_seconds":120}]}.',
+                $count,
+                $job?->title ?? 'posisi umum',
+            );
+
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
-            ['role' => 'user', 'content' => sprintf(
-                'Generate %d interview questions in %s for the role "%s". Return JSON shaped {"questions":[{"order_number":1,"category":"opening|technical|behavioral|situational|culture|closing","question":"...","expected_keywords":[...],"max_duration_seconds":120}]}',
-                $count,
-                $session->language ?? 'id',
-                $job?->title ?? 'general role',
-            )],
+            ['role' => 'user', 'content' => $userPrompt],
         ];
 
         $response = $this->audit->run(
@@ -78,18 +86,41 @@ class AiQuestionGeneratorService
 
     private function buildSystemPrompt(AiInterviewSession $session): string
     {
+        $isEnglish = ($session->language ?? 'id') === 'en';
         $job = $session->job;
-        $base = 'You are an expert technical interviewer for a job portal. ';
-        $base .= 'Generate balanced questions covering opening, technical depth, behavioral, situational, culture, and closing. ';
-        $base .= 'Always respond as valid JSON only. Avoid yes/no questions. ';
+
+        if ($isEnglish) {
+            $base = 'You are an expert technical interviewer for a job portal. ';
+            $base .= 'All question texts MUST be written in English. ';
+            $base .= 'Generate balanced questions covering opening, technical depth, behavioral, situational, culture, and closing. ';
+            $base .= 'Always respond as valid JSON only. Avoid yes/no questions. ';
+
+            if ($job) {
+                $base .= "\n\nJob title: {$job->title}.";
+                if ($job->experience_level) {
+                    $base .= "\nLevel: {$job->experience_level->value}.";
+                }
+                if ($job->description) {
+                    $base .= "\nDescription excerpt: ".mb_substr(strip_tags($job->description), 0, 500);
+                }
+            }
+
+            return $base;
+        }
+
+        // Default: Bahasa Indonesia
+        $base = 'Kamu adalah interviewer teknis profesional untuk platform karir di Indonesia. ';
+        $base .= 'SEMUA teks pertanyaan WAJIB ditulis dalam Bahasa Indonesia yang natural, sopan, dan profesional — jangan campur Bahasa Inggris kecuali untuk istilah teknis yang tidak punya padanan. ';
+        $base .= 'Buat pertanyaan yang seimbang mencakup pembuka (opening), kedalaman teknis (technical), perilaku (behavioral), situasional (situational), budaya kerja (culture), dan penutup (closing). ';
+        $base .= 'Selalu balas dalam format JSON valid saja, tanpa teks tambahan. Hindari pertanyaan jawaban ya/tidak. ';
 
         if ($job) {
-            $base .= "\n\nJob title: {$job->title}.";
+            $base .= "\n\nPosisi: {$job->title}.";
             if ($job->experience_level) {
                 $base .= "\nLevel: {$job->experience_level->value}.";
             }
             if ($job->description) {
-                $base .= "\nDescription excerpt: ".mb_substr(strip_tags($job->description), 0, 500);
+                $base .= "\nKutipan deskripsi pekerjaan: ".mb_substr(strip_tags($job->description), 0, 500);
             }
         }
 

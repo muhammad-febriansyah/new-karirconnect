@@ -182,15 +182,26 @@ class AiInterviewController extends Controller
     {
         $this->authorizeOwn($request, $session);
 
-        $session->load(['analysis', 'questions.response', 'job:id,title']);
+        $session->load(['analysis', 'questions.response', 'job:id,title,company_id', 'job.company:id,name,logo_path']);
+
+        $companyLogoPath = $session->job?->company?->logo_path;
+        $companyLogoUrl = $companyLogoPath
+            ? rtrim((string) config('app.url'), '/').'/storage/'.ltrim((string) $companyLogoPath, '/')
+            : null;
 
         return Inertia::render('employee/ai-interviews/result', [
             'session' => [
                 'id' => $session->id,
                 'job_title' => $session->job?->title,
+                'company_name' => $session->job?->company?->name,
+                'company_logo_url' => $companyLogoUrl,
                 'is_practice' => $session->is_practice,
                 'duration_seconds' => $session->duration_seconds,
+                'started_at' => optional($session->started_at)->toIso8601String(),
                 'completed_at' => optional($session->completed_at)->toIso8601String(),
+                'recording_url' => $session->recording_url,
+                'total_questions' => $session->questions->count(),
+                'answered_questions' => $session->questions->filter(fn ($q) => $q->response !== null)->count(),
             ],
             'analysis' => $session->analysis ? [
                 'overall_score' => $session->analysis->overall_score,
