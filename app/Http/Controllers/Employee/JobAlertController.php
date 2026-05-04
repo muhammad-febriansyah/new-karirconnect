@@ -117,11 +117,13 @@ class JobAlertController extends Controller
     {
         abort_unless($alert->user_id === $request->user()->id, 403);
 
-        $count = $this->dispatcher->dispatchOne($alert);
+        $count = $this->dispatcher->dispatchOne($alert, force: true);
 
-        return back()->with('success', $count > 0
-            ? "Digest terkirim dengan {$count} lowongan baru."
-            : 'Belum ada lowongan baru sejak alert terakhir terkirim.');
+        if ($count > 0) {
+            return back()->with('success', "Digest terkirim ke email kamu dengan {$count} lowongan yang cocok.");
+        }
+
+        return back()->with('warning', 'Belum ada lowongan yang cocok dengan kriteria alert ini. Coba longgarkan filter (kata kunci, kota, kategori, atau level pengalaman) lalu coba lagi.');
     }
 
     /**

@@ -51,10 +51,16 @@ class JobAlertDispatcher
     /**
      * Send a single alert digest if there are matches. Returns the number of
      * matches included so callers can short-circuit when zero.
+     *
+     * When $force is true (manual "Kirim sekarang" from the UI) the matcher
+     * ignores the last_sent_at cutoff so the candidate sees every job that
+     * still satisfies the criteria — not just brand-new ones since the last
+     * digest. The cron-driven path (run()) never sets force, keeping digests
+     * strictly incremental.
      */
-    public function dispatchOne(JobAlert $alert): int
+    public function dispatchOne(JobAlert $alert, bool $force = false): int
     {
-        $matches = $this->matcher->match($alert);
+        $matches = $this->matcher->match($alert, ignoreCutoff: $force);
         if ($matches->isEmpty()) {
             return 0;
         }

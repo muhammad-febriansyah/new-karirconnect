@@ -1226,7 +1226,7 @@ function DeviceCheckPanel({
                                         <div className="text-xs text-slate-500">
                                             {cameraCheck === 'idle' && 'Cek kamera biar terbiasa dengan setup interview formal.'}
                                             {cameraCheck === 'testing' && 'Mengaktifkan kamera…'}
-                                            {cameraCheck === 'ok' && 'Kamera aktif — preview di bawah.'}
+                                            {cameraCheck === 'ok' && 'Kamera aktif — preview ada di kanan.'}
                                             {cameraCheck === 'fail' && 'Kamera tidak bisa diakses. Sesi voice tetap bisa dilanjut.'}
                                         </div>
                                     </div>
@@ -1238,17 +1238,6 @@ function DeviceCheckPanel({
                                     </Button>
                                 </div>
                             </div>
-                            {cameraCheck === 'ok' && (
-                                <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-slate-900">
-                                    <video
-                                        ref={previewVideoRef}
-                                        autoPlay
-                                        playsInline
-                                        muted
-                                        className="aspect-video w-full object-cover"
-                                    />
-                                </div>
-                            )}
                         </div>
 
                         {/* Speaker */}
@@ -1312,6 +1301,52 @@ function DeviceCheckPanel({
             </Card>
 
             <aside className="space-y-3">
+                {/* Self-view: prominent camera preview ala video call */}
+                <Card className="overflow-hidden border-slate-200/70 shadow-sm">
+                    <div className="relative aspect-video bg-slate-950">
+                        {cameraCheck === 'ok' ? (
+                            <>
+                                <video
+                                    ref={previewVideoRef}
+                                    autoPlay
+                                    playsInline
+                                    muted
+                                    className="size-full object-cover"
+                                    style={{ transform: 'scaleX(-1)' }}
+                                />
+                                <div className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                                    <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+                                    Preview kamu
+                                </div>
+                                <div className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                                    <Camera className="size-3" />
+                                    Live
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+                                <div className="flex size-12 items-center justify-center rounded-full bg-slate-800/80 ring-1 ring-white/10">
+                                    {cameraCheck === 'fail' ? (
+                                        <CameraOff className="size-5 text-rose-400" />
+                                    ) : (
+                                        <Camera className="size-5 text-slate-300" />
+                                    )}
+                                </div>
+                                <div className="text-xs font-semibold text-slate-200">
+                                    {cameraCheck === 'fail'
+                                        ? 'Kamera tidak terdeteksi'
+                                        : 'Kamera belum aktif'}
+                                </div>
+                                <p className="text-[11px] text-slate-400">
+                                    {cameraCheck === 'fail'
+                                        ? 'Cek izin browser & coba lagi.'
+                                        : 'Aktifkan kamera untuk lihat preview di sini.'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+
                 <Card className="border-slate-200/70 bg-slate-50/50 shadow-sm">
                     <CardContent className="space-y-2 p-4 text-xs text-slate-600">
                         <div className="text-sm font-semibold text-slate-900">Tips Sebelum Mulai</div>

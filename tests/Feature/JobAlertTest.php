@@ -283,3 +283,49 @@ test('alert index renders for employee', function () {
             ->has('alerts.data', 2)
         );
 });
+
+test('manual dispatch (force) ignores last_sent_at cutoff and rematches all jobs', function () {
+    Notification::fake();
+    ['user' => $user] = makeAlertContext();
+
+    // Job published before alert was last sent
+    $oldJob = makeJob(['title' => 'Senior PHP Architect']);
+    $oldJob->forceFill(['published_at' => now()->subDays(10)])->save();
+
+    $alert = JobAlert::factory()->create([
+        'user_id' => $user->id,
+        'keyword' => 'PHP',
+        'frequency' => 'instant',
+        'last_sent_at' => now()->subDay(), // already sent yesterday
+    ]);
+
+    // Without force, the job published 10 days ago should be excluded by cutoff
+    $countNormal = app(JobAlertDispatcher::class)->dispatchOne($alert);
+    expect($countNormal)->toBe(0);
+
+    // With force=true (manual button), the cutoff is ignored and the old job matches
+    $countForced = app(JobAlertDispatcher::class)->dispatchOne($alert->fresh(), force: true);
+    expect($countForced)->toBe(1);
+});
+
+test('dispatchNow controller endpoint uses force mode and matches old jobs', function () {
+    Notification::fake();
+    ['user' => $user] = makeAlertContext();
+
+    $oldJob = makeJob(['title' => 'Marketing Lead']);
+    $oldJob->forceFill(['published_at' => now()->subDays(20)])->save();
+
+    $alert = JobAlert::factory()->create([
+        'user_id' => $user->id,
+        'keyword' => 'Marketing',
+        'frequency' => 'instant',
+        'last_sent_at' => now()->subDay(),
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('employee.job-alerts.dispatch', $alert))
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    Notification::assertSentTo($user, JobAlertDigestNotification::class);
+});

@@ -19,14 +19,14 @@ class JobAlertMatcherService
     /**
      * @return Collection<int, Job>
      */
-    public function match(JobAlert $alert, ?int $limit = 20): Collection
+    public function match(JobAlert $alert, ?int $limit = 20, bool $ignoreCutoff = false): Collection
     {
         $query = Job::query()
             ->with(['company:id,name,slug,logo_path', 'category:id,name', 'city:id,name'])
             ->where('status', JobStatus::Published)
             ->whereNotNull('published_at');
 
-        $cutoff = $alert->last_sent_at;
+        $cutoff = $ignoreCutoff ? null : $alert->last_sent_at;
         if ($cutoff) {
             $query->where('published_at', '>=', $cutoff);
         }
