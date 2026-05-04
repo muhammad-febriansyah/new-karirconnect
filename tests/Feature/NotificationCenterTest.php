@@ -119,7 +119,7 @@ test('user cannot mark another user notification as read', function () {
     $owner->notify(new ApplicationSubmittedNotification($application));
     $notification = $owner->notifications()->first();
 
-    $other = User::factory()->employer()->create();
+    $other = User::factory()->employee()->create();
 
     $this->actingAs($other)
         ->post(route('notifications.read', ['notification' => $notification->id]))

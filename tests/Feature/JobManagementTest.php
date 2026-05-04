@@ -26,7 +26,7 @@ test('employer can manage jobs and screening questions', function () {
         'email_verified_at' => now(),
     ]);
 
-    $company = Company::factory()->for($employer, 'owner')->create();
+    $company = Company::factory()->for($employer, 'owner')->approved()->create();
     CompanyMember::factory()->owner()->create([
         'company_id' => $company->id,
         'user_id' => $employer->id,
@@ -151,7 +151,7 @@ test('employee can save and remove published jobs', function () {
         'email_verified_at' => now(),
     ]);
 
-    $company = Company::factory()->for($employer, 'owner')->create();
+    $company = Company::factory()->for($employer, 'owner')->approved()->create();
     $job = Job::factory()->for($company)->for($employer, 'postedBy')->published()->create();
 
     $this->actingAs($employee)
@@ -188,7 +188,7 @@ test('admin can browse and moderate jobs', function () {
         'email_verified_at' => now(),
     ]);
 
-    $company = Company::factory()->for($employer, 'owner')->create();
+    $company = Company::factory()->for($employer, 'owner')->approved()->create();
     $job = Job::factory()->for($company)->for($employer, 'postedBy')->published()->create([
         'title' => 'Platform Engineer',
         'slug' => 'platform-engineer',

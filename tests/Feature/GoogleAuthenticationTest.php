@@ -81,7 +81,7 @@ test('google login callback rejects unknown accounts', function () {
         'code' => 'auth-code',
     ]))
         ->assertRedirect(route('login'))
-        ->assertSessionHasErrors('google');
+        ->assertSessionHas('error');
 
     $this->assertGuest();
 });
@@ -160,5 +160,5 @@ test('google callback rejects invalid state', function () {
         'code' => 'auth-code',
     ]))
         ->assertRedirect(route('login'))
-        ->assertSessionHasErrors('google');
+        ->assertSessionHas('error');
 });

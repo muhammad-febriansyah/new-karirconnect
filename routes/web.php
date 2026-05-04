@@ -92,7 +92,7 @@ Route::prefix('companies')->name('public.companies.')->group(function (): void {
     });
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'onboarding', 'employer.onboarded'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('notifications')->name('notifications.')->group(function (): void {

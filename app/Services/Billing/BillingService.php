@@ -6,6 +6,8 @@ use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
+use App\Exceptions\Billing\InvalidWebhookSignatureException;
+use App\Exceptions\Billing\WebhookAmountMismatchException;
 use App\Models\Company;
 use App\Models\CompanySubscription;
 use App\Models\Job;
@@ -114,7 +116,7 @@ class BillingService
         $client = $this->factory->make();
 
         if (! $client->verifyCallback($payload)) {
-            throw new RuntimeException('Invalid callback signature.');
+            throw new InvalidWebhookSignatureException;
         }
 
         $reference = (string) ($payload['merchantOrderId'] ?? '');
@@ -124,15 +126,20 @@ class BillingService
             return $order;
         }
 
+        $payloadAmount = (int) ($payload['amount'] ?? 0);
+        if ($payloadAmount !== $order->amount_idr) {
+            throw new WebhookAmountMismatchException($order->amount_idr, $payloadAmount);
+        }
+
         $status = $client->normalizeStatus($payload);
 
-        return DB::transaction(function () use ($order, $payload, $client, $status): Order {
+        return DB::transaction(function () use ($order, $payload, $client, $status, $payloadAmount): Order {
             PaymentTransaction::query()->create([
                 'order_id' => $order->id,
                 'provider' => $client->provider(),
                 'gateway_reference' => (string) ($payload['reference'] ?? ''),
                 'payment_method' => (string) ($payload['paymentCode'] ?? null),
-                'amount_idr' => (int) ($payload['amount'] ?? $order->amount_idr),
+                'amount_idr' => $payloadAmount,
                 'status' => match ($status) {
                     'success' => PaymentStatus::Success,
                     'failed' => PaymentStatus::Failed,

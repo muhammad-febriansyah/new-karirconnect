@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'verification_status',
     'approved_at',
     'verified_at',
+    'onboarding_completed_at',
 ])]
 class Company extends Model
 {
@@ -52,6 +53,7 @@ class Company extends Model
             'verification_status' => CompanyVerificationStatus::class,
             'approved_at' => 'datetime',
             'verified_at' => 'datetime',
+            'onboarding_completed_at' => 'datetime',
         ];
     }
 

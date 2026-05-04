@@ -104,11 +104,39 @@ test('invalid signature is rejected and order stays awaiting', function () {
     $payload['signature'] = 'tampered-signature';
 
     $this->post(route('payments.duitku.callback'), $payload)
-        ->assertOk()
-        ->assertJson(['status' => 'rejected']);
+        ->assertStatus(401)
+        ->assertJson(['status' => 'invalid_signature']);
 
     expect($order->fresh()->status)->toBe(OrderStatus::AwaitingPayment);
     expect(CompanySubscription::query()->count())->toBe(0);
+});
+
+test('amount mismatch is rejected with 422 and no entitlement applied', function () {
+    ['owner' => $owner, 'company' => $company] = makeBillingContext();
+    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
+
+    // Build payload with a different amount but signature that verifies for the
+    // tampered amount. Real attacker without API key can't do this, but a buggy
+    // gateway sending wrong amount would be caught by this defense-in-depth.
+    $tamperedAmount = $order->amount_idr + 1;
+    $payload = makeFakeCallback($order->reference, $tamperedAmount);
+    $payload['amount'] = (string) $tamperedAmount;
+
+    $this->post(route('payments.duitku.callback'), $payload)
+        ->assertStatus(422)
+        ->assertJson(['status' => 'amount_mismatch']);
+
+    expect($order->fresh()->status)->toBe(OrderStatus::AwaitingPayment);
+    expect(CompanySubscription::query()->count())->toBe(0);
+});
+
+test('unknown order reference returns 404', function () {
+    $payload = makeFakeCallback('UNKNOWN-REF-9999', 100000);
+
+    $this->post(route('payments.duitku.callback'), $payload)
+        ->assertStatus(404)
+        ->assertJson(['status' => 'order_not_found']);
 });
 
 test('replaying same callback does not double-apply entitlement', function () {

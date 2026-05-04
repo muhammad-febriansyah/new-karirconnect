@@ -1,5 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowRight, BriefcaseBusiness, Building2, Mail, Sparkles, UserRoundSearch } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, Building2, Mail, Sparkles, UserRoundSearch, Building } from 'lucide-react';
 import GoogleMark from '@/components/google-mark';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -188,6 +188,27 @@ export default function Register({
                                 />
                                 <InputError message={errors.name} className="mt-1" />
                             </div>
+
+                            {role === 'employer' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="company_name" className="text-xs font-semibold uppercase tracking-wider text-brand-navy/80">
+                                        Nama Perusahaan
+                                    </Label>
+                                    <div className="relative">
+                                        <Building className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                                        <Input
+                                            id="company_name"
+                                            type="text"
+                                            required
+                                            autoComplete="organization"
+                                            name="company_name"
+                                            placeholder="PT Maju Bersama"
+                                            className="h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
+                                        />
+                                    </div>
+                                    <InputError message={errors.company_name} />
+                                </div>
+                            )}
 
                             <div className="grid gap-2">
                                 <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-brand-navy/80">

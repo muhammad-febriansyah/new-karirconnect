@@ -40,7 +40,18 @@ class CompanyFactory extends Factory
             'benefits' => fake()->paragraph(),
             'status' => CompanyStatus::Pending,
             'verification_status' => CompanyVerificationStatus::Unverified,
+            'onboarding_completed_at' => now(),
         ];
+    }
+
+    /**
+     * Indicate that the company owner has not completed the wizard yet.
+     */
+    public function pendingOnboarding(): self
+    {
+        return $this->state(fn () => [
+            'onboarding_completed_at' => null,
+        ]);
     }
 
     public function approved(): self

@@ -37,11 +37,22 @@ class UserFactory extends Factory
             'locale' => 'id',
             'is_active' => true,
             'notification_settings' => null,
+            'onboarding_completed_at' => now(),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    /**
+     * Indicate that the user has not completed the post-register onboarding.
+     */
+    public function pendingOnboarding(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'onboarding_completed_at' => null,
+        ]);
     }
 
     /**

@@ -1,5 +1,5 @@
-// Components
 import { Form, Head } from '@inertiajs/react';
+import { Mail } from 'lucide-react';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -9,38 +9,43 @@ import { send } from '@/routes/verification';
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <>
-            <Head title="Email verification" />
+            <Head title="Verifikasi Email" />
 
-            {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+            <div className="space-y-5 text-center">
+                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-blue/10 text-brand-blue">
+                    <Mail className="size-6" />
                 </div>
-            )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
-                {({ processing }) => (
-                    <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Resend verification email
-                        </Button>
-
-                        <TextLink
-                            href={logout()}
-                            className="mx-auto block text-sm"
-                        >
-                            Log out
-                        </TextLink>
-                    </>
+                {status === 'verification-link-sent' && (
+                    <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                        Link verifikasi baru sudah dikirim ke email Anda. Silakan cek inbox / folder spam.
+                    </div>
                 )}
-            </Form>
+
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                    Kami sudah mengirimkan link verifikasi ke email Anda. Klik link tersebut untuk
+                    mengaktifkan akun lalu kembali ke sini.
+                </p>
+
+                <Form {...send.form()} className="space-y-3">
+                    {({ processing }) => (
+                        <>
+                            <Button disabled={processing} className="w-full">
+                                {processing && <Spinner />}
+                                Kirim ulang email verifikasi
+                            </Button>
+                            <TextLink href={logout()} className="mx-auto block text-sm">
+                                Keluar
+                            </TextLink>
+                        </>
+                    )}
+                </Form>
+            </div>
         </>
     );
 }
 
 VerifyEmail.layout = {
-    title: 'Verify email',
-    description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+    title: 'Verifikasi Email',
+    description: 'Cek inbox Anda dan klik link verifikasi yang kami kirim.',
 };

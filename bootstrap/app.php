@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureCompanyApproved;
+use App\Http\Middleware\EnsureEmployerOnboarded;
 use App\Http\Middleware\EnsureFeatureEnabled;
+use App\Http\Middleware\EnsureOnboardingCompleted;
 use App\Http\Middleware\EnsureSubscriptionActive;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -33,6 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'company.approved' => EnsureCompanyApproved::class,
             'subscription.active' => EnsureSubscriptionActive::class,
             'feature' => EnsureFeatureEnabled::class,
+            'onboarding' => EnsureOnboardingCompleted::class,
+            'employer.onboarded' => EnsureEmployerOnboarded::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

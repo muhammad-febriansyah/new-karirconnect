@@ -45,6 +45,7 @@ class EmployeeDashboardService
                 'completion' => $profile->profile_completion ?? 0,
                 'is_open_to_work' => $profile->is_open_to_work,
                 'headline' => $profile->headline,
+                'missing_items' => $this->profiles->missingItems($profile),
             ],
             'applications' => $applicationStats,
             'interviews' => [

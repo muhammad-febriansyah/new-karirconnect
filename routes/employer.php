@@ -17,15 +17,23 @@ use App\Http\Controllers\Employer\JobBoostController;
 use App\Http\Controllers\Employer\JobController;
 use App\Http\Controllers\Employer\JobScreeningQuestionController;
 use App\Http\Controllers\Employer\MessageTemplateController;
+use App\Http\Controllers\Employer\OnboardingController as EmployerOnboardingController;
 use App\Http\Controllers\Employer\SavedCandidateController;
 use App\Http\Controllers\Employer\TalentSearchController;
 use App\Http\Controllers\Employer\TeamController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'role:employer'])
+Route::middleware(['auth', 'verified', 'role:employer', 'employer.onboarded'])
     ->prefix('employer')
     ->name('employer.')
     ->group(function (): void {
+        Route::prefix('onboarding')->name('onboarding.')->group(function (): void {
+            Route::get('/', [EmployerOnboardingController::class, 'edit'])->name('edit');
+            Route::post('profile', [EmployerOnboardingController::class, 'updateProfile'])->name('profile');
+            Route::post('document', [EmployerOnboardingController::class, 'uploadDocument'])->name('document');
+            Route::post('finish', [EmployerOnboardingController::class, 'finish'])->name('finish');
+        });
+
         Route::prefix('company')
             ->name('company.')
             ->group(function (): void {

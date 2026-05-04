@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { Bell, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useFcm } from '@/hooks/use-fcm';
 import { isFirebaseConfigured } from '@/lib/firebase';
@@ -10,12 +10,21 @@ const DISMISS_KEY = 'karirconnect.notification-banner.dismissed';
 export function NotificationPermissionBanner() {
     const { auth } = usePage<{ auth: { user?: { id?: number } | null } }>().props;
     const { permission, requesting, request } = useFcm();
+    const [mounted, setMounted] = useState(false);
     const [dismissed, setDismissed] = useState(() => {
         if (typeof window === 'undefined') {
             return false;
         }
         return window.localStorage.getItem(DISMISS_KEY) === '1';
     });
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null;
+    }
 
     if (!auth?.user?.id) {
         return null;

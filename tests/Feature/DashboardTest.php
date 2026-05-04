@@ -64,13 +64,12 @@ test('employer dashboard renders employer role-specific component', function () 
         );
 });
 
-test('employer without company sees prompt', function () {
+test('employer without company is forced to onboarding', function () {
     $owner = User::factory()->employer()->create();
 
     $this->actingAs($owner)
         ->get('/dashboard')
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('data.has_company', false));
+        ->assertRedirect('/employer/onboarding');
 });
 
 test('admin dashboard renders admin role-specific component', function () {

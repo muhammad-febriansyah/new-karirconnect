@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use App\Models\GoogleCalendarToken;
 use App\Models\User;
 use App\Services\Settings\SettingService;
@@ -16,6 +17,7 @@ test('connect redirects to google when oauth credentials configured', function (
     app(SettingService::class)->set('integrations', 'google_client_secret', 'fake-secret');
 
     $employer = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $employer->id]);
 
     $response = $this->actingAs($employer)
         ->get(route('employer.google-calendar.connect'));
@@ -30,6 +32,7 @@ test('connect shows error when oauth not configured', function () {
     app(SettingService::class)->set('integrations', 'google_client_secret', '');
 
     $employer = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $employer->id]);
 
     $this->actingAs($employer)
         ->from(route('employer.interviews.index'))
@@ -39,6 +42,7 @@ test('connect shows error when oauth not configured', function () {
 
 test('callback rejects invalid state', function () {
     $employer = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $employer->id]);
 
     $this->actingAs($employer)
         ->withSession(['google_oauth_state' => 'expected-state'])
@@ -62,6 +66,7 @@ test('callback exchanges code for token and persists encrypted', function () {
     ]);
 
     $employer = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $employer->id]);
 
     $this->actingAs($employer)
         ->withSession(['google_oauth_state' => 'state-123'])
@@ -76,6 +81,7 @@ test('callback exchanges code for token and persists encrypted', function () {
 
 test('disconnect removes token row', function () {
     $employer = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $employer->id]);
     GoogleCalendarToken::query()->create([
         'user_id' => $employer->id,
         'calendar_email' => 'r@example.com',

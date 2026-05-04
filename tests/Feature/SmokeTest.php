@@ -62,7 +62,7 @@ it('renders admin dashboard pages without error', function (string $path): void 
 
 it('renders employer dashboard pages without error', function (string $path): void {
     $employer = User::factory()->employer()->create();
-    Company::factory()->create(['owner_id' => $employer->id]);
+    Company::factory()->approved()->create(['owner_id' => $employer->id]);
 
     $this->actingAs($employer)->get($path)->assertOk();
 })->with([

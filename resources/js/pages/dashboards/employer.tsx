@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ApexOptions } from 'apexcharts';
-import { BriefcaseBusiness, CalendarClock, CreditCard, ShieldCheck, UserCheck, UserSearch } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, CalendarClock, CheckCircle2, Clock, CreditCard, ShieldCheck, Sparkles, UserCheck, UserSearch } from 'lucide-react';
 import { ApexChart } from '@/components/charts/apex-chart';
 import { BRAND_COLORS, BRAND_PALETTE, brandChartDefaults, mergeChartOptions } from '@/components/charts/chart-theme';
 import { EmptyState } from '@/components/feedback/empty-state';
@@ -16,10 +16,19 @@ import { formatStatus } from '@/lib/format-status';
 
 type TrendPoint = { date: string; label: string; count: number };
 
+type MissingItem = { key: string; label: string; href: string };
+
 type Props = {
     data: {
         has_company: boolean;
-        company?: { id: number; name: string; slug: string; verification_status: string };
+        company?: {
+            id: number;
+            name: string;
+            slug: string;
+            status: string | null;
+            verification_status: string | null;
+            missing_items: MissingItem[];
+        };
         jobs?: { total: number; published: number; draft: number };
         applicants?: {
             total: number;
@@ -157,8 +166,46 @@ export default function EmployerDashboard({ data }: Props) {
             <div className="space-y-6 p-4 sm:p-6">
                 <PageHeader
                     title={data.company!.name}
-                    description={`Verifikasi: ${data.company!.verification_status}`}
+                    description={`Verifikasi: ${data.company!.verification_status ?? '—'}`}
                 />
+
+                <CompanyStatusBanner status={data.company!.status} />
+
+                {data.company!.missing_items.length > 0 && (
+                    <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
+                        <CardContent className="space-y-3 p-4 sm:p-5">
+                            <div className="flex items-center justify-between gap-2">
+                                <div>
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                                        <Sparkles className="size-4" /> Lengkapi profil perusahaan
+                                    </div>
+                                    <div className="text-xs text-amber-800/80">
+                                        Profil yang lengkap meningkatkan kepercayaan kandidat & SEO halaman karier.
+                                    </div>
+                                </div>
+                                <span className="rounded-full bg-amber-200/70 px-2.5 py-1 text-xs font-bold text-amber-900">
+                                    {data.company!.missing_items.length} hal
+                                </span>
+                            </div>
+                            <ul className="grid gap-2 sm:grid-cols-2">
+                                {data.company!.missing_items.map((item) => (
+                                    <li key={item.key}>
+                                        <Link
+                                            href={item.href}
+                                            className="group flex items-center justify-between gap-2 rounded-xl border border-amber-200/70 bg-white/70 px-3 py-2 text-sm text-amber-900 transition-colors hover:border-amber-400 hover:bg-white"
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <CheckCircle2 className="size-4 text-amber-400" />
+                                                {item.label}
+                                            </span>
+                                            <ArrowRight className="size-3.5 text-amber-700 transition-transform group-hover:translate-x-0.5" />
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                     <StatCard
@@ -338,5 +385,45 @@ export default function EmployerDashboard({ data }: Props) {
                 )}
             </div>
         </>
+    );
+}
+
+function CompanyStatusBanner({ status }: { status: string | null }) {
+    if (status === 'approved') return null;
+
+    if (status === 'suspended') {
+        return (
+            <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                    <ShieldCheck className="size-5" />
+                </span>
+                <div className="space-y-1">
+                    <p className="text-sm font-bold text-rose-900">Akun perusahaan dinonaktifkan</p>
+                    <p className="text-xs text-rose-800/80">
+                        Hubungi admin KarirConnect untuk informasi lebih lanjut atau peninjauan ulang.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/60 p-4">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-200/70 text-amber-800">
+                <Clock className="size-5" />
+            </span>
+            <div className="flex-1 space-y-1">
+                <p className="text-sm font-bold text-amber-900">Perusahaan menunggu persetujuan admin</p>
+                <p className="text-xs text-amber-800/80">
+                    Anda belum bisa posting lowongan & akses talent search hingga admin meng-approve. Estimasi review 1×24 jam.
+                </p>
+            </div>
+            <Link
+                href="/employer/company/verification"
+                className="hidden shrink-0 items-center gap-1 self-start text-xs font-semibold text-amber-900 underline-offset-4 hover:underline sm:inline-flex"
+            >
+                Cek status <ArrowRight className="size-3.5" />
+            </Link>
+        </div>
     );
 }

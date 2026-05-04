@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ApexOptions } from 'apexcharts';
-import { Bookmark, Bot, BriefcaseBusiness, CalendarClock, Inbox, Send, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowRight, Bookmark, Bot, BriefcaseBusiness, CalendarClock, CheckCircle2, Inbox, Send, Sparkles, TrendingUp } from 'lucide-react';
 import { ApexChart } from '@/components/charts/apex-chart';
 import { BRAND_COLORS, BRAND_PALETTE, brandChartDefaults, mergeChartOptions } from '@/components/charts/chart-theme';
 import { EmptyState } from '@/components/feedback/empty-state';
@@ -14,9 +14,16 @@ import { formatStatus } from '@/lib/format-status';
 
 type TrendPoint = { date: string; label: string; count: number };
 
+type MissingItem = { key: string; label: string; href: string };
+
 type Props = {
     data: {
-        profile: { completion: number; is_open_to_work: boolean; headline: string | null };
+        profile: {
+            completion: number;
+            is_open_to_work: boolean;
+            headline: string | null;
+            missing_items: MissingItem[];
+        };
         applications: {
             total: number;
             in_progress: number;
@@ -174,6 +181,42 @@ export default function EmployeeDashboard({ data }: Props) {
                         accent={`linear-gradient(135deg, ${BRAND_COLORS.dark}, ${BRAND_COLORS.accent})`}
                     />
                 </div>
+
+                {data.profile.missing_items.length > 0 && (
+                    <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
+                        <CardContent className="space-y-3 p-4 sm:p-5">
+                            <div className="flex items-center justify-between gap-2">
+                                <div>
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                                        <Sparkles className="size-4" /> Lengkapi profil Anda
+                                    </div>
+                                    <div className="text-xs text-amber-800/80">
+                                        Profil yang lebih lengkap meningkatkan peluang dilihat recruiter.
+                                    </div>
+                                </div>
+                                <span className="rounded-full bg-amber-200/70 px-2.5 py-1 text-xs font-bold text-amber-900">
+                                    {data.profile.missing_items.length} hal
+                                </span>
+                            </div>
+                            <ul className="grid gap-2 sm:grid-cols-2">
+                                {data.profile.missing_items.map((item) => (
+                                    <li key={item.key}>
+                                        <Link
+                                            href={item.href}
+                                            className="group flex items-center justify-between gap-2 rounded-xl border border-amber-200/70 bg-white/70 px-3 py-2 text-sm text-amber-900 transition-colors hover:border-amber-400 hover:bg-white"
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <CheckCircle2 className="size-4 text-amber-400" />
+                                                {item.label}
+                                            </span>
+                                            <ArrowRight className="size-3.5 text-amber-700 transition-transform group-hover:translate-x-0.5" />
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <div className="grid gap-4 lg:grid-cols-3">
                     <Card className="border-slate-200/70 shadow-sm">

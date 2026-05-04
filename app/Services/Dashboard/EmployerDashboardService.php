@@ -17,10 +17,13 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\TalentSearchLog;
 use App\Models\User;
+use App\Services\Company\CompanyService;
 use Carbon\CarbonImmutable;
 
 class EmployerDashboardService
 {
+    public function __construct(private readonly CompanyService $companies) {}
+
     /**
      * @return array<string, mixed>
      */
@@ -91,7 +94,9 @@ class EmployerDashboardService
                 'id' => $company->id,
                 'name' => $company->name,
                 'slug' => $company->slug,
-                'verification_status' => $company->verification_status,
+                'status' => $company->status?->value,
+                'verification_status' => $company->verification_status?->value,
+                'missing_items' => $this->companies->missingItems($company),
             ],
             'jobs' => [
                 'total' => $jobsCount,

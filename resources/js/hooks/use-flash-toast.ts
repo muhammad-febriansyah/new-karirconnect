@@ -16,6 +16,15 @@ type ToastShape = { type?: ToastType; message?: string };
 type ValidationErrors = Record<string, string | string[] | undefined>;
 
 /**
+ * Error keys that already have inline display elsewhere (OAuth providers,
+ * external integrations) and are NOT actual form fields. The generic
+ * "Formulir belum lengkap" toast should not fire when only these keys are
+ * present — the controller is expected to flash a proper `error` message
+ * instead.
+ */
+const NON_FORM_ERROR_KEYS = new Set(['google', 'oauth', 'social']);
+
+/**
  * Subscribe to Inertia router events instead of usePage() so this hook stays
  * mountable from globally-rendered components (e.g. <Toaster /> in app.tsx)
  * that live outside the Inertia page tree.
@@ -87,7 +96,15 @@ export function useFlashToast(): void {
                 return;
             }
 
-            const fingerprint = `validation|${Object.keys(errors).sort().join(',')}`;
+            const formKeys = Object.keys(errors).filter(
+                (key) => !NON_FORM_ERROR_KEYS.has(key),
+            );
+
+            if (formKeys.length === 0) {
+                return;
+            }
+
+            const fingerprint = `validation|${formKeys.sort().join(',')}`;
             const now = Date.now();
 
             if (

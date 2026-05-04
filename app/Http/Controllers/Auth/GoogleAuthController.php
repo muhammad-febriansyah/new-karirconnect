@@ -47,7 +47,7 @@ class GoogleAuthController extends Controller
 
         if ($request->filled('error')) {
             return redirect()->to($redirectTo)
-                ->withErrors(['google' => 'Login Google dibatalkan.']);
+                ->with('error', 'Login Google dibatalkan.');
         }
 
         $state = (string) $request->query('state', '');
@@ -55,19 +55,19 @@ class GoogleAuthController extends Controller
 
         if ($state === '' || $expected === '' || ! hash_equals($expected, $state)) {
             return redirect()->to($redirectTo)
-                ->withErrors(['google' => 'State Google OAuth tidak valid. Silakan coba lagi.']);
+                ->with('error', 'Sesi Google OAuth kedaluwarsa. Silakan coba lagi.');
         }
 
         $code = (string) $request->query('code', '');
         if ($code === '') {
             return redirect()->to($redirectTo)
-                ->withErrors(['google' => 'Kode otorisasi Google tidak ditemukan.']);
+                ->with('error', 'Kode otorisasi Google tidak ditemukan.');
         }
 
         [$clientId, $clientSecret] = $this->credentials();
         if ($clientId === null || $clientSecret === null) {
             return redirect()->to($redirectTo)
-                ->withErrors(['google' => 'Google OAuth belum dikonfigurasi.']);
+                ->with('error', 'Google OAuth belum dikonfigurasi. Hubungi admin.');
         }
 
         $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
@@ -80,13 +80,13 @@ class GoogleAuthController extends Controller
 
         if (! $response->ok()) {
             return redirect()->to($redirectTo)
-                ->withErrors(['google' => 'Gagal menyelesaikan login Google.']);
+                ->with('error', 'Gagal menyelesaikan login Google.');
         }
 
         $accessToken = (string) ($response->json('access_token') ?? '');
         if ($accessToken === '') {
             return redirect()->to($redirectTo)
-                ->withErrors(['google' => 'Token Google tidak diterima.']);
+                ->with('error', 'Token Google tidak diterima.');
         }
 
         $profile = $this->resolveProfile($accessToken);
@@ -94,20 +94,20 @@ class GoogleAuthController extends Controller
 
         if ($email === '') {
             return redirect()->to($redirectTo)
-                ->withErrors(['google' => 'Email akun Google tidak tersedia.']);
+                ->with('error', 'Email akun Google tidak tersedia.');
         }
 
         $user = User::query()->where('email', $email)->first();
 
         if ($user === null && $intent === 'login') {
             return redirect()->route('login')
-                ->withErrors(['google' => 'Akun ini belum terdaftar. Silakan daftar terlebih dahulu.']);
+                ->with('error', 'Akun ini belum terdaftar. Silakan daftar terlebih dahulu.');
         }
 
         if ($user === null) {
             if ($role === null) {
                 return redirect()->route('register')
-                    ->withErrors(['google' => 'Jenis akun tidak valid. Silakan pilih ulang.']);
+                    ->with('error', 'Jenis akun tidak valid. Silakan pilih ulang.');
             }
 
             $user = User::query()->create([
@@ -139,7 +139,7 @@ class GoogleAuthController extends Controller
 
         if ($clientId === null) {
             return redirect()->to($this->redirectToFor($intent, $role))
-                ->withErrors(['google' => 'Google OAuth belum dikonfigurasi. Hubungi admin.']);
+                ->with('error', 'Google OAuth belum dikonfigurasi. Hubungi admin.');
         }
 
         $state = Str::random(40);

@@ -62,6 +62,52 @@ class CompanyService
         return $company;
     }
 
+    /**
+     * Build a checklist of company profile fields that are still missing.
+     * Used by the employer dashboard "Lengkapi profil" widget.
+     *
+     * @return array<int, array{key: string, label: string, href: string}>
+     */
+    public function missingItems(Company $company): array
+    {
+        $company->loadMissing(['verifications']);
+        $items = [];
+        $editPath = '/employer/company/edit';
+
+        if (blank($company->logo_path)) {
+            $items[] = ['key' => 'logo', 'label' => 'Unggah logo perusahaan', 'href' => $editPath];
+        }
+        if (blank($company->tagline)) {
+            $items[] = ['key' => 'tagline', 'label' => 'Tulis tagline singkat perusahaan', 'href' => $editPath];
+        }
+        if (blank($company->website)) {
+            $items[] = ['key' => 'website', 'label' => 'Tambahkan website perusahaan', 'href' => $editPath];
+        }
+        if (blank($company->industry_id)) {
+            $items[] = ['key' => 'industry', 'label' => 'Pilih industri perusahaan', 'href' => $editPath];
+        }
+        if (blank($company->company_size_id)) {
+            $items[] = ['key' => 'company_size', 'label' => 'Pilih ukuran perusahaan', 'href' => $editPath];
+        }
+        if (blank($company->city_id)) {
+            $items[] = ['key' => 'location', 'label' => 'Tentukan lokasi (provinsi & kota)', 'href' => $editPath];
+        }
+        if (blank($company->about)) {
+            $items[] = ['key' => 'about', 'label' => 'Tulis deskripsi tentang perusahaan', 'href' => $editPath];
+        }
+        if (blank($company->culture)) {
+            $items[] = ['key' => 'culture', 'label' => 'Tambahkan budaya kerja & nilai perusahaan', 'href' => $editPath];
+        }
+        if (blank($company->benefits)) {
+            $items[] = ['key' => 'benefits', 'label' => 'Daftarkan benefit & fasilitas karyawan', 'href' => $editPath];
+        }
+        if ($company->verifications->isEmpty()) {
+            $items[] = ['key' => 'verification', 'label' => 'Unggah dokumen verifikasi badan usaha', 'href' => '/employer/company/verification'];
+        }
+
+        return $items;
+    }
+
     public function suspend(Company $company): Company
     {
         $company->forceFill([

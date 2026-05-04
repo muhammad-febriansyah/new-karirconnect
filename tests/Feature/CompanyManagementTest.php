@@ -29,16 +29,16 @@ test('employer can register and view company pages', function () {
         'email_verified_at' => now(),
     ]);
 
-    $this->actingAs($employer)
-        ->post(route('employer.company.store'), [
-            'name' => 'PT Karir Sprint Tiga',
-            'industry_id' => null,
-            'company_size_id' => null,
-            'website' => 'https://karir-sprint.test',
-            'email' => 'hr@karir-sprint.test',
-            'phone' => '021-0000000',
-        ])
-        ->assertRedirect();
+    Company::factory()->for($employer, 'owner')->create([
+        'name' => 'PT Karir Sprint Tiga',
+        'website' => 'https://karir-sprint.test',
+        'email' => 'hr@karir-sprint.test',
+        'phone' => '021-0000000',
+    ]);
+    CompanyMember::factory()->owner()->create([
+        'company_id' => Company::query()->latest('id')->value('id'),
+        'user_id' => $employer->id,
+    ]);
 
     $company = Company::query()->firstOrFail();
 

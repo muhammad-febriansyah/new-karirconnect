@@ -60,6 +60,7 @@ test('new companies can register', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => UserRole::Employer->value,
+        'company_name' => 'PT Maju Jaya',
     ]);
 
     $this->assertAuthenticated();

@@ -12,6 +12,7 @@ use App\Http\Controllers\Employee\InterviewController;
 use App\Http\Controllers\Employee\JobAlertController;
 use App\Http\Controllers\Employee\JobRecommendationController;
 use App\Http\Controllers\Employee\MessageController;
+use App\Http\Controllers\Employee\OnboardingController;
 use App\Http\Controllers\Employee\ProfileController;
 use App\Http\Controllers\Employee\SalarySubmissionController;
 use App\Http\Controllers\Employee\SavedJobController;
@@ -19,10 +20,16 @@ use App\Http\Controllers\Employee\SkillAssessmentController;
 use App\Http\Controllers\Employee\WorkExperienceController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'role:employee'])
+Route::middleware(['auth', 'verified', 'role:employee', 'onboarding'])
     ->prefix('employee')
     ->name('employee.')
     ->group(function (): void {
+        Route::get('onboarding', [OnboardingController::class, 'edit'])->name('onboarding.edit');
+        Route::post('onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+        Route::post('onboarding/parse-cv', [OnboardingController::class, 'parseCv'])
+            ->middleware('throttle:10,1')
+            ->name('onboarding.parse-cv');
+
         Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('profile/edit', [ProfileController::class, 'update'])->name('profile.update');
 
