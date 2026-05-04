@@ -417,7 +417,7 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                     </Field>
                                     <Field label="Jenis Kelamin">
                                         <Select
-                                            value={form.data.gender || undefined}
+                                            value={form.data.gender}
                                             onValueChange={(v) => form.setData('gender', v)}
                                         >
                                             <SelectTrigger>
@@ -435,7 +435,7 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                     </Field>
                                     <Field label="Provinsi">
                                         <Select
-                                            value={form.data.province_id || undefined}
+                                            value={form.data.province_id}
                                             onValueChange={(v) => {
                                                 form.setData((prev) => ({
                                                     ...prev,
@@ -459,7 +459,7 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                     </Field>
                                     <Field label="Kota">
                                         <Select
-                                            value={form.data.city_id || undefined}
+                                            value={form.data.city_id}
                                             onValueChange={(v) => form.setData('city_id', v)}
                                             disabled={!form.data.province_id}
                                         >
@@ -491,7 +491,7 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                     </Field>
                                     <Field label="Level Pengalaman">
                                         <Select
-                                            value={form.data.experience_level || undefined}
+                                            value={form.data.experience_level}
                                             onValueChange={(v) => form.setData('experience_level', v)}
                                         >
                                             <SelectTrigger>

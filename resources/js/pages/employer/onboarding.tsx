@@ -180,7 +180,7 @@ export default function EmployerOnboarding({ user, company, options }: Props) {
                                     </Field>
                                     <Field label="Industri">
                                         <Select
-                                            value={form.data.industry_id || undefined}
+                                            value={form.data.industry_id}
                                             onValueChange={(v) => form.setData('industry_id', v)}
                                         >
                                             <SelectTrigger>
@@ -198,7 +198,7 @@ export default function EmployerOnboarding({ user, company, options }: Props) {
                                     </Field>
                                     <Field label="Ukuran Perusahaan">
                                         <Select
-                                            value={form.data.company_size_id || undefined}
+                                            value={form.data.company_size_id}
                                             onValueChange={(v) => form.setData('company_size_id', v)}
                                         >
                                             <SelectTrigger>
@@ -240,7 +240,7 @@ export default function EmployerOnboarding({ user, company, options }: Props) {
                                 <FieldGroup>
                                     <Field label="Provinsi">
                                         <Select
-                                            value={form.data.province_id || undefined}
+                                            value={form.data.province_id}
                                             onValueChange={(v) =>
                                                 form.setData((prev) => ({
                                                     ...prev,
@@ -264,7 +264,7 @@ export default function EmployerOnboarding({ user, company, options }: Props) {
                                     </Field>
                                     <Field label="Kota">
                                         <Select
-                                            value={form.data.city_id || undefined}
+                                            value={form.data.city_id}
                                             onValueChange={(v) => form.setData('city_id', v)}
                                             disabled={!form.data.province_id}
                                         >
