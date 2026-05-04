@@ -72,6 +72,8 @@ Route::middleware(['auth', 'verified', 'role:employer', 'employer.onboarded'])
                 Route::get('/', [InterviewController::class, 'index'])->name('index');
                 Route::get('create', [InterviewController::class, 'create'])->name('create');
                 Route::post('/', [InterviewController::class, 'store'])->name('store');
+                Route::get('bulk/create', [InterviewController::class, 'bulkCreate'])->name('bulk.create');
+                Route::post('bulk', [InterviewController::class, 'bulkStore'])->name('bulk.store');
                 Route::get('{interview}', [InterviewController::class, 'show'])->name('show');
                 Route::post('{interview}/cancel', [InterviewController::class, 'cancel'])->name('cancel');
                 Route::post('{interview}/complete', [InterviewController::class, 'complete'])->name('complete');

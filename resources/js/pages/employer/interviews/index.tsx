@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { useDraggable } from '@dnd-kit/core';
 import { Head, Link, router } from '@inertiajs/react';
-import { Bot, Calendar, ChevronsRight, GripVertical, MapPin, MoreVertical, Plus, Video } from 'lucide-react';
+import { Bot, Calendar, ChevronsRight, GripVertical, Layers, MapPin, MoreVertical, Plus, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { PageHeader } from '@/components/layout/page-header';
@@ -236,6 +236,11 @@ export default function InterviewsIndex({ columns: initialColumns, filters, stag
                                     Per Status
                                 </button>
                             </div>
+                            <Button variant="outline" asChild>
+                                <Link href="/employer/interviews/bulk/create">
+                                    <Layers className="size-4" /> Jadwalkan Serentak
+                                </Link>
+                            </Button>
                             <Button asChild>
                                 <Link href={interviewCreate().url}>
                                     <Plus className="size-4" /> Jadwalkan

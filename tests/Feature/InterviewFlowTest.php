@@ -358,3 +358,159 @@ test('changeStage rejects an unknown stage value', function () {
         ->post(route('employer.interviews.stage', ['interview' => $interview->id]), ['stage' => 'not-real-stage'])
         ->assertSessionHasErrors('stage');
 });
+
+test('employer can bulk schedule interviews in sequential mode', function () {
+    Notification::fake();
+
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+    $job = Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+    ]);
+
+    $applicationIds = collect(range(1, 3))->map(function () use ($job) {
+        $candidate = User::factory()->employee()->create();
+        $profile = EmployeeProfile::factory()->create(['user_id' => $candidate->id]);
+
+        return Application::factory()->create([
+            'job_id' => $job->id,
+            'employee_profile_id' => $profile->id,
+            'status' => ApplicationStatus::Reviewed,
+        ])->id;
+    })->all();
+
+    $start = now()->addDays(2)->setTime(9, 0);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.bulk.store'), [
+            'application_ids' => $applicationIds,
+            'stage' => 'hr',
+            'mode' => 'online',
+            'title' => 'HR Screening Bulk',
+            'start_at' => $start->toIso8601String(),
+            'duration_minutes' => 30,
+            'gap_minutes' => 5,
+            'group_mode' => false,
+            'requires_confirmation' => true,
+        ])
+        ->assertRedirect(route('employer.interviews.index'));
+
+    expect(Interview::query()->count())->toBe(3);
+
+    $interviews = Interview::query()->orderBy('scheduled_at')->get();
+    // Slot 0, 35min, 70min apart (duration 30 + gap 5)
+    expect((int) abs($interviews[1]->scheduled_at->diffInMinutes($interviews[0]->scheduled_at)))->toBe(35);
+    expect((int) abs($interviews[2]->scheduled_at->diffInMinutes($interviews[1]->scheduled_at)))->toBe(35);
+});
+
+test('employer can bulk schedule interviews in group mode (same slot)', function () {
+    Notification::fake();
+
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+    $job = Job::factory()->published()->create([
+        'company_id' => $company->id,
+        'posted_by_user_id' => $owner->id,
+        'job_category_id' => $cat->id,
+    ]);
+
+    $applicationIds = collect(range(1, 3))->map(function () use ($job) {
+        $candidate = User::factory()->employee()->create();
+        $profile = EmployeeProfile::factory()->create(['user_id' => $candidate->id]);
+
+        return Application::factory()->create([
+            'job_id' => $job->id,
+            'employee_profile_id' => $profile->id,
+            'status' => ApplicationStatus::Reviewed,
+        ])->id;
+    })->all();
+
+    $start = now()->addDays(3)->setTime(14, 0);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.bulk.store'), [
+            'application_ids' => $applicationIds,
+            'stage' => 'final',
+            'mode' => 'online',
+            'title' => 'Final Group Panel',
+            'start_at' => $start->toIso8601String(),
+            'duration_minutes' => 60,
+            'gap_minutes' => 0,
+            'group_mode' => true,
+        ])
+        ->assertRedirect(route('employer.interviews.index'));
+
+    $interviews = Interview::query()->get();
+    expect($interviews)->toHaveCount(3);
+
+    // All three at the same slot
+    $first = $interviews->first()->scheduled_at;
+    $interviews->each(function ($i) use ($first) {
+        expect($i->scheduled_at->equalTo($first))->toBeTrue();
+    });
+});
+
+test('bulk schedule rejects applications from another company', function () {
+    Notification::fake();
+
+    $owner = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $owner->id]);
+
+    // Application owned by a different company
+    $otherOwner = User::factory()->employer()->create();
+    $otherCompany = Company::factory()->approved()->create(['owner_id' => $otherOwner->id]);
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+    $otherJob = Job::factory()->published()->create([
+        'company_id' => $otherCompany->id,
+        'posted_by_user_id' => $otherOwner->id,
+        'job_category_id' => $cat->id,
+    ]);
+    $candidate = User::factory()->employee()->create();
+    $profile = EmployeeProfile::factory()->create(['user_id' => $candidate->id]);
+    $foreignApp = Application::factory()->create([
+        'job_id' => $otherJob->id,
+        'employee_profile_id' => $profile->id,
+        'status' => ApplicationStatus::Reviewed,
+    ]);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.bulk.store'), [
+            'application_ids' => [$foreignApp->id],
+            'stage' => 'hr',
+            'mode' => 'online',
+            'title' => 'Sneaky Bulk',
+            'start_at' => now()->addDay()->toIso8601String(),
+            'duration_minutes' => 30,
+            'gap_minutes' => 5,
+            'group_mode' => false,
+        ])
+        ->assertSessionHasErrors('application_ids');
+
+    expect(Interview::query()->count())->toBe(0);
+});
+
+test('bulk schedule validates required fields', function () {
+    $owner = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $owner->id]);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.bulk.store'), [
+            'application_ids' => [],
+            'mode' => 'online',
+        ])
+        ->assertSessionHasErrors(['application_ids', 'stage', 'title', 'start_at']);
+});
+
+test('employer can view bulk schedule page', function () {
+    $owner = User::factory()->employer()->create();
+    Company::factory()->approved()->create(['owner_id' => $owner->id]);
+
+    $this->actingAs($owner)
+        ->get(route('employer.interviews.bulk.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('employer/interviews/bulk'));
+});

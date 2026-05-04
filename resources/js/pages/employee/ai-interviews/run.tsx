@@ -2,13 +2,16 @@ import { Head, router, useForm } from '@inertiajs/react';
 import {
     AlertCircle,
     Bot,
+    Building2,
     Camera,
     CameraOff,
     CheckCircle2,
+    GraduationCap,
     Loader2,
     Mic,
     MicOff,
     PhoneOff,
+    Radio,
     Send,
     Sparkles,
     Volume2,
@@ -17,7 +20,6 @@ import {
 } from 'lucide-react';
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { TextareaField } from '@/components/form/textarea-field';
-import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,8 +43,11 @@ type Props = {
         language: string | null;
         voice: string | null;
         job_title: string | null;
+        company_name: string | null;
+        company_logo_url: string | null;
         is_practice: boolean;
         total_questions: number;
+        total_duration_seconds: number;
         current_index: number;
         recording_url: string | null;
     };
@@ -55,6 +60,81 @@ type Props = {
         max_duration_seconds: number;
     } | null;
 };
+
+type SessionInfo = Props['session'];
+
+function InterviewContextHeader({ session }: { session: SessionInfo }) {
+    if (session.is_practice) {
+        return (
+            <div className="rounded-2xl border border-slate-200/70 bg-gradient-to-r from-white via-sky-50/40 to-white p-4 shadow-sm sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+                            style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
+                        >
+                            <GraduationCap className="size-6" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-medium uppercase tracking-wider text-[color:#1080E0]">
+                                Latihan Wawancara
+                            </div>
+                            <div className="text-base font-semibold text-slate-900">
+                                Sesi Latihan dengan KarirConnect AI
+                            </div>
+                            <div className="text-xs text-slate-500">
+                                Mode aman untuk persiapan — jawaban tidak dikirim ke perusahaan.
+                            </div>
+                        </div>
+                    </div>
+                    <Badge variant="secondary" className="self-start sm:self-auto">
+                        <Sparkles className="size-3" /> Mode Latihan
+                    </Badge>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                        {session.company_logo_url ? (
+                            <img
+                                src={session.company_logo_url}
+                                alt={session.company_name ?? 'Logo perusahaan'}
+                                className="size-full object-contain p-1"
+                            />
+                        ) : (
+                            <Building2 className="size-7 text-slate-400" />
+                        )}
+                    </div>
+                    <div className="min-w-0">
+                        <div className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                            Wawancara untuk
+                        </div>
+                        <div className="truncate text-base font-semibold text-slate-900">
+                            {session.job_title ?? 'Posisi tidak diketahui'}
+                        </div>
+                        <div className="truncate text-xs text-slate-600">
+                            {session.company_name ?? 'Perusahaan'}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm"
+                        style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
+                    >
+                        <Sparkles className="size-3.5" />
+                        KarirConnect AI
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function AiInterviewRun(props: Props) {
     if (props.session.mode === 'voice') {
@@ -90,20 +170,28 @@ function TextRun({ session, questions, currentQuestion }: Props) {
         <>
             <Head title="Sesi AI Interview" />
 
-            <div className="space-y-6 p-4 sm:p-6">
-                <PageHeader
-                    title={session.is_practice ? 'Latihan AI Interview' : `AI Interview: ${session.job_title ?? '-'}`}
-                    description={`Pertanyaan ${session.current_index + 1} dari ${session.total_questions}`}
-                    actions={
-                        session.current_index >= session.total_questions ? (
+            <div className="space-y-5 p-4 sm:p-6">
+                <InterviewContextHeader session={session} />
+
+                <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+                    <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <div className="text-sm font-semibold text-slate-900">
+                                Pertanyaan {Math.min(session.current_index + 1, session.total_questions)} dari{' '}
+                                {session.total_questions}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                                Jawab tiap pertanyaan dengan tenang. Bisa lanjut atau selesaikan kapan saja.
+                            </div>
+                        </div>
+                        {session.current_index >= session.total_questions && (
                             <Button onClick={completeNow}>
                                 <CheckCircle2 className="size-4" /> Selesaikan & Lihat Hasil
                             </Button>
-                        ) : null
-                    }
-                />
-
-                <Progress value={progressValue} />
+                        )}
+                    </div>
+                    <Progress value={progressValue} />
+                </div>
 
                 {currentQuestion ? (
                     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
@@ -620,11 +708,8 @@ function VoiceRun({ session, questions }: Props) {
         <>
             <Head title="Sesi AI Voice Interview" />
 
-            <div className="space-y-6 p-4 sm:p-6">
-                <PageHeader
-                    title={session.is_practice ? 'Latihan Voice AI Interview' : `Voice AI Interview: ${session.job_title ?? '-'}`}
-                    description={`${session.total_questions} pertanyaan · Mode realtime voice`}
-                />
+            <div className="space-y-5 p-4 sm:p-6">
+                <InterviewContextHeader session={session} />
 
                 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
 
@@ -657,120 +742,166 @@ function VoiceRun({ session, questions }: Props) {
                 )}
 
                 {connected && (
-                    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+                    <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
                         <div className="space-y-4">
-                            {/* Hero: AI orb + status */}
-                            <Card
-                                className="relative overflow-hidden border-slate-200/70 shadow-sm"
-                                style={{ background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)' }}
+                            {/* Hero stage — video-call style */}
+                            <div
+                                className="relative overflow-hidden rounded-3xl border border-slate-800/40 shadow-2xl"
+                                style={{
+                                    background:
+                                        'radial-gradient(ellipse at 30% 20%, rgba(16,128,224,0.35) 0%, transparent 55%), radial-gradient(ellipse at 70% 80%, rgba(16,192,224,0.25) 0%, transparent 50%), linear-gradient(135deg, #0b1224 0%, #0a1a3a 50%, #08172e 100%)',
+                                }}
                             >
-                                <CardContent className="relative p-6">
-                                    {/* Decorative gradient ring */}
+                                {/* Top status strip */}
+                                <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-black/20 px-4 py-2.5 backdrop-blur">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-400/30">
+                                            <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+                                            Live
+                                        </span>
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-mono text-xs text-white/90 ring-1 ring-white/10">
+                                            <Radio className="size-3" />
+                                            {formatTime(elapsedSec)}
+                                        </span>
+                                        <span className="hidden items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/90 ring-1 ring-white/10 sm:inline-flex">
+                                            {currentQIndex !== null
+                                                ? `Pertanyaan ${currentQIndex + 1}/${questions.length}`
+                                                : `${questions.length} pertanyaan`}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-white/70">
+                                        <Sparkles className="size-3.5" />
+                                        KarirConnect AI
+                                    </div>
+                                </div>
+
+                                {/* Stage */}
+                                <div className="relative flex min-h-[420px] flex-col items-center justify-center px-6 py-10 sm:py-14">
+                                    {/* Decorative blur orbs */}
                                     <div
                                         aria-hidden
-                                        className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full opacity-20 blur-3xl"
+                                        className="pointer-events-none absolute -right-32 -top-32 size-96 rounded-full opacity-25 blur-3xl"
                                         style={{ background: 'radial-gradient(circle, #10C0E0, transparent)' }}
                                     />
                                     <div
                                         aria-hidden
-                                        className="pointer-events-none absolute -bottom-24 -left-24 size-72 rounded-full opacity-10 blur-3xl"
+                                        className="pointer-events-none absolute -bottom-32 -left-32 size-[28rem] rounded-full opacity-20 blur-3xl"
                                         style={{ background: 'radial-gradient(circle, #1080E0, transparent)' }}
                                     />
 
-                                    <div className="relative flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                                        {/* AI orb with pulsing rings */}
-                                        <div className="relative flex shrink-0 items-center justify-center">
-                                            {aiSpeaking && (
-                                                <>
-                                                    <span
-                                                        className="absolute size-32 animate-ping rounded-full opacity-30"
-                                                        style={{ background: 'radial-gradient(circle, #10C0E0, transparent 70%)' }}
-                                                    />
-                                                    <span
-                                                        className="absolute size-24 animate-pulse rounded-full opacity-40"
-                                                        style={{ background: 'radial-gradient(circle, #1080E0, transparent 70%)' }}
-                                                    />
-                                                </>
-                                            )}
-                                            <div
-                                                className={`relative flex size-20 items-center justify-center rounded-full text-white shadow-lg transition-transform ${aiSpeaking ? 'scale-105' : ''}`}
-                                                style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0, #001060)' }}
-                                            >
-                                                <Bot className="size-9" />
-                                                {aiSpeaking && (
-                                                    <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-white shadow ring-2 ring-[color:#10C0E0]">
-                                                        <Sparkles className="size-3 text-[color:#1080E0]" />
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex-1 space-y-3 text-center sm:text-left">
-                                            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                                                    <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-                                                    Terhubung
-                                                </span>
-                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 font-mono text-xs text-slate-700">
-                                                    {formatTime(elapsedSec)}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">
-                                                    {currentQIndex !== null ? `Pertanyaan ${currentQIndex + 1}/${questions.length}` : `${questions.length} pertanyaan`}
-                                                </span>
-                                            </div>
-
-                                            <div>
-                                                <div className="text-xs uppercase tracking-wide text-slate-500">
-                                                    {aiSpeaking ? 'AI sedang bicara…' : 'Giliranmu menjawab'}
-                                                </div>
-                                                {currentQIndex !== null && questions[currentQIndex] ? (
-                                                    <div className="mt-1 text-base font-semibold leading-snug text-slate-900">
-                                                        {questions[currentQIndex].question}
-                                                    </div>
-                                                ) : (
-                                                    <div className="mt-1 text-sm text-slate-600">AI sedang menyapa…</div>
-                                                )}
-                                            </div>
-
-                                            {/* Mic level meter */}
-                                            <div className="space-y-1.5">
-                                                <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                    {muted ? <MicOff className="size-3.5 text-rose-500" /> : <Mic className="size-3.5 text-[color:#1080E0]" />}
-                                                    <span>{muted ? 'Mic dimatikan' : 'Mic aktif'}</span>
-                                                </div>
-                                                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                                                    <div
-                                                        className="h-full rounded-full transition-[width] duration-75"
-                                                        style={{
-                                                            width: `${Math.min(100, micLevel * 100)}%`,
-                                                            background: muted
-                                                                ? '#cbd5e1'
-                                                                : 'linear-gradient(90deg, #1080E0, #10C0E0)',
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Action bar */}
-                                    <div className="relative mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-4">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={toggleMute}
-                                            className={muted ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' : ''}
+                                    {/* AI Avatar with multi-ring pulsing */}
+                                    <div className="relative flex items-center justify-center">
+                                        {aiSpeaking && (
+                                            <>
+                                                <span
+                                                    className="absolute size-64 animate-ping rounded-full opacity-20"
+                                                    style={{ background: 'radial-gradient(circle, #10C0E0, transparent 70%)' }}
+                                                />
+                                                <span
+                                                    className="absolute size-48 animate-pulse rounded-full opacity-30"
+                                                    style={{ background: 'radial-gradient(circle, #1080E0, transparent 70%)' }}
+                                                />
+                                            </>
+                                        )}
+                                        <div className="absolute size-40 rounded-full bg-white/5 ring-1 ring-white/10" />
+                                        <div className="absolute size-32 rounded-full bg-white/10 ring-1 ring-white/15" />
+                                        <div
+                                            className={`relative flex size-28 items-center justify-center rounded-full text-white shadow-2xl transition-transform duration-500 ${aiSpeaking ? 'scale-110' : 'scale-100'}`}
+                                            style={{
+                                                background:
+                                                    'linear-gradient(135deg, #1080E0 0%, #10C0E0 50%, #001060 100%)',
+                                                boxShadow:
+                                                    '0 20px 60px -10px rgba(16,128,224,0.6), 0 0 0 1px rgba(255,255,255,0.1) inset',
+                                            }}
                                         >
-                                            {muted ? <MicOff className="size-4" /> : <Mic className="size-4" />}
-                                            {muted ? 'Aktifkan Mic' : 'Matikan Mic'}
-                                        </Button>
-                                        <Button size="sm" variant="destructive" onClick={finish} disabled={finishing}>
-                                            {finishing ? <Loader2 className="size-4 animate-spin" /> : <PhoneOff className="size-4" />}
-                                            Akhiri Sesi
-                                        </Button>
+                                            <Bot className="size-12" />
+                                            {aiSpeaking && (
+                                                <span className="absolute -bottom-1.5 -right-1.5 flex size-8 items-center justify-center rounded-full bg-white shadow ring-2 ring-[color:#10C0E0]">
+                                                    <Sparkles className="size-4 text-[color:#1080E0]" />
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+
+                                    {/* AI status caption */}
+                                    <div className="mt-6 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 backdrop-blur">
+                                        <span
+                                            className={`size-1.5 rounded-full ${aiSpeaking ? 'animate-pulse bg-[color:#10C0E0]' : 'bg-emerald-400'}`}
+                                        />
+                                        {aiSpeaking ? 'AI sedang bicara…' : 'Giliranmu menjawab'}
+                                    </div>
+
+                                    {/* Current question caption (Zoom-like) */}
+                                    {currentQIndex !== null && questions[currentQIndex] && (
+                                        <div className="mt-6 max-w-2xl rounded-2xl border border-white/15 bg-black/40 px-5 py-4 text-center backdrop-blur">
+                                            <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-white/60">
+                                                {questions[currentQIndex].category}
+                                            </div>
+                                            <div className="text-base font-medium leading-relaxed text-white sm:text-lg">
+                                                {questions[currentQIndex].question}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Mic visualizer */}
+                                    <div className="mt-6 w-full max-w-md">
+                                        <div className="mb-1.5 flex items-center justify-between text-[11px] text-white/60">
+                                            <span className="inline-flex items-center gap-1.5">
+                                                {muted ? (
+                                                    <MicOff className="size-3 text-rose-300" />
+                                                ) : (
+                                                    <Mic className="size-3 text-[color:#10C0E0]" />
+                                                )}
+                                                {muted ? 'Mic dimatikan' : 'Suara kamu'}
+                                            </span>
+                                            <span className="font-mono text-[10px] text-white/40">
+                                                {Math.round(micLevel * 100)}%
+                                            </span>
+                                        </div>
+                                        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10 ring-1 ring-white/10">
+                                            <div
+                                                className="h-full rounded-full transition-[width] duration-75"
+                                                style={{
+                                                    width: `${Math.min(100, micLevel * 100)}%`,
+                                                    background: muted
+                                                        ? 'rgba(255,255,255,0.2)'
+                                                        : 'linear-gradient(90deg, #1080E0, #10C0E0)',
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Floating action bar — video-call style */}
+                                <div className="relative flex items-center justify-center gap-3 border-t border-white/10 bg-black/30 px-4 py-4 backdrop-blur">
+                                    <button
+                                        type="button"
+                                        onClick={toggleMute}
+                                        className={`flex size-12 items-center justify-center rounded-full transition ${
+                                            muted
+                                                ? 'bg-rose-500 text-white shadow-lg hover:bg-rose-600'
+                                                : 'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/15'
+                                        }`}
+                                        aria-label={muted ? 'Aktifkan mic' : 'Matikan mic'}
+                                        title={muted ? 'Aktifkan mic' : 'Matikan mic'}
+                                    >
+                                        {muted ? <MicOff className="size-5" /> : <Mic className="size-5" />}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={finish}
+                                        disabled={finishing}
+                                        className="flex h-12 items-center gap-2 rounded-full bg-rose-500 px-5 font-semibold text-white shadow-lg transition hover:bg-rose-600 disabled:opacity-60"
+                                    >
+                                        {finishing ? (
+                                            <Loader2 className="size-5 animate-spin" />
+                                        ) : (
+                                            <PhoneOff className="size-5" />
+                                        )}
+                                        Akhiri Sesi
+                                    </button>
+                                </div>
+                            </div>
 
                             {/* Live transcript */}
                             <Card className="border-slate-200/70 shadow-sm">
