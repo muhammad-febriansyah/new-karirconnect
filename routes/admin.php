@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\SkillController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\TalentSearchLogController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'role:admin'])
@@ -150,5 +151,18 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->group(function (): void {
                 Route::get('/', [ReportController::class, 'index'])->name('index');
                 Route::post('{report}/review', [ReportController::class, 'review'])->name('review');
+            });
+
+        Route::prefix('users')
+            ->name('users.')
+            ->group(function (): void {
+                Route::get('/', [UserController::class, 'index'])->name('index');
+                Route::get('{user}', [UserController::class, 'show'])->name('show');
+                Route::put('{user}', [UserController::class, 'update'])->name('update');
+                Route::delete('{user}', [UserController::class, 'destroy'])->name('destroy');
+                Route::post('{user}/suspend', [UserController::class, 'suspend'])->name('suspend');
+                Route::post('{user}/activate', [UserController::class, 'activate'])->name('activate');
+                Route::post('{user}/password-reset', [UserController::class, 'sendPasswordReset'])
+                    ->name('password-reset');
             });
     });

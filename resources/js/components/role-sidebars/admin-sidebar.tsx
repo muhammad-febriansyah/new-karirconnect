@@ -19,6 +19,8 @@ import {
     Star,
     Tag,
     TrendingUp,
+    UserCog,
+    Users,
     UserSearch,
 } from 'lucide-react';
 import AboutPageController from '@/actions/App/Http/Controllers/Admin/AboutPageController';
@@ -40,10 +42,12 @@ import SalaryInsightController from '@/actions/App/Http/Controllers/Admin/Salary
 import SubscriptionController from '@/actions/App/Http/Controllers/Admin/SubscriptionController';
 import SubscriptionPlanController from '@/actions/App/Http/Controllers/Admin/SubscriptionPlanController';
 import TalentSearchLogController from '@/actions/App/Http/Controllers/Admin/TalentSearchLogController';
+import UserController from '@/actions/App/Http/Controllers/Admin/UserController';
 import { dashboard } from '@/routes';
 import { edit as adminSettingsEdit } from '@/routes/admin/settings';
 import { index as jobCategoriesIndex } from '@/routes/admin/job-categories';
 import { index as skillsIndex } from '@/routes/admin/skills';
+import { edit as profileEdit } from '@/routes/profile';
 import type { NavSection } from '@/types';
 
 export const adminMainNavSections: NavSection[] = [
@@ -54,6 +58,16 @@ export const adminMainNavSections: NavSection[] = [
                 title: 'Dashboard',
                 href: dashboard(),
                 icon: LayoutGrid,
+            },
+        ],
+    },
+    {
+        label: 'Pengguna',
+        items: [
+            {
+                title: 'Manajemen Pengguna',
+                href: UserController.index().url,
+                icon: Users,
             },
         ],
     },
@@ -190,6 +204,11 @@ export const adminMainNavSections: NavSection[] = [
     {
         label: 'Sistem',
         items: [
+            {
+                title: 'Profil Saya',
+                href: profileEdit().url,
+                icon: UserCog,
+            },
             {
                 title: 'Pengaturan Sistem',
                 href: adminSettingsEdit().url,
