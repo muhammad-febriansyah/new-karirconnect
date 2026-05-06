@@ -345,22 +345,60 @@ export default function AiInterviewResult({ session, analysis, responses }: Prop
                 </div>
 
                 {!analysis ? (
-                    <Card>
-                        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-                            <div className="flex size-12 items-center justify-center rounded-full bg-sky-50">
-                                <Sparkles className="size-6 animate-pulse text-sky-600" />
-                            </div>
-                            <div>
-                                <h3 className="text-base font-semibold text-slate-900">Analisis sedang diproses</h3>
-                                <p className="mt-1 text-sm text-slate-500">
-                                    AI sedang menganalisis jawabanmu. Refresh halaman dalam beberapa saat.
-                                </p>
-                            </div>
-                            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-                                Refresh
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    session.is_practice ? (
+                        <Card>
+                            <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+                                <div className="flex size-12 items-center justify-center rounded-full bg-sky-50">
+                                    <Sparkles className="size-6 animate-pulse text-sky-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-slate-900">Analisis sedang diproses</h3>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        AI sedang menganalisis jawabanmu. Refresh halaman dalam beberapa saat.
+                                    </p>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                                    Refresh
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/60 to-white">
+                            <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+                                <div className="flex size-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <CheckCircle2 className="size-7" />
+                                </div>
+                                <div className="max-w-xl space-y-2">
+                                    <h3 className="text-lg font-semibold text-slate-900">Wawancara berhasil dikirim</h3>
+                                    <p className="text-sm leading-relaxed text-slate-600">
+                                        Terima kasih sudah menyelesaikan sesi wawancara AI. Hasil dan analisis lengkap
+                                        akan langsung dikirim ke recruiter
+                                        {session.company_name ? <> di <span className="font-medium text-slate-800">{session.company_name}</span></> : null}
+                                        {' '}untuk ditinjau. Recruiter akan menghubungimu lewat email atau notifikasi
+                                        jika lolos ke tahap berikutnya.
+                                    </p>
+                                </div>
+                                <div className="grid w-full max-w-xl gap-2 text-left text-xs text-slate-600 sm:grid-cols-2">
+                                    <div className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-emerald-100">
+                                        <Sparkles className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                                        <span>Skor & feedback bersifat rahasia dan hanya dilihat recruiter, bukan kandidat.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-emerald-100">
+                                        <Clock className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                                        <span>Status lamaran &amp; jadwal interview lanjutan dapat dipantau di halaman lamaran.</span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-2 pt-2">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href="/employee/applications">Lihat Lamaran Saya</Link>
+                                    </Button>
+                                    <Button asChild size="sm">
+                                        <Link href="/employee/ai-interviews">Kembali ke Daftar Wawancara</Link>
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )
                 ) : (
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
                         <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-grid">

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('payment_transactions', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->string('provider', 32)->default('duitku');
+            $table->string('provider', 32)->default('midtrans');
             $table->string('gateway_reference')->nullable()->index();
             $table->string('payment_method', 64)->nullable();
             $table->unsignedInteger('amount_idr');

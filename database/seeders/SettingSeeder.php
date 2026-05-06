@@ -27,6 +27,22 @@ class SettingSeeder extends Seeder
             ])
             ->delete();
 
+        Setting::query()
+            ->where('group', 'payment')
+            ->whereIn('key', [
+                'duitku_merchant_code',
+                'duitku_api_key',
+                'duitku_environment',
+                'duitku_callback_url',
+                'duitku_return_url',
+            ])
+            ->delete();
+
+        Setting::query()
+            ->where('group', 'general')
+            ->whereIn('key', ['timezone', 'default_locale'])
+            ->delete();
+
         $rows = [];
         $sort = 0;
 
@@ -67,8 +83,39 @@ class SettingSeeder extends Seeder
                 'app_tagline' => ['label' => 'Tagline', 'value' => 'Temukan karir impianmu', 'is_public' => true],
                 'contact_email' => ['label' => 'Email Kontak', 'value' => 'support@karirconnect.test', 'is_public' => true],
                 'contact_phone' => ['label' => 'Nomor Kontak', 'value' => '', 'is_public' => true],
-                'timezone' => ['label' => 'Zona Waktu', 'value' => 'Asia/Jakarta'],
-                'default_locale' => ['label' => 'Bahasa Default', 'value' => 'id', 'is_public' => true],
+            ],
+            'social' => [
+                'linkedin_url' => [
+                    'label' => 'LinkedIn',
+                    'value' => 'https://www.linkedin.com/company/karirconnect',
+                    'is_public' => true,
+                    'description' => 'URL profil LinkedIn perusahaan. Kosongkan untuk menyembunyikan ikon.',
+                ],
+                'instagram_url' => [
+                    'label' => 'Instagram',
+                    'value' => 'https://www.instagram.com/karirconnect.id',
+                    'is_public' => true,
+                ],
+                'twitter_url' => [
+                    'label' => 'Twitter / X',
+                    'value' => 'https://twitter.com/karirconnect',
+                    'is_public' => true,
+                ],
+                'facebook_url' => [
+                    'label' => 'Facebook',
+                    'value' => 'https://www.facebook.com/karirconnect',
+                    'is_public' => true,
+                ],
+                'youtube_url' => [
+                    'label' => 'YouTube',
+                    'value' => 'https://www.youtube.com/@karirconnect',
+                    'is_public' => true,
+                ],
+                'tiktok_url' => [
+                    'label' => 'TikTok',
+                    'value' => 'https://www.tiktok.com/@karirconnect',
+                    'is_public' => true,
+                ],
             ],
             'branding' => [
                 'logo_path' => ['label' => 'Logo', 'type' => 'file', 'is_public' => true],
@@ -106,11 +153,19 @@ class SettingSeeder extends Seeder
                 'cost_output_per_1k' => ['label' => 'Cost Output / 1K token (USD)', 'type' => 'float', 'value' => '0.0006'],
             ],
             'payment' => [
-                'duitku_merchant_code' => ['label' => 'Duitku Merchant Code'],
-                'duitku_api_key' => ['label' => 'Duitku API Key', 'type' => 'password'],
-                'duitku_environment' => ['label' => 'Mode (sandbox/production)', 'value' => 'sandbox'],
-                'duitku_callback_url' => ['label' => 'URL Callback'],
-                'duitku_return_url' => ['label' => 'URL Return'],
+                'midtrans_merchant_id' => ['label' => 'Midtrans Merchant ID', 'value' => '', 'description' => 'Isi dari dashboard Midtrans (Settings → General).'],
+                'midtrans_client_key' => ['label' => 'Midtrans Client Key', 'value' => '', 'description' => 'Isi dari dashboard Midtrans (Settings → Access Keys).'],
+                'midtrans_server_key' => [
+                    'label' => 'Midtrans Server Key',
+                    'type' => 'password',
+                    'value' => '',
+                    'description' => 'Disimpan terenkripsi. Isi dari dashboard Midtrans (Settings → Access Keys). Dipakai untuk auth Snap API dan verifikasi signature notifikasi.',
+                ],
+                'midtrans_environment' => [
+                    'label' => 'Mode (sandbox/production)',
+                    'value' => 'production',
+                    'description' => 'Pilih: sandbox atau production.',
+                ],
             ],
             'email' => [
                 'mail_driver' => ['label' => 'Mail Driver', 'value' => 'mailketing', 'description' => 'Pilih: mailketing (default) atau log untuk debugging.'],

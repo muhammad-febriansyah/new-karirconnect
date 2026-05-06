@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'company_id',
@@ -53,5 +54,13 @@ class AiInterviewTemplate extends Model
     public function job(): BelongsTo
     {
         return $this->belongsTo(Job::class);
+    }
+
+    /**
+     * @return HasMany<AiInterviewTemplateQuestion, $this>
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(AiInterviewTemplateQuestion::class, 'template_id')->orderBy('order_number');
     }
 }

@@ -89,7 +89,7 @@ export default function EmployerBillingShow({ order, transactions }: Props) {
                         <CardContent className="flex items-center justify-between p-4">
                             <div>
                                 <div className="font-semibold">Selesaikan pembayaran</div>
-                                <div className="text-sm text-muted-foreground">Klik tombol untuk dialihkan ke halaman pembayaran Duitku.</div>
+                                <div className="text-sm text-muted-foreground">Klik tombol untuk dialihkan ke halaman pembayaran Midtrans.</div>
                             </div>
                             <Button asChild>
                                 <a href={order.payment_url} target="_blank" rel="noreferrer">

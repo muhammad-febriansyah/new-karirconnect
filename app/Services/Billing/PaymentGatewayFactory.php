@@ -2,14 +2,14 @@
 
 namespace App\Services\Billing;
 
-use App\Services\Billing\Clients\DuitkuClient;
-use App\Services\Billing\Clients\FakeDuitkuClient;
+use App\Services\Billing\Clients\FakeMidtransClient;
+use App\Services\Billing\Clients\MidtransClient;
 use App\Services\Billing\Contracts\PaymentGatewayClient;
 use Illuminate\Contracts\Foundation\Application;
 
 /**
- * Resolves the payment gateway client. Tests bind FakeDuitkuClient via the
- * container; production uses the real Duitku client driven by Settings.
+ * Resolves the payment gateway client. Tests bind FakeMidtransClient via the
+ * container; production uses the real Midtrans client driven by Settings.
  */
 class PaymentGatewayFactory
 {
@@ -22,7 +22,7 @@ class PaymentGatewayFactory
         }
 
         return $this->app->environment('testing')
-            ? $this->app->make(FakeDuitkuClient::class)
-            : $this->app->make(DuitkuClient::class);
+            ? $this->app->make(FakeMidtransClient::class)
+            : $this->app->make(MidtransClient::class);
     }
 }

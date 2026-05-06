@@ -48,6 +48,8 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
                 return HomeLayout;
+            case name.startsWith('errors/'):
+                return ({ children }: { children: React.ReactNode }) => <>{children}</>;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):

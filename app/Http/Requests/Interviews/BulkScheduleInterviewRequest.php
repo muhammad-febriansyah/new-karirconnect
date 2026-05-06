@@ -5,6 +5,8 @@ namespace App\Http\Requests\Interviews;
 use App\Enums\InterviewMode;
 use App\Enums\InterviewStage;
 use App\Enums\UserRole;
+use App\Models\AiInterviewTemplate;
+use App\Models\Company;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -49,7 +51,47 @@ class BulkScheduleInterviewRequest extends FormRequest
 
             'interviewer_ids' => ['nullable', 'array'],
             'interviewer_ids.*' => ['integer', 'exists:users,id'],
+
+            'ai_template_id' => [
+                Rule::requiredIf($mode === 'ai'),
+                'nullable',
+                'integer',
+                'exists:ai_interview_templates,id',
+            ],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            if ($this->input('mode') !== 'ai') {
+                return;
+            }
+
+            $templateId = $this->input('ai_template_id');
+            if (! $templateId) {
+                return;
+            }
+
+            $company = Company::query()->where('owner_id', $this->user()->id)->first();
+            $template = AiInterviewTemplate::query()
+                ->withCount('questions')
+                ->where('id', $templateId)
+                ->first();
+
+            if (! $template || ! $company || $template->company_id !== $company->id) {
+                $validator->errors()->add('ai_template_id', 'Template AI tidak ditemukan untuk perusahaan ini.');
+
+                return;
+            }
+
+            if ((int) $template->questions_count === 0) {
+                $validator->errors()->add(
+                    'ai_template_id',
+                    'Template AI belum punya pertanyaan. Tambahkan minimal 1 pertanyaan sebelum menjadwalkan.',
+                );
+            }
+        });
     }
 
     protected function prepareForValidation(): void

@@ -1,8 +1,9 @@
-import { Bot, BriefcaseBusiness, Building2, CalendarClock, CreditCard, LayoutGrid, MapPin, MessageCircle, MessageSquare, ShieldCheck, Sparkles, UserCheck, Users, UserSearch } from 'lucide-react';
+import { Bot, BriefcaseBusiness, Building2, CalendarClock, CreditCard, LayoutGrid, MapPin, MessageCircle, MessageSquare, Send, ShieldCheck, Sparkles, UserCheck, Users, UserSearch } from 'lucide-react';
 import AiInterviewReviewController from '@/actions/App/Http/Controllers/Employer/AiInterviewReviewController';
 import AiInterviewTemplateController from '@/actions/App/Http/Controllers/Employer/AiInterviewTemplateController';
 import ApplicantController from '@/actions/App/Http/Controllers/Employer/ApplicantController';
 import BillingController from '@/actions/App/Http/Controllers/Employer/BillingController';
+import CandidateOutreachController from '@/actions/App/Http/Controllers/Employer/CandidateOutreachController';
 import CompanyOfficeController from '@/actions/App/Http/Controllers/Employer/CompanyOfficeController';
 import CompanyProfileController from '@/actions/App/Http/Controllers/Employer/CompanyProfileController';
 import CompanyReviewResponseController from '@/actions/App/Http/Controllers/Employer/CompanyReviewResponseController';
@@ -58,6 +59,11 @@ export const employerMainNavSections: NavSection[] = [
                 title: 'Cari Kandidat',
                 href: TalentSearchController.index().url,
                 icon: UserSearch,
+            },
+            {
+                title: 'Outreach Kandidat',
+                href: CandidateOutreachController.index().url,
+                icon: Send,
             },
             {
                 title: 'Jadwal Interview',

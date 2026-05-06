@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedSmallInteger('quantity')->default(1);
             $table->string('currency', 8)->default('IDR');
             $table->string('status', 32)->default('pending')->index();
-            $table->string('payment_provider', 32)->default('duitku');
+            $table->string('payment_provider', 32)->default('midtrans');
             $table->string('payment_reference')->nullable();
             $table->string('payment_url', 512)->nullable();
             $table->timestamp('paid_at')->nullable();

@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/lib/format-date';
 import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
@@ -501,41 +502,12 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                             </ContentCard>
                         )}
 
-                        {job.description && (
-                            <ContentCard title="Deskripsi">
-                                <SafeHtml
-                                    html={job.description}
-                                    className="prose prose-sm max-w-none text-foreground/85 prose-headings:text-foreground prose-strong:text-foreground"
-                                />
-                            </ContentCard>
-                        )}
-
-                        {job.responsibilities && (
-                            <ContentCard title="Tanggung Jawab">
-                                <SafeHtml
-                                    html={job.responsibilities}
-                                    className="prose prose-sm max-w-none text-foreground/85 prose-headings:text-foreground prose-strong:text-foreground"
-                                />
-                            </ContentCard>
-                        )}
-
-                        {job.requirements && (
-                            <ContentCard title="Kualifikasi">
-                                <SafeHtml
-                                    html={job.requirements}
-                                    className="prose prose-sm max-w-none text-foreground/85 prose-headings:text-foreground prose-strong:text-foreground"
-                                />
-                            </ContentCard>
-                        )}
-
-                        {job.benefits && (
-                            <ContentCard title="Benefit & Tunjangan">
-                                <SafeHtml
-                                    html={job.benefits}
-                                    className="prose prose-sm max-w-none text-foreground/85 prose-headings:text-foreground prose-strong:text-foreground"
-                                />
-                            </ContentCard>
-                        )}
+                        <JobDetailTabs
+                            description={job.description}
+                            responsibilities={job.responsibilities}
+                            requirements={job.requirements}
+                            benefits={job.benefits}
+                        />
 
                         {job.screening_questions.length > 0 && (
                             <ContentCard
@@ -984,6 +956,56 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                 })}
             </ul>
         </div>
+    );
+}
+
+const PROSE_CLASSES =
+    'prose prose-sm max-w-none text-foreground/85 prose-headings:text-foreground prose-headings:font-semibold prose-strong:text-foreground prose-a:text-brand-blue prose-li:marker:text-muted-foreground prose-ul:my-3 prose-ol:my-3 prose-p:leading-relaxed';
+
+function JobDetailTabs({
+    description,
+    responsibilities,
+    requirements,
+    benefits,
+}: {
+    description: string | null;
+    responsibilities: string | null;
+    requirements: string | null;
+    benefits: string | null;
+}) {
+    const sections = [
+        { key: 'description', label: 'Deskripsi', html: description },
+        { key: 'responsibilities', label: 'Tanggung Jawab', html: responsibilities },
+        { key: 'requirements', label: 'Kualifikasi', html: requirements },
+        { key: 'benefits', label: 'Benefit & Tunjangan', html: benefits },
+    ].filter((s): s is { key: string; label: string; html: string } => Boolean(s.html));
+
+    if (sections.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
+            <Tabs defaultValue={sections[0].key} className="space-y-5">
+                <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/50 p-1">
+                    {sections.map((section) => (
+                        <TabsTrigger
+                            key={section.key}
+                            value={section.key}
+                            className="rounded-lg px-3.5 py-1.5 text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        >
+                            {section.label}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+
+                {sections.map((section) => (
+                    <TabsContent key={section.key} value={section.key} className="focus-visible:outline-none">
+                        <SafeHtml html={section.html} className={PROSE_CLASSES} />
+                    </TabsContent>
+                ))}
+            </Tabs>
+        </section>
     );
 }
 

@@ -116,6 +116,17 @@ test('cannot apply twice to the same job', function () {
     expect(Application::query()->count())->toBe(1);
 });
 
+test('non-employee user is redirected back with friendly message instead of 403', function () {
+    $employer = User::factory()->employer()->create();
+    $job = makePublishedJob();
+
+    $response = $this->actingAs($employer)
+        ->get("/jobs/{$job->slug}/apply");
+
+    $response->assertRedirect(route('public.jobs.show', ['job' => $job->slug]));
+    $response->assertSessionHas('error', fn (string $msg) => str_contains($msg, 'kandidat (jobseeker)'));
+});
+
 test('cannot apply to draft jobs', function () {
     $employee = User::factory()->employee()->create();
     $owner = User::factory()->employer()->create();

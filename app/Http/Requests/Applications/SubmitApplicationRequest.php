@@ -18,7 +18,7 @@ class SubmitApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cover_letter' => ['nullable', 'string', 'max:8000'],
+            'cover_letter' => ['nullable', 'string', 'max:16000'],
             'expected_salary' => ['nullable', 'integer', 'min:0'],
             'candidate_cv_id' => ['nullable', 'integer', 'exists:candidate_cvs,id'],
             'answers' => ['nullable', 'array'],
@@ -30,9 +30,24 @@ class SubmitApplicationRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'cover_letter' => $this->normalizeRichText($this->input('cover_letter')),
             'expected_salary' => $this->normalizeRupiah($this->input('expected_salary')),
             'candidate_cv_id' => $this->filled('candidate_cv_id') ? (int) $this->input('candidate_cv_id') : null,
         ]);
+    }
+
+    /**
+     * Treat editor output that is only empty markup (e.g. "<p></p>") as null.
+     */
+    private function normalizeRichText(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $stripped = trim(strip_tags($value, '<img>'));
+
+        return $stripped === '' ? null : $value;
     }
 
     private function normalizeRupiah(mixed $value): ?int

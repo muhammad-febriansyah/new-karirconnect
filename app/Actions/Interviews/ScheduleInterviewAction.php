@@ -6,6 +6,8 @@ use App\Enums\ApplicationStatus;
 use App\Enums\InterviewMode;
 use App\Enums\InterviewStage;
 use App\Enums\InterviewStatus;
+use App\Models\AiInterviewSession;
+use App\Models\AiInterviewTemplate;
 use App\Models\Application;
 use App\Models\Interview;
 use App\Models\User;
@@ -15,6 +17,7 @@ use App\Services\Interviews\GoogleMeetService;
 use App\Services\Interviews\InterviewSchedulingService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ScheduleInterviewAction
@@ -102,6 +105,35 @@ class ScheduleInterviewAction
                     'meeting_id' => $meeting['id'],
                     'meeting_passcode' => $data['meeting_passcode'] ?? null,
                 ])->save();
+            }
+
+            if ($mode === InterviewMode::Ai) {
+                $templateId = isset($data['ai_template_id']) ? (int) $data['ai_template_id'] : null;
+                $template = $templateId ? AiInterviewTemplate::query()->find($templateId) : null;
+
+                // Template carries the recruiter's choice of voice/text + language.
+                // Fallback ke 'text'/'id' kalau template lama / belum dipilih.
+                $sessionMode = $template?->mode?->value ?? 'text';
+                $sessionLanguage = $template?->language ?? 'id';
+
+                AiInterviewSession::query()->updateOrCreate(
+                    [
+                        'application_id' => $application->id,
+                        'is_practice' => false,
+                    ],
+                    [
+                        'candidate_profile_id' => $application->employee_profile_id,
+                        'job_id' => $application->job_id,
+                        'template_id' => $template?->id,
+                        'mode' => $sessionMode,
+                        'language' => $sessionLanguage,
+                        'voice' => $sessionMode === 'voice' ? 'marin' : null,
+                        'status' => 'pending',
+                        'invitation_token' => Str::uuid()->toString(),
+                        'invited_at' => now(),
+                        'expires_at' => $start->copy()->addDays(7),
+                    ],
+                );
             }
 
             $interview->participants()->create([

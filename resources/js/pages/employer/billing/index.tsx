@@ -122,7 +122,7 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
             <div className="space-y-6 p-4 sm:p-6">
                 <PageHeader
                     title="Billing & Langganan"
-                    description="Pilih paket yang sesuai untuk perekrutan Anda. Pembayaran diproses melalui Duitku."
+                    description="Pilih paket yang sesuai untuk perekrutan Anda. Pembayaran diproses melalui Midtrans."
                 />
 
                 {/* Active subscription overview */}
@@ -214,24 +214,25 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
                             title="Paket Tersedia"
                             description="Klik salah satu paket untuk berlangganan. Paket gratis langsung aktif tanpa pembayaran."
                         >
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {sortedPlans.map((plan) => {
                                     const isCurrent = currentPlanSlugMatch === plan.slug;
                                     return (
-                                        <div key={plan.id} className="relative">
+                                        <div key={plan.id} className="relative flex">
                                             {isCurrent && (
-                                                <div className="pointer-events-none absolute -inset-px rounded-xl ring-2 ring-emerald-400/60" />
+                                                <div className="pointer-events-none absolute -inset-px z-10 rounded-xl ring-2 ring-emerald-400/60" />
                                             )}
                                             <PricingCard
+                                                className="w-full"
                                                 name={plan.name}
+                                                tier={plan.tier}
                                                 priceIdr={plan.price_idr}
                                                 period={`/ ${plan.billing_period_days} hari`}
                                                 featured={plan.is_featured}
                                                 quotas={[
-                                                    { label: 'Lowongan aktif', value: String(plan.job_post_quota) },
+                                                    { label: 'Lowongan', value: String(plan.job_post_quota) },
                                                     { label: 'Boost', value: String(plan.featured_credits) },
                                                     { label: 'AI Interview', value: String(plan.ai_interview_credits) },
-                                                    { label: 'Tier', value: plan.tier },
                                                 ]}
                                                 features={plan.features}
                                                 ctaLabel={isCurrent ? 'Paket Aktif' : 'Pilih Paket'}

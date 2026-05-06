@@ -60,7 +60,7 @@ class AiInterviewController extends Controller
                     'title' => $s->job?->title,
                     'slug' => $s->job?->slug,
                 ],
-                'analysis' => $s->analysis ? [
+                'analysis' => ($s->is_practice && $s->analysis) ? [
                     'overall_score' => $s->analysis->overall_score,
                     'recommendation' => $s->analysis->recommendation,
                 ] : null,
@@ -101,7 +101,7 @@ class AiInterviewController extends Controller
     {
         $this->authorizeOwn($request, $session);
 
-        $jobLoad = ['questions.response', 'job:id,title,company_id', 'job.company:id,name,logo_path'];
+        $jobLoad = ['questions.response', 'job:id,title,company_id,experience_level,description', 'job.company:id,name,logo_path'];
 
         $session->load($jobLoad);
 
@@ -178,16 +178,76 @@ class AiInterviewController extends Controller
         return redirect()->route('employee.ai-interviews.result', ['session' => $session->id]);
     }
 
+    /**
+     * Fallback: kandidat di lingkungan bising / mic bermasalah dapat beralih
+     * dari mode voice ke mode teks. Ini hanya dimungkinkan jika sesi belum
+     * dimulai atau masih di pertanyaan pertama (untuk mencegah kehilangan
+     * jawaban audio yang sudah terkirim).
+     */
+    public function switchToText(Request $request, AiInterviewSession $session): RedirectResponse
+    {
+        $this->authorizeOwn($request, $session);
+
+        if (($session->mode?->value ?? 'text') !== 'voice') {
+            return back()->with('error', 'Sesi ini sudah dalam mode teks.');
+        }
+
+        $hasAnswers = $session->questions()->whereHas('response')->exists();
+        if ($hasAnswers) {
+            return back()->with(
+                'error',
+                'Tidak bisa beralih ke teks karena sudah ada jawaban tersimpan. Hubungi recruiter jika perlu.',
+            );
+        }
+
+        $session->forceFill([
+            'mode' => 'text',
+            'voice' => null,
+        ])->save();
+
+        return redirect()->route('employee.ai-interviews.run', ['session' => $session->id])
+            ->with('success', 'Mode beralih ke teks. Lanjutkan dengan mengetik jawaban.');
+    }
+
     public function result(Request $request, AiInterviewSession $session): Response
     {
         $this->authorizeOwn($request, $session);
 
-        $session->load(['analysis', 'questions.response', 'job:id,title,company_id', 'job.company:id,name,logo_path']);
+        $session->load(['analysis', 'questions.response', 'job:id,title,company_id,experience_level,description', 'job.company:id,name,logo_path']);
 
         $companyLogoPath = $session->job?->company?->logo_path;
         $companyLogoUrl = $companyLogoPath
             ? rtrim((string) config('app.url'), '/').'/storage/'.ltrim((string) $companyLogoPath, '/')
             : null;
+
+        $isPractice = (bool) $session->is_practice;
+
+        // Hasil skor & analisis hanya boleh dilihat kandidat pada mode latihan.
+        // Untuk wawancara nyata (terhubung dengan lamaran), hasil dikembalikan ke recruiter saja.
+        $analysisPayload = ($isPractice && $session->analysis) ? [
+            'overall_score' => $session->analysis->overall_score,
+            'fit_score' => $session->analysis->fit_score,
+            'recommendation' => $session->analysis->recommendation,
+            'summary' => $session->analysis->summary,
+            'strengths' => $session->analysis->strengths ?? [],
+            'weaknesses' => $session->analysis->weaknesses ?? [],
+            'skill_assessment' => $session->analysis->skill_assessment ?? [],
+            'communication_score' => $session->analysis->communication_score,
+            'technical_score' => $session->analysis->technical_score,
+            'problem_solving_score' => $session->analysis->problem_solving_score,
+            'culture_fit_score' => $session->analysis->culture_fit_score,
+            'red_flags' => $session->analysis->red_flags ?? [],
+        ] : null;
+
+        $responsesPayload = $session->questions->map(fn ($q) => [
+            'order_number' => $q->order_number,
+            'category' => $q->category,
+            'question' => $q->question,
+            'answer' => $q->response?->answer_text,
+            'ai_score' => $isPractice ? $q->response?->ai_score : null,
+            'sub_scores' => $isPractice ? $q->response?->sub_scores : null,
+            'ai_feedback' => $isPractice ? $q->response?->ai_feedback : null,
+        ])->values();
 
         return Inertia::render('employee/ai-interviews/result', [
             'session' => [
@@ -195,7 +255,7 @@ class AiInterviewController extends Controller
                 'job_title' => $session->job?->title,
                 'company_name' => $session->job?->company?->name,
                 'company_logo_url' => $companyLogoUrl,
-                'is_practice' => $session->is_practice,
+                'is_practice' => $isPractice,
                 'duration_seconds' => $session->duration_seconds,
                 'started_at' => optional($session->started_at)->toIso8601String(),
                 'completed_at' => optional($session->completed_at)->toIso8601String(),
@@ -203,29 +263,8 @@ class AiInterviewController extends Controller
                 'total_questions' => $session->questions->count(),
                 'answered_questions' => $session->questions->filter(fn ($q) => $q->response !== null)->count(),
             ],
-            'analysis' => $session->analysis ? [
-                'overall_score' => $session->analysis->overall_score,
-                'fit_score' => $session->analysis->fit_score,
-                'recommendation' => $session->analysis->recommendation,
-                'summary' => $session->analysis->summary,
-                'strengths' => $session->analysis->strengths ?? [],
-                'weaknesses' => $session->analysis->weaknesses ?? [],
-                'skill_assessment' => $session->analysis->skill_assessment ?? [],
-                'communication_score' => $session->analysis->communication_score,
-                'technical_score' => $session->analysis->technical_score,
-                'problem_solving_score' => $session->analysis->problem_solving_score,
-                'culture_fit_score' => $session->analysis->culture_fit_score,
-                'red_flags' => $session->analysis->red_flags ?? [],
-            ] : null,
-            'responses' => $session->questions->map(fn ($q) => [
-                'order_number' => $q->order_number,
-                'category' => $q->category,
-                'question' => $q->question,
-                'answer' => $q->response?->answer_text,
-                'ai_score' => $q->response?->ai_score,
-                'sub_scores' => $q->response?->sub_scores,
-                'ai_feedback' => $q->response?->ai_feedback,
-            ])->values(),
+            'analysis' => $analysisPayload,
+            'responses' => $responsesPayload,
         ]);
     }
 
@@ -250,7 +289,7 @@ class AiInterviewController extends Controller
 
         $session->load([
             'questions:id,session_id,question,category,order_number,max_duration_seconds',
-            'job:id,title,company_id',
+            'job:id,title,company_id,experience_level,description',
             'job.company:id,name',
         ]);
 

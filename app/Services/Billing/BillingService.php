@@ -53,7 +53,7 @@ class BillingService
                 'quantity' => 1,
                 'currency' => 'IDR',
                 'status' => $plan->price_idr === 0 ? OrderStatus::Paid : OrderStatus::Pending,
-                'payment_provider' => 'duitku',
+                'payment_provider' => 'midtrans',
                 'expires_at' => now()->addHours(24),
                 'metadata' => ['plan_slug' => $plan->slug, 'plan_tier' => $plan->tier->value],
             ]);
@@ -93,7 +93,7 @@ class BillingService
                 'quantity' => 1,
                 'currency' => 'IDR',
                 'status' => OrderStatus::Pending,
-                'payment_provider' => 'duitku',
+                'payment_provider' => 'midtrans',
                 'expires_at' => now()->addHours(24),
                 'metadata' => ['job_slug' => $job->slug, 'days' => $days],
             ]);
@@ -119,14 +119,16 @@ class BillingService
             throw new InvalidWebhookSignatureException;
         }
 
-        $reference = (string) ($payload['merchantOrderId'] ?? '');
+        $reference = (string) ($payload['order_id'] ?? '');
         $order = Order::query()->where('reference', $reference)->firstOrFail();
 
         if ($order->status->isFinal() && $order->status !== OrderStatus::Pending) {
             return $order;
         }
 
-        $payloadAmount = (int) ($payload['amount'] ?? 0);
+        // Midtrans sends gross_amount as a decimal string (e.g. "100000.00"). Cast
+        // through float first so we don't truncate to 0 on edge formats.
+        $payloadAmount = (int) round((float) ($payload['gross_amount'] ?? 0));
         if ($payloadAmount !== $order->amount_idr) {
             throw new WebhookAmountMismatchException($order->amount_idr, $payloadAmount);
         }
@@ -137,8 +139,8 @@ class BillingService
             PaymentTransaction::query()->create([
                 'order_id' => $order->id,
                 'provider' => $client->provider(),
-                'gateway_reference' => (string) ($payload['reference'] ?? ''),
-                'payment_method' => (string) ($payload['paymentCode'] ?? null),
+                'gateway_reference' => (string) ($payload['transaction_id'] ?? ''),
+                'payment_method' => (string) ($payload['payment_type'] ?? null),
                 'amount_idr' => $payloadAmount,
                 'status' => match ($status) {
                     'success' => PaymentStatus::Success,
@@ -146,7 +148,7 @@ class BillingService
                     'expired' => PaymentStatus::Expired,
                     default => PaymentStatus::Pending,
                 },
-                'signature' => (string) ($payload['signature'] ?? null),
+                'signature' => (string) ($payload['signature_key'] ?? null),
                 'callback_payload' => $payload,
                 'settled_at' => $status === 'success' ? now() : null,
             ]);
@@ -160,7 +162,7 @@ class BillingService
 
             $order->forceFill([
                 'status' => $newStatus,
-                'payment_reference' => (string) ($payload['reference'] ?? $order->payment_reference),
+                'payment_reference' => (string) ($payload['transaction_id'] ?? $order->payment_reference),
                 'paid_at' => $newStatus === OrderStatus::Paid ? now() : $order->paid_at,
             ])->save();
 

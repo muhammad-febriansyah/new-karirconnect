@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/feedback/status-badge';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
+import { SafeHtml } from '@/components/shared/safe-html';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -204,7 +205,10 @@ export default function InterviewShow({ interview, myScorecard }: Props) {
 
                         {interview.candidate_instructions && (
                             <Section title="Instruksi untuk Kandidat">
-                                <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{interview.candidate_instructions}</p>
+                                <SafeHtml
+                                    html={interview.candidate_instructions}
+                                    className="prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-a:text-brand-blue"
+                                />
                             </Section>
                         )}
 

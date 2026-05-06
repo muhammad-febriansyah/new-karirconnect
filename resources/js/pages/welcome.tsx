@@ -2,7 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, CheckCircle2, ChevronDown, Clock, FileSearch, FileText, MapPin, Quote, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
 import { Spotlight } from '@/components/aceternity/spotlight';
 import { motion } from 'motion/react';
-import { type FormEvent, lazy, Suspense, useState } from 'react';
+import { type FormEvent, lazy, Suspense, useEffect, useState } from 'react';
 import { Marquee } from '@/components/ui/marquee';
 
 const Globe3D = lazy(() => import('@/components/ui/3d-globe').then((m) => ({ default: m.Globe3D })));
@@ -279,65 +279,68 @@ function PipelinePreview() {
 }
 
 function CompanyCard({ company }: { company: TopCompany }) {
+    const isHiring = company.open_jobs > 0;
+    const hasReviews = company.review_count > 0 && company.avg_rating !== null;
+
     return (
         <Link
             href={`/companies/${company.slug}`}
-            className="group/co relative flex w-[260px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-background p-4 shadow-sm transition-all hover:-translate-y-1 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10 sm:w-[300px] sm:p-5"
+            className="group/co relative flex w-[280px] shrink-0 items-center gap-3 rounded-2xl border border-border/60 bg-background p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md hover:shadow-brand-blue/10 sm:w-[320px] sm:gap-3.5 sm:p-3.5"
         >
-            {company.open_jobs > 0 && (
-                <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-500/20">
-                    <span className="relative flex size-1.5">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-                        <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
-                    </span>
-                    Hiring
-                </span>
-            )}
-            <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 ring-1 ring-border/60 sm:size-14">
-                {company.logo ? (
-                    <img src={company.logo} alt={company.name} loading="lazy" className="size-full object-cover" />
-                ) : (
-                    <span className="bg-gradient-to-br from-brand-blue to-brand-cyan bg-clip-text text-base font-bold text-transparent">
-                        {company.name
-                            .split(' ')
-                            .slice(0, 2)
-                            .map((w) => w[0])
-                            .join('')
-                            .toUpperCase()}
+            <div className="relative shrink-0">
+                <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 ring-1 ring-border/60 sm:size-14">
+                    {company.logo ? (
+                        <img src={company.logo} alt={company.name} loading="lazy" className="size-full object-cover" />
+                    ) : (
+                        <span className="bg-gradient-to-br from-brand-blue to-brand-cyan bg-clip-text text-base font-bold text-transparent">
+                            {company.name
+                                .split(' ')
+                                .slice(0, 2)
+                                .map((w) => w[0])
+                                .join('')
+                                .toUpperCase()}
+                        </span>
+                    )}
+                </div>
+                {isHiring && (
+                    <span
+                        aria-label="Sedang merekrut"
+                        className="absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-background ring-1 ring-border/60"
+                    >
+                        <span className="relative flex size-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+                            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                        </span>
                     </span>
                 )}
             </div>
-            <h3 className="mt-3 line-clamp-1 text-sm font-bold text-brand-navy transition-colors group-hover/co:text-brand-blue">
-                {company.name}
-            </h3>
-            {company.review_count > 0 && company.avg_rating !== null ? (
-                <div className="mt-1 flex items-center gap-2 text-xs">
-                    <div className="flex items-center gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                                key={i}
-                                className={cn(
-                                    'size-3',
-                                    i < Math.round(company.avg_rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-muted/40',
-                                )}
-                            />
-                        ))}
-                    </div>
-                    <span className="font-semibold text-brand-navy">{company.avg_rating}</span>
-                    <span className="text-muted-foreground">({company.review_count})</span>
+
+            <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                    <h3 className="line-clamp-1 text-sm font-bold text-brand-navy transition-colors group-hover/co:text-brand-blue">
+                        {company.name}
+                    </h3>
                 </div>
-            ) : (
-                <div className="mt-1 text-xs text-muted-foreground">Belum ada ulasan</div>
-            )}
-            <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3 text-xs">
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Briefcase className="size-3.5 text-brand-blue" />
-                    <span>
-                        <span className="font-bold text-brand-navy">{company.open_jobs}</span> lowongan
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    {hasReviews ? (
+                        <>
+                            <Star className="size-3 fill-amber-400 text-amber-400" />
+                            <span className="font-semibold text-brand-navy">{company.avg_rating}</span>
+                            <span>({company.review_count})</span>
+                        </>
+                    ) : (
+                        <span>Belum ada ulasan</span>
+                    )}
+                    <span className="text-muted-foreground/40">·</span>
+                    <span className="inline-flex items-center gap-1">
+                        <Briefcase className="size-3 text-brand-blue" />
+                        <span className="font-semibold text-brand-navy">{company.open_jobs}</span>
+                        <span>lowongan</span>
                     </span>
                 </div>
-                <ArrowRight className="size-3.5 -translate-x-1 text-brand-blue opacity-0 transition-all group-hover/co:translate-x-0 group-hover/co:opacity-100" />
             </div>
+
+            <ArrowRight className="size-4 shrink-0 -translate-x-1 text-brand-blue opacity-0 transition-all group-hover/co:translate-x-0 group-hover/co:opacity-100" />
         </Link>
     );
 }
@@ -426,6 +429,11 @@ function CityPill({ name, count, tone, delay = '0ms' }: { name: string; count: s
 export default function Welcome({ home }: Props) {
     const { auth } = usePage<SharedPageProps>().props;
     const [search, setSearch] = useState('');
+    const [globeReady, setGlobeReady] = useState(false);
+
+    useEffect(() => {
+        setGlobeReady(true);
+    }, []);
 
     const submitSearch = (e: FormEvent) => {
         e.preventDefault();
@@ -570,9 +578,13 @@ export default function Welcome({ home }: Props) {
 
                                 {/* 3D Earth globe with markers */}
                                 <div className="absolute inset-0">
-                                    <Suspense fallback={<GlobeFallback />}>
-                                        <Globe3D markers={GLOBE_MARKERS} config={GLOBE_CONFIG_3D} className="!h-full" />
-                                    </Suspense>
+                                    {globeReady ? (
+                                        <Suspense fallback={<GlobeFallback />}>
+                                            <Globe3D markers={GLOBE_MARKERS} config={GLOBE_CONFIG_3D} className="!h-full" />
+                                        </Suspense>
+                                    ) : (
+                                        <GlobeFallback />
+                                    )}
                                 </div>
 
                                 {/* Floating city pills */}

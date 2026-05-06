@@ -4,6 +4,9 @@ use App\Actions\Interviews\RescheduleInterviewAction;
 use App\Enums\ApplicationStatus;
 use App\Enums\InterviewMode;
 use App\Enums\InterviewStatus;
+use App\Models\AiInterviewSession;
+use App\Models\AiInterviewTemplate;
+use App\Models\AiInterviewTemplateQuestion;
 use App\Models\Application;
 use App\Models\Company;
 use App\Models\EmployeeProfile;
@@ -88,8 +91,40 @@ test('onsite interview requires location fields', function () {
         ->assertSessionHasErrors(['location_name', 'location_address']);
 });
 
-test('AI interview can be scheduled without meeting or location', function () {
+test('AI interview can be scheduled with a template that has questions', function () {
     Notification::fake();
+    ['owner' => $owner, 'company' => $company, 'application' => $application] = makeInterviewContext();
+
+    $template = AiInterviewTemplate::factory()->create([
+        'company_id' => $company->id,
+        'mode' => 'text',
+    ]);
+    AiInterviewTemplateQuestion::factory()->create(['template_id' => $template->id, 'order_number' => 1]);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.store'), [
+            'application_id' => $application->id,
+            'stage' => 'screening',
+            'mode' => 'ai',
+            'title' => 'AI Pre-Screen',
+            'scheduled_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
+            'duration_minutes' => 30,
+            'ai_template_id' => $template->id,
+        ])
+        ->assertRedirect();
+
+    $interview = Interview::query()->first();
+    expect($interview->mode)->toBe(InterviewMode::Ai);
+    expect($interview->meeting_url)->toBeNull();
+    expect($interview->location_address)->toBeNull();
+
+    // Session juga dibuat & terhubung dengan template
+    $session = AiInterviewSession::query()->where('application_id', $application->id)->first();
+    expect($session)->not->toBeNull();
+    expect($session->template_id)->toBe($template->id);
+});
+
+test('AI interview cannot be scheduled without a template', function () {
     ['owner' => $owner, 'application' => $application] = makeInterviewContext();
 
     $this->actingAs($owner)
@@ -101,12 +136,55 @@ test('AI interview can be scheduled without meeting or location', function () {
             'scheduled_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
             'duration_minutes' => 30,
         ])
-        ->assertRedirect();
+        ->assertSessionHasErrors(['ai_template_id']);
 
-    $interview = Interview::query()->first();
-    expect($interview->mode)->toBe(InterviewMode::Ai);
-    expect($interview->meeting_url)->toBeNull();
-    expect($interview->location_address)->toBeNull();
+    expect(Interview::query()->count())->toBe(0);
+});
+
+test('AI interview cannot be scheduled when template has no questions', function () {
+    ['owner' => $owner, 'company' => $company, 'application' => $application] = makeInterviewContext();
+
+    $template = AiInterviewTemplate::factory()->create([
+        'company_id' => $company->id,
+        'mode' => 'text',
+    ]);
+    // No questions
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.store'), [
+            'application_id' => $application->id,
+            'stage' => 'screening',
+            'mode' => 'ai',
+            'title' => 'AI Pre-Screen',
+            'scheduled_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
+            'duration_minutes' => 30,
+            'ai_template_id' => $template->id,
+        ])
+        ->assertSessionHasErrors(['ai_template_id']);
+
+    expect(Interview::query()->count())->toBe(0);
+});
+
+test('AI interview cannot use template from another company', function () {
+    ['owner' => $owner, 'application' => $application] = makeInterviewContext();
+
+    $otherCompany = Company::factory()->approved()->create([
+        'owner_id' => User::factory()->employer()->create()->id,
+    ]);
+    $foreign = AiInterviewTemplate::factory()->create(['company_id' => $otherCompany->id, 'mode' => 'text']);
+    AiInterviewTemplateQuestion::factory()->create(['template_id' => $foreign->id]);
+
+    $this->actingAs($owner)
+        ->post(route('employer.interviews.store'), [
+            'application_id' => $application->id,
+            'stage' => 'screening',
+            'mode' => 'ai',
+            'title' => 'AI Pre-Screen',
+            'scheduled_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
+            'duration_minutes' => 30,
+            'ai_template_id' => $foreign->id,
+        ])
+        ->assertSessionHasErrors(['ai_template_id']);
 });
 
 test('cannot schedule conflicting slot for the same candidate', function () {

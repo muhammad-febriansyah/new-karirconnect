@@ -7,15 +7,21 @@ import {
     Heart,
     HelpCircle,
     Info,
+    Facebook,
+    Instagram,
+    Linkedin,
     Mail,
     MapPin,
     Menu,
+    Music2,
     Phone,
     ScrollText,
     Shield,
     ShieldCheck,
     Sparkles,
+    Twitter,
     X,
+    Youtube,
 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -34,7 +40,7 @@ import { index as companiesIndex } from '@/routes/public/companies';
 import { index as careerResourcesIndex } from '@/routes/public/career-resources';
 import { show as legalShow } from '@/routes/public/legal';
 import type { Auth, FeatureFlags } from '@/types';
-import type { AppMeta, Branding } from '@/types/shared';
+import type { AppMeta, Branding, SocialLinks } from '@/types/shared';
 
 type HomeLayoutProps = {
     children: ReactNode;
@@ -77,12 +83,23 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
         features?: FeatureFlags;
         app?: AppMeta;
         branding?: Branding;
+        social?: SocialLinks;
     };
     const { url } = usePage();
     const auth = props.auth;
     const features = props.features ?? {};
     const appName = props.app?.name ?? 'KarirConnect';
     const logoPath = props.branding?.logo_path;
+    const social = props.social ?? {};
+
+    const socialLinks: { href: string; icon: typeof Linkedin; label: string }[] = [
+        { href: social.linkedin ?? '', icon: Linkedin, label: 'LinkedIn' },
+        { href: social.instagram ?? '', icon: Instagram, label: 'Instagram' },
+        { href: social.twitter ?? '', icon: Twitter, label: 'Twitter / X' },
+        { href: social.facebook ?? '', icon: Facebook, label: 'Facebook' },
+        { href: social.youtube ?? '', icon: Youtube, label: 'YouTube' },
+        { href: social.tiktok ?? '', icon: Music2, label: 'TikTok' },
+    ].filter((s) => s.href.trim().length > 0);
 
     const [mobileOpen, setMobileOpen] = useState(false);
     const [mobileHelpOpen, setMobileHelpOpen] = useState(false);
@@ -402,10 +419,87 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                     className="pointer-events-none absolute -right-40 bottom-0 h-80 w-80 rounded-full bg-brand-cyan/5 blur-3xl"
                 />
 
-                <div className="relative mx-auto grid w-full max-w-7xl gap-12 px-4 py-16 sm:grid-cols-2 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:px-8">
+                {/* ── Top CTA banner (full-width) ── */}
+                <div className="relative mx-auto w-full max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan p-6 text-white shadow-xl shadow-brand-blue/20 sm:p-8">
+                        <div
+                            aria-hidden
+                            className="pointer-events-none absolute -right-12 -top-12 size-56 rounded-full bg-white/15 blur-3xl"
+                        />
+                        <div
+                            aria-hidden
+                            className="pointer-events-none absolute -bottom-16 -left-10 size-56 rounded-full bg-brand-cyan/40 blur-3xl"
+                        />
+                        <div
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 opacity-[0.12]"
+                            style={{
+                                backgroundImage:
+                                    'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)',
+                                backgroundSize: '22px 22px',
+                            }}
+                        />
+                        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-4">
+                                <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+                                    <Sparkles className="size-5" />
+                                </span>
+                                <div>
+                                    <h4 className="text-lg font-bold leading-tight tracking-tight sm:text-xl">
+                                        Siap melangkah lebih jauh?
+                                    </h4>
+                                    <p className="mt-1 max-w-md text-sm text-white/85">
+                                        {auth?.user
+                                            ? 'Lanjutkan perjalanan karier Anda — buka dashboard untuk akses penuh ke fitur AI.'
+                                            : 'Bergabung gratis dan dapatkan AI Coach pribadi, AI Interview, dan rekomendasi lowongan personal.'}
+                                    </p>
+                                </div>
+                            </div>
+                            {!auth?.user && features.registration_enabled !== false && (
+                                <div className="flex shrink-0 flex-wrap gap-2 sm:flex-nowrap">
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        className="h-11 rounded-xl bg-white px-5 text-brand-blue shadow-md shadow-brand-navy/20 hover:bg-white/95"
+                                    >
+                                        <Link href={register()} prefetch>
+                                            Mulai Sekarang
+                                            <ArrowRight className="size-4" />
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        asChild
+                                        size="lg"
+                                        variant="outline"
+                                        className="h-11 rounded-xl border-white/30 bg-white/10 px-5 text-white backdrop-blur hover:bg-white/15 hover:text-white"
+                                    >
+                                        <Link href={login().url} prefetch>
+                                            Masuk
+                                        </Link>
+                                    </Button>
+                                </div>
+                            )}
+                            {auth?.user && (
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    className="h-11 shrink-0 rounded-xl bg-white px-5 text-brand-blue shadow-md shadow-brand-navy/20 hover:bg-white/95"
+                                >
+                                    <Link href={dashboard()} prefetch>
+                                        Buka Dashboard
+                                        <ArrowRight className="size-4" />
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Main grid ── */}
+                <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-12 lg:gap-8 lg:px-8">
                     {/* Brand col */}
-                    <div className="space-y-5 sm:col-span-2 lg:col-span-4">
-                        <Link href="/" className="inline-flex items-center gap-2.5" prefetch>
+                    <div className="space-y-5 md:col-span-2 lg:col-span-5">
+                        <Link href="/" className="inline-flex items-center" prefetch aria-label={appName}>
                             {logoPath ? (
                                 <img src={logoPath} alt={appName} className="h-10 w-auto" />
                             ) : (
@@ -413,230 +507,116 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                     <AppLogoIcon className="size-5 fill-current text-white" />
                                 </div>
                             )}
-                            <span className="text-base font-bold tracking-tight text-foreground">
-                                {appName}
-                            </span>
                         </Link>
-                        <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+                        <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
                             Platform karier all-in-one yang mempertemukan kandidat dengan perusahaan
                             terbaik, didukung AI Coach, AI Interview, dan insight gaji riil dari
                             ribuan posisi.
                         </p>
-                        <div className="flex flex-col gap-2.5 pt-1 text-xs text-muted-foreground">
+
+                        <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background/60 p-3 backdrop-blur-sm sm:max-w-sm">
                             <a
                                 href="mailto:halo@karirconnect.id"
-                                className="group inline-flex items-center gap-2 transition-colors hover:text-brand-blue"
+                                className="group inline-flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-sm transition-colors hover:bg-brand-blue/5 hover:text-brand-blue"
                             >
-                                <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue transition-colors group-hover:bg-brand-blue/15">
-                                    <Mail className="size-3.5" />
+                                <span className="flex size-8 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue transition-colors group-hover:bg-brand-blue/15">
+                                    <Mail className="size-4" />
                                 </span>
-                                halo@karirconnect.id
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Email
+                                    </span>
+                                    <span className="font-medium text-foreground group-hover:text-brand-blue">
+                                        halo@karirconnect.id
+                                    </span>
+                                </div>
                             </a>
-                            <span className="inline-flex items-center gap-2">
-                                <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
-                                    <MapPin className="size-3.5" />
+                            <div className="inline-flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-sm">
+                                <span className="flex size-8 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
+                                    <MapPin className="size-4" />
                                 </span>
-                                Jakarta, Indonesia
-                            </span>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Lokasi
+                                    </span>
+                                    <span className="font-medium text-foreground">Jakarta, Indonesia</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 pt-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/15 bg-brand-blue/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-blue">
-                                <Sparkles className="size-3" />
-                                Made in Indonesia
-                            </span>
-                        </div>
+
+                        {socialLinks.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Ikuti Kami
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                    {socialLinks.map(({ href, icon: Icon, label }) => (
+                                        <a
+                                            key={label}
+                                            href={href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={label}
+                                            title={label}
+                                            className="flex size-8 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
+                                        >
+                                            <Icon className="size-4" />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Link columns */}
-                    <div className="space-y-4 lg:col-span-2">
-                        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-navy">
-                            <span className="size-1 rounded-full bg-brand-blue" />
-                            Perusahaan
-                        </h3>
-                        <ul className="space-y-2.5 text-sm text-muted-foreground">
-                            <li>
-                                <Link
-                                    href={aboutRoute().url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Tentang Kami
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={contactRoute().url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Kontak
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={faqRoute().url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    FAQ
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={careerResourcesIndex().url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Tips Karier
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
+                    <FooterLinkColumn
+                        accent="bg-brand-blue"
+                        title="Perusahaan"
+                        links={[
+                            { href: aboutRoute().url, label: 'Tentang Kami' },
+                            { href: contactRoute().url, label: 'Kontak' },
+                            { href: faqRoute().url, label: 'FAQ' },
+                            { href: careerResourcesIndex().url, label: 'Tips Karier' },
+                        ]}
+                    />
 
-                    <div className="space-y-4 lg:col-span-2">
-                        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-navy">
-                            <span className="size-1 rounded-full bg-brand-cyan" />
-                            Cari Kerja
-                        </h3>
-                        <ul className="space-y-2.5 text-sm text-muted-foreground">
-                            <li>
-                                <Link
-                                    href={jobsIndex().url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Lowongan
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={companiesIndex().url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Perusahaan
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={salaryInsightRoute().url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Insight Gaji
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            {!auth?.user && features.registration_enabled !== false && (
-                                <li>
-                                    <Link
-                                        href={register().url}
-                                        className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                    >
-                                        Buat Akun
-                                        <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                    </Link>
-                                </li>
-                            )}
-                        </ul>
-                    </div>
+                    <FooterLinkColumn
+                        accent="bg-brand-cyan"
+                        title="Cari Kerja"
+                        links={[
+                            { href: jobsIndex().url, label: 'Lowongan' },
+                            { href: companiesIndex().url, label: 'Perusahaan' },
+                            { href: salaryInsightRoute().url, label: 'Insight Gaji' },
+                            ...(!auth?.user && features.registration_enabled !== false
+                                ? [{ href: register().url, label: 'Buat Akun' }]
+                                : []),
+                        ]}
+                    />
 
-                    <div className="space-y-4 lg:col-span-2">
-                        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-navy">
-                            <span className="size-1 rounded-full bg-amber-400" />
-                            Legal
-                        </h3>
-                        <ul className="space-y-2.5 text-sm text-muted-foreground">
-                            <li>
-                                <Link
-                                    href={legalShow('terms').url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Syarat & Ketentuan
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={legalShow('privacy').url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Kebijakan Privasi
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href={legalShow('cookies').url}
-                                    className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
-                                >
-                                    Kebijakan Cookies
-                                    <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* CTA card */}
-                    <div className="sm:col-span-2 lg:col-span-2">
-                        <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan p-5 text-white shadow-lg shadow-brand-blue/20">
-                            <div
-                                aria-hidden
-                                className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-white/15 blur-2xl"
-                            />
-                            <div
-                                aria-hidden
-                                className="pointer-events-none absolute inset-0 opacity-15"
-                                style={{
-                                    backgroundImage:
-                                        'radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px)',
-                                    backgroundSize: '20px 20px',
-                                }}
-                            />
-                            <div className="relative">
-                                <span className="inline-flex size-8 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur">
-                                    <Sparkles className="size-4" />
-                                </span>
-                                <h4 className="mt-3 text-sm font-bold leading-tight">
-                                    Siap melangkah lebih jauh?
-                                </h4>
-                                <p className="mt-1.5 text-xs leading-relaxed text-white/80">
-                                    Bergabung gratis dan dapatkan AI Coach pribadi.
-                                </p>
-                                {!auth?.user && features.registration_enabled !== false && (
-                                    <Button
-                                        asChild
-                                        size="sm"
-                                        className="mt-3 h-9 w-full rounded-lg bg-white text-brand-blue hover:bg-white/95"
-                                    >
-                                        <Link href={register()} prefetch>
-                                            Mulai Sekarang
-                                            <ArrowRight className="size-3.5" />
-                                        </Link>
-                                    </Button>
-                                )}
-                                {auth?.user && (
-                                    <Button
-                                        asChild
-                                        size="sm"
-                                        className="mt-3 h-9 w-full rounded-lg bg-white text-brand-blue hover:bg-white/95"
-                                    >
-                                        <Link href={dashboard()} prefetch>
-                                            Buka Dashboard
-                                            <ArrowRight className="size-3.5" />
-                                        </Link>
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <FooterLinkColumn
+                        accent="bg-amber-400"
+                        title="Legal"
+                        links={[
+                            { href: legalShow('terms').url, label: 'Syarat & Ketentuan' },
+                            { href: legalShow('privacy').url, label: 'Kebijakan Privasi' },
+                            { href: legalShow('cookies').url, label: 'Kebijakan Cookies' },
+                        ]}
+                    />
                 </div>
 
-                <div className="relative border-t border-border/60">
+                {/* ── Bottom bar ── */}
+                <div className="relative border-t border-border/60 bg-muted/30">
                     <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-                        <div className="flex items-center gap-1.5">
-                            <span>© {new Date().getFullYear()} {appName}. Dibuat dengan</span>
-                            <Heart className="size-3.5 fill-rose-500 text-rose-500" />
-                            <span>untuk Indonesia.</span>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                            <span className="inline-flex items-center gap-1.5">
+                                <span>© {new Date().getFullYear()} {appName}. Dibuat dengan</span>
+                                <Heart className="size-3.5 fill-rose-500 text-rose-500" />
+                                <span>untuk Indonesia.</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/20 bg-brand-blue/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-blue">
+                                <Sparkles className="size-3" />
+                                Made in ID
+                            </span>
                         </div>
                         <nav className="flex items-center gap-3" aria-label="Tautan legal">
                             <Link
@@ -666,6 +646,38 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                     </div>
                 </div>
             </footer>
+        </div>
+    );
+}
+
+function FooterLinkColumn({
+    title,
+    accent,
+    links,
+}: {
+    title: string;
+    accent: string;
+    links: { href: string; label: string }[];
+}) {
+    return (
+        <div className="space-y-4 lg:col-span-2">
+            <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-brand-navy">
+                <span className={cn('h-3 w-0.5 rounded-full', accent)} />
+                {title}
+            </h3>
+            <ul className="space-y-2.5 text-sm text-muted-foreground">
+                {links.map((link) => (
+                    <li key={link.href}>
+                        <Link
+                            href={link.href}
+                            className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
+                        >
+                            {link.label}
+                            <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                        </Link>
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }

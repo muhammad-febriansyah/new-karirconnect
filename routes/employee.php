@@ -79,6 +79,7 @@ Route::middleware(['auth', 'verified', 'role:employee', 'onboarding'])
                 Route::post('{session}/recording', [AiInterviewController::class, 'uploadRecording'])->name('recording');
                 Route::post('{session}/voice-submit', [AiInterviewController::class, 'submitVoice'])->name('voice-submit');
                 Route::post('{session}/complete', [AiInterviewController::class, 'complete'])->name('complete');
+                Route::post('{session}/switch-to-text', [AiInterviewController::class, 'switchToText'])->name('switch-to-text');
             });
         });
 

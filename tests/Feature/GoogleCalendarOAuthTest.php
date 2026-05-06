@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Settings\SettingService;
 use Database\Seeders\SettingSeeder;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function (): void {
@@ -75,8 +76,15 @@ test('callback exchanges code for token and persists encrypted', function () {
 
     $token = GoogleCalendarToken::query()->where('user_id', $employer->id)->firstOrFail();
     expect($token->calendar_email)->toBe('recruiter@example.com');
-    expect(Crypt::decryptString($token->access_token))->toBe('access-xyz');
-    expect(Crypt::decryptString($token->refresh_token))->toBe('refresh-xyz');
+    // Model casts auto-decrypt on read; values come back plaintext.
+    expect($token->access_token)->toBe('access-xyz');
+    expect($token->refresh_token)->toBe('refresh-xyz');
+    // Verify the raw DB column is encrypted (not plaintext).
+    $rawAccess = (string) DB::table('google_calendar_tokens')
+        ->where('user_id', $employer->id)
+        ->value('access_token');
+    expect($rawAccess)->not->toBe('access-xyz');
+    expect(Crypt::decryptString($rawAccess))->toBe('access-xyz');
 });
 
 test('disconnect removes token row', function () {
@@ -85,7 +93,8 @@ test('disconnect removes token row', function () {
     GoogleCalendarToken::query()->create([
         'user_id' => $employer->id,
         'calendar_email' => 'r@example.com',
-        'access_token' => Crypt::encryptString('a'),
+        // Model casts as 'encrypted' — pass plain string.
+        'access_token' => 'a',
         'expires_at' => now()->addHour(),
         'scopes' => ['x'],
     ]);

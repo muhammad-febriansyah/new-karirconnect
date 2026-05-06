@@ -37,7 +37,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->group(function (): void {
                 Route::get('/', [SettingController::class, 'edit'])->name('edit');
                 Route::get('{group}', [SettingController::class, 'edit'])
-                    ->whereIn('group', ['general', 'branding', 'seo', 'ai', 'payment', 'email', 'security', 'feature_flags', 'legal'])
+                    ->whereIn('group', ['general', 'branding', 'seo', 'social', 'ai', 'payment', 'email', 'security', 'feature_flags', 'legal'])
                     ->name('group');
                 Route::post('/', [SettingController::class, 'update'])->name('update');
                 Route::post('test-email', [SettingController::class, 'testEmail'])->name('test-email');

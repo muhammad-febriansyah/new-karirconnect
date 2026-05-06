@@ -87,6 +87,11 @@ Route::middleware(['auth', 'verified', 'role:employer', 'employer.onboarded'])
                 Route::post('/', [AiInterviewTemplateController::class, 'store'])->name('store');
                 Route::patch('{template}', [AiInterviewTemplateController::class, 'update'])->name('update');
                 Route::delete('{template}', [AiInterviewTemplateController::class, 'destroy'])->name('destroy');
+
+                Route::post('{template}/questions', [AiInterviewTemplateController::class, 'storeQuestion'])->name('questions.store');
+                Route::patch('{template}/questions/{question}', [AiInterviewTemplateController::class, 'updateQuestion'])->name('questions.update');
+                Route::delete('{template}/questions/{question}', [AiInterviewTemplateController::class, 'destroyQuestion'])->name('questions.destroy');
+                Route::post('{template}/questions/reorder', [AiInterviewTemplateController::class, 'reorderQuestions'])->name('questions.reorder');
             });
 
             Route::prefix('ai-interviews')->name('ai-interviews.')->group(function (): void {
@@ -131,5 +136,7 @@ Route::middleware(['auth', 'verified', 'role:employer', 'employer.onboarded'])
                 Route::delete('{profile}/save', [SavedCandidateController::class, 'destroy'])->name('unsave');
                 Route::post('{profile}/outreach', [CandidateOutreachController::class, 'store'])->name('outreach');
             });
+
+            Route::get('outreach', [CandidateOutreachController::class, 'index'])->name('outreach.index');
         });
     });

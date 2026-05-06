@@ -52,6 +52,7 @@ type Props = {
         location_map_url: string | null;
         candidate_instructions: string | null;
         application_id: number | null;
+        ai_session_id: number | null;
         scheduled_by: string | null;
         job: { title: string | null; slug: string | null };
         company: { name: string | null; slug: string | null };
@@ -361,18 +362,30 @@ export default function EmployeeInterviewShow({ interview }: Props) {
                                         <Bot className="size-3.5" /> AI Interview
                                     </h3>
                                     <p className="text-sm leading-relaxed text-foreground">
-                                        Buka tab <strong>AI Interview Otomatis</strong> di dashboard untuk mengikuti sesi.
-                                        Pastikan koneksi internet stabil dan ruangan tenang.
+                                        {interview.ai_session_id
+                                            ? 'Klik tombol di bawah untuk masuk ke sesi AI Interview Anda. Pastikan koneksi internet stabil dan ruangan tenang.'
+                                            : 'Sesi AI Interview belum disiapkan oleh recruiter. Silakan hubungi recruiter atau coba refresh halaman ini.'}
                                     </p>
-                                    <Button
-                                        asChild
-                                        variant="outline"
-                                        className="border-violet-500/30 text-violet-700 hover:bg-violet-500/10"
-                                    >
-                                        <Link href="/employee/ai-interviews">
-                                            <Bot className="size-4" /> Mulai AI Interview
-                                        </Link>
-                                    </Button>
+                                    {interview.ai_session_id ? (
+                                        <Button
+                                            asChild
+                                            className="bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:brightness-110"
+                                        >
+                                            <Link href={`/employee/ai-interviews/${interview.ai_session_id}/run`}>
+                                                <Bot className="size-4" /> Mulai AI Interview
+                                            </Link>
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            className="border-violet-500/30 text-violet-700 hover:bg-violet-500/10"
+                                        >
+                                            <Link href="/employee/ai-interviews">
+                                                <Bot className="size-4" /> Buka Daftar AI Interview
+                                            </Link>
+                                        </Button>
+                                    )}
                                 </CardContent>
                             </Card>
                         )}

@@ -18,6 +18,10 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'phone' => ['nullable', 'string', 'max:32'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'locale' => ['required', 'string', 'in:id,en', 'max:5'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
         ];
     }
 

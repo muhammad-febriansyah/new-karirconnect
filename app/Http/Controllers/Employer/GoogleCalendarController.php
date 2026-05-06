@@ -7,7 +7,6 @@ use App\Models\GoogleCalendarToken;
 use App\Services\Settings\SettingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -106,8 +105,9 @@ class GoogleCalendarController extends Controller
             ['user_id' => $request->user()->id],
             [
                 'calendar_email' => $email,
-                'access_token' => Crypt::encryptString($accessToken),
-                'refresh_token' => $refreshToken !== null ? Crypt::encryptString((string) $refreshToken) : null,
+                // Model casts both fields as 'encrypted' so we pass plaintext.
+                'access_token' => $accessToken,
+                'refresh_token' => $refreshToken !== null ? (string) $refreshToken : null,
                 'expires_at' => now()->addSeconds($expiresIn),
                 'scopes' => self::SCOPES,
             ],

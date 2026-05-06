@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Employee;
 
 use App\Actions\Interviews\RescheduleInterviewAction;
 use App\Http\Controllers\Controller;
+use App\Models\AiInterviewSession;
 use App\Models\Interview;
 use App\Models\InterviewParticipant;
 use App\Services\Employee\EmployeeProfileService;
@@ -81,9 +82,19 @@ class InterviewController extends Controller
             'scheduledBy:id,name',
         ]);
 
+        $aiSessionId = null;
+        if ($interview->mode?->value === 'ai' && $interview->application_id !== null) {
+            $aiSessionId = AiInterviewSession::query()
+                ->where('application_id', $interview->application_id)
+                ->where('is_practice', false)
+                ->orderByDesc('id')
+                ->value('id');
+        }
+
         return Inertia::render('employee/interviews/show', [
             'interview' => [
                 'id' => $interview->id,
+                'ai_session_id' => $aiSessionId,
                 'title' => $interview->title,
                 'stage' => $interview->stage?->value,
                 'mode' => $interview->mode?->value,

@@ -209,6 +209,50 @@ test('employee cannot view another candidate ai interview session', function () 
         ->assertForbidden();
 });
 
+test('candidate result page hides analysis & scores for non-practice sessions', function () {
+    ['candidate' => $candidate, 'profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+        'is_practice' => false,
+    ]);
+    app(AiQuestionGeneratorService::class)->generate($session);
+    app(AiInterviewAnalysisService::class)->analyze($session->fresh());
+
+    $response = $this->actingAs($candidate)
+        ->get(route('employee.ai-interviews.result', ['session' => $session->id]))
+        ->assertOk();
+
+    $page = $response->viewData('page');
+    expect($page['props']['analysis'])->toBeNull();
+    foreach ($page['props']['responses'] as $r) {
+        expect($r['ai_score'])->toBeNull();
+        expect($r['sub_scores'])->toBeNull();
+        expect($r['ai_feedback'])->toBeNull();
+    }
+});
+
+test('candidate result page still shows analysis on practice sessions', function () {
+    ['candidate' => $candidate, 'profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+        'is_practice' => true,
+    ]);
+    app(AiQuestionGeneratorService::class)->generate($session);
+    app(AiInterviewAnalysisService::class)->analyze($session->fresh());
+
+    $response = $this->actingAs($candidate)
+        ->get(route('employee.ai-interviews.result', ['session' => $session->id]))
+        ->assertOk();
+
+    $page = $response->viewData('page');
+    expect($page['props']['analysis'])->not->toBeNull();
+    expect($page['props']['analysis']['overall_score'])->toBeInt();
+});
+
 test('employer can review own-company ai interview analysis', function () {
     ['owner' => $owner, 'profile' => $profile, 'job' => $job] = makeAiInterviewContext();
 

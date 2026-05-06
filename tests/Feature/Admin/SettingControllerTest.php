@@ -26,7 +26,7 @@ test('admin can render every settings group', function () {
     $admin = User::factory()->admin()->create();
     $this->actingAs($admin);
 
-    foreach (['general', 'branding', 'seo', 'ai', 'payment', 'email', 'feature_flags', 'legal'] as $group) {
+    foreach (['general', 'branding', 'seo', 'social', 'ai', 'payment', 'email', 'feature_flags', 'legal'] as $group) {
         $this->get(route('admin.settings.group', ['group' => $group]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
@@ -62,7 +62,7 @@ test('settings password update is recorded but the secret is redacted', function
 
     $this->post(route('admin.settings.update'), [
         'group' => 'payment',
-        'values' => ['duitku_api_key' => 'super-secret-token'],
+        'values' => ['midtrans_server_key' => 'super-secret-token'],
     ])->assertRedirect();
 
     $log = AuditLog::query()->where('action', 'settings.update')->latest('id')->firstOrFail();
@@ -96,19 +96,19 @@ test('password type values are encrypted at rest and not exposed publicly', func
     $this->post(route('admin.settings.update'), [
         'group' => 'payment',
         'values' => [
-            'duitku_api_key' => 'secret-api-key',
+            'midtrans_server_key' => 'secret-api-key',
         ],
     ])->assertRedirect();
 
     $service = app(SettingService::class);
-    expect($service->get('payment.duitku_api_key'))->toBe('secret-api-key');
+    expect($service->get('payment.midtrans_server_key'))->toBe('secret-api-key');
 
     $public = $service->publicByGroup();
-    expect(data_get($public, 'payment.duitku_api_key'))->toBeNull();
+    expect(data_get($public, 'payment.midtrans_server_key'))->toBeNull();
 
     $rawValue = Setting::query()
         ->where('group', 'payment')
-        ->where('key', 'duitku_api_key')
+        ->where('key', 'midtrans_server_key')
         ->value('value');
 
     expect($rawValue)->not->toBe('secret-api-key');

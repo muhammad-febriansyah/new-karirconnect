@@ -58,6 +58,7 @@ const GROUP_NOTES: Record<string, string> = {
     general: 'Atur identitas dasar aplikasi, kanal kontak, dan preferensi regional yang dipakai di seluruh platform.',
     branding: 'Kelola aset visual utama seperti logo, favicon, dan elemen branding publik lainnya.',
     seo: 'Tentukan metadata SEO, OG image, dan identitas pelacakan untuk halaman publik.',
+    social: 'Tautan sosial media perusahaan yang ditampilkan di footer publik. Kosongkan field untuk menyembunyikan ikon.',
     ai: 'Konfigurasikan provider AI, model, dan batas token untuk fitur coaching serta interview.',
     payment: 'Simpan kredensial dan endpoint gateway pembayaran yang dipakai saat checkout.',
     email: 'Atur pengiriman email sistem, alamat pengirim, dan detail SMTP.',

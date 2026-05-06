@@ -6,6 +6,7 @@ export type User = {
     email: string;
     avatar_url?: string | null;
     phone?: string | null;
+    address?: string | null;
     locale?: string;
     is_active?: boolean;
     role: UserRole;

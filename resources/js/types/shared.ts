@@ -32,6 +32,15 @@ export type SeoMeta = {
     google_tag_manager_id?: string | null;
 };
 
+export type SocialLinks = {
+    linkedin?: string | null;
+    instagram?: string | null;
+    twitter?: string | null;
+    facebook?: string | null;
+    youtube?: string | null;
+    tiktok?: string | null;
+};
+
 export type FeatureFlags = {
     ai_interview_enabled?: boolean;
     ai_coach_enabled?: boolean;
@@ -51,6 +60,7 @@ export type SharedPageProps = {
     app: AppMeta;
     branding: Branding;
     seo: SeoMeta;
+    social: SocialLinks;
     features: FeatureFlags;
     [key: string]: unknown;
 };

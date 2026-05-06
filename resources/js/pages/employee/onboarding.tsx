@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { DatePickerField } from '@/components/form/date-picker-field';
+import { MoneyInput } from '@/components/form/money-input';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -408,10 +410,10 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                         <InputError message={form.errors.about} />
                                     </Field>
                                     <Field label="Tanggal Lahir">
-                                        <Input
-                                            type="date"
+                                        <DatePickerField
                                             value={form.data.date_of_birth}
-                                            onChange={(e) => form.setData('date_of_birth', e.target.value)}
+                                            onChange={(value) => form.setData('date_of_birth', value)}
+                                            placeholder="Pilih tanggal lahir"
                                         />
                                         <InputError message={form.errors.date_of_birth} />
                                     </Field>
@@ -508,22 +510,18 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                         <InputError message={form.errors.experience_level} />
                                     </Field>
                                     <Field label="Ekspektasi Gaji Min (IDR)">
-                                        <Input
-                                            type="number"
-                                            inputMode="numeric"
+                                        <MoneyInput
                                             value={form.data.expected_salary_min}
-                                            onChange={(e) => form.setData('expected_salary_min', e.target.value)}
-                                            placeholder="5000000"
+                                            onChange={(value) => form.setData('expected_salary_min', value === null ? '' : String(value))}
+                                            placeholder="Rp 5.000.000"
                                         />
                                         <InputError message={form.errors.expected_salary_min} />
                                     </Field>
                                     <Field label="Ekspektasi Gaji Max (IDR)">
-                                        <Input
-                                            type="number"
-                                            inputMode="numeric"
+                                        <MoneyInput
                                             value={form.data.expected_salary_max}
-                                            onChange={(e) => form.setData('expected_salary_max', e.target.value)}
-                                            placeholder="8000000"
+                                            onChange={(value) => form.setData('expected_salary_max', value === null ? '' : String(value))}
+                                            placeholder="Rp 8.000.000"
                                         />
                                         <InputError message={form.errors.expected_salary_max} />
                                     </Field>
@@ -573,24 +571,22 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                                     />
                                                 </Field>
                                                 <Field label="Tanggal Mulai">
-                                                    <Input
-                                                        type="date"
+                                                    <DatePickerField
                                                         value={exp.start_date}
-                                                        onChange={(e) => {
+                                                        onChange={(value) => {
                                                             const next = [...form.data.work_experiences];
-                                                            next[idx] = { ...exp, start_date: e.target.value };
+                                                            next[idx] = { ...exp, start_date: value };
                                                             form.setData('work_experiences', next);
                                                         }}
                                                     />
                                                 </Field>
                                                 <Field label="Tanggal Berakhir">
-                                                    <Input
-                                                        type="date"
+                                                    <DatePickerField
                                                         value={exp.end_date}
                                                         disabled={exp.is_current}
-                                                        onChange={(e) => {
+                                                        onChange={(value) => {
                                                             const next = [...form.data.work_experiences];
-                                                            next[idx] = { ...exp, end_date: e.target.value };
+                                                            next[idx] = { ...exp, end_date: value };
                                                             form.setData('work_experiences', next);
                                                         }}
                                                     />

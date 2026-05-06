@@ -48,18 +48,26 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
-                'warning' => fn () => $request->session()->get('warning'),
-                'info' => fn () => $request->session()->get('info'),
+                'success' => fn () => $request->hasSession() ? $request->session()->get('success') : null,
+                'error' => fn () => $request->hasSession() ? $request->session()->get('error') : null,
+                'warning' => fn () => $request->hasSession() ? $request->session()->get('warning') : null,
+                'info' => fn () => $request->hasSession() ? $request->session()->get('info') : null,
             ],
             'app' => [
                 'name' => $public['general']['app_name'] ?? config('app.name'),
                 'tagline' => $public['general']['app_tagline'] ?? null,
                 'contact_email' => $public['general']['contact_email'] ?? null,
                 'contact_phone' => $public['general']['contact_phone'] ?? null,
-                'locale' => $public['general']['default_locale'] ?? 'id',
+                'locale' => 'id',
                 'url' => url('/'),
+            ],
+            'social' => [
+                'linkedin' => $public['social']['linkedin_url'] ?? null,
+                'instagram' => $public['social']['instagram_url'] ?? null,
+                'twitter' => $public['social']['twitter_url'] ?? null,
+                'facebook' => $public['social']['facebook_url'] ?? null,
+                'youtube' => $public['social']['youtube_url'] ?? null,
+                'tiktok' => $public['social']['tiktok_url'] ?? null,
             ],
             'branding' => [
                 'logo_path' => $this->asset($public['branding']['logo_path'] ?? null),
@@ -111,6 +119,12 @@ class HandleInertiaRequests extends Middleware
      */
     private function resolveUser(Request $request): ?array
     {
+        // Guard auth resolution when session isn't bound (e.g. exception render
+        // before StartSession middleware runs for unmatched 404 routes).
+        if (! $request->hasSession()) {
+            return null;
+        }
+
         $user = $request->user();
 
         if (! $user) {
@@ -119,7 +133,7 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...$user->only([
-                'id', 'name', 'email', 'phone', 'locale', 'is_active',
+                'id', 'name', 'email', 'phone', 'address', 'locale', 'is_active',
                 'email_verified_at', 'created_at', 'updated_at',
             ]),
             'role' => $user->role?->value,

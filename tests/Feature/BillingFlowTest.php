@@ -11,7 +11,7 @@ use App\Models\PaymentTransaction;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\Billing\BillingService;
-use App\Services\Billing\Clients\FakeDuitkuClient;
+use App\Services\Billing\Clients\FakeMidtransClient;
 use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
 use Database\Seeders\SettingSeeder;
@@ -34,19 +34,32 @@ function makeBillingContext(): array
     return compact('owner', 'company');
 }
 
-function makeFakeCallback(string $reference, int $amount, string $resultCode = '00'): array
+function makeFakeCallback(string $reference, int $amount, string $transactionStatus = 'settlement'): array
 {
-    /** @var FakeDuitkuClient $client */
-    $client = app(FakeDuitkuClient::class);
+    /** @var FakeMidtransClient $client */
+    $client = app(FakeMidtransClient::class);
+
+    $statusCode = match ($transactionStatus) {
+        'settlement', 'capture' => '200',
+        'pending' => '201',
+        'deny', 'cancel', 'failure' => '202',
+        'expire' => '407',
+        default => '500',
+    };
+
+    $grossAmount = number_format((float) $amount, 2, '.', '');
 
     return [
-        'merchantCode' => 'FAKEMERCHANT',
-        'amount' => (string) $amount,
-        'merchantOrderId' => $reference,
-        'reference' => 'GW-'.$reference,
-        'resultCode' => $resultCode,
-        'paymentCode' => 'BC',
-        'signature' => $client->expectedSignature('FAKEMERCHANT', (string) $amount, $reference),
+        'merchant_id' => 'FAKEMERCHANT',
+        'order_id' => $reference,
+        'transaction_id' => 'GW-'.$reference,
+        'gross_amount' => $grossAmount,
+        'currency' => 'IDR',
+        'transaction_status' => $transactionStatus,
+        'status_code' => $statusCode,
+        'fraud_status' => 'accept',
+        'payment_type' => 'bank_transfer',
+        'signature_key' => $client->expectedSignature($reference, $statusCode, $grossAmount),
     ];
 }
 
@@ -74,14 +87,14 @@ test('free plan checkout activates subscription immediately', function () {
     expect($sub->status)->toBe(SubscriptionStatus::Active);
 });
 
-test('valid duitku callback marks order paid and activates plan', function () {
+test('valid midtrans callback marks order paid and activates plan', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
     $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $payload = makeFakeCallback($order->reference, $order->amount_idr);
 
-    $this->post(route('payments.duitku.callback'), $payload)
+    $this->post(route('payments.midtrans.notification'), $payload)
         ->assertOk()
         ->assertJson(['status' => 'ok', 'order_status' => 'paid']);
 
@@ -101,9 +114,9 @@ test('invalid signature is rejected and order stays awaiting', function () {
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $payload = makeFakeCallback($order->reference, $order->amount_idr);
-    $payload['signature'] = 'tampered-signature';
+    $payload['signature_key'] = 'tampered-signature';
 
-    $this->post(route('payments.duitku.callback'), $payload)
+    $this->post(route('payments.midtrans.notification'), $payload)
         ->assertStatus(401)
         ->assertJson(['status' => 'invalid_signature']);
 
@@ -121,9 +134,9 @@ test('amount mismatch is rejected with 422 and no entitlement applied', function
     // gateway sending wrong amount would be caught by this defense-in-depth.
     $tamperedAmount = $order->amount_idr + 1;
     $payload = makeFakeCallback($order->reference, $tamperedAmount);
-    $payload['amount'] = (string) $tamperedAmount;
+    $payload['gross_amount'] = number_format((float) $tamperedAmount, 2, '.', '');
 
-    $this->post(route('payments.duitku.callback'), $payload)
+    $this->post(route('payments.midtrans.notification'), $payload)
         ->assertStatus(422)
         ->assertJson(['status' => 'amount_mismatch']);
 
@@ -134,7 +147,7 @@ test('amount mismatch is rejected with 422 and no entitlement applied', function
 test('unknown order reference returns 404', function () {
     $payload = makeFakeCallback('UNKNOWN-REF-9999', 100000);
 
-    $this->post(route('payments.duitku.callback'), $payload)
+    $this->post(route('payments.midtrans.notification'), $payload)
         ->assertStatus(404)
         ->assertJson(['status' => 'order_not_found']);
 });
@@ -146,8 +159,8 @@ test('replaying same callback does not double-apply entitlement', function () {
 
     $payload = makeFakeCallback($order->reference, $order->amount_idr);
 
-    $this->post(route('payments.duitku.callback'), $payload)->assertOk();
-    $this->post(route('payments.duitku.callback'), $payload)->assertOk();
+    $this->post(route('payments.midtrans.notification'), $payload)->assertOk();
+    $this->post(route('payments.midtrans.notification'), $payload)->assertOk();
 
     expect(CompanySubscription::query()->where('company_id', $company->id)->where('status', SubscriptionStatus::Active)->count())
         ->toBe(1);
@@ -158,9 +171,9 @@ test('failed callback marks order failed and creates no subscription', function 
     $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
-    $payload = makeFakeCallback($order->reference, $order->amount_idr, '02');
+    $payload = makeFakeCallback($order->reference, $order->amount_idr, 'deny');
 
-    $this->post(route('payments.duitku.callback'), $payload)->assertOk();
+    $this->post(route('payments.midtrans.notification'), $payload)->assertOk();
 
     expect($order->fresh()->status)->toBe(OrderStatus::Failed);
     expect(CompanySubscription::query()->where('company_id', $company->id)->count())->toBe(0);
@@ -180,7 +193,7 @@ test('job boost order marks job featured after successful payment', function () 
 
     $order = app(BillingService::class)->checkoutJobBoost($company, $owner, $job, 199000, 30);
 
-    $this->post(route('payments.duitku.callback'), makeFakeCallback($order->reference, $order->amount_idr))->assertOk();
+    $this->post(route('payments.midtrans.notification'), makeFakeCallback($order->reference, $order->amount_idr))->assertOk();
 
     $job->refresh();
     expect($job->is_featured)->toBeTrue();
@@ -219,7 +232,7 @@ test('checkout endpoint redirects to gateway payment url', function () {
         ->post(route('employer.billing.checkout', ['plan' => $plan->slug]));
 
     $response->assertRedirect();
-    expect($response->headers->get('Location'))->toContain('sandbox.duitku.test');
+    expect($response->headers->get('Location'))->toContain('sandbox.midtrans.test');
     expect(Order::query()->count())->toBe(1);
 });
 

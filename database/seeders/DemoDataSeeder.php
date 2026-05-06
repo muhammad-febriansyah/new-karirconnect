@@ -774,8 +774,8 @@ class DemoDataSeeder extends Seeder
                         'quantity' => 1,
                         'currency' => 'IDR',
                         'status' => OrderStatus::Paid,
-                        'payment_provider' => 'duitku',
-                        'payment_reference' => 'DK-'.Str::random(8),
+                        'payment_provider' => 'midtrans',
+                        'payment_reference' => 'MT-'.Str::random(8),
                         'paid_at' => now()->subDays(15),
                         'metadata' => ['source' => 'demo'],
                     ],
@@ -784,8 +784,8 @@ class DemoDataSeeder extends Seeder
                 PaymentTransaction::query()->updateOrCreate(
                     ['order_id' => $order->id, 'gateway_reference' => $order->payment_reference],
                     [
-                        'provider' => 'duitku',
-                        'payment_method' => 'BC',
+                        'provider' => 'midtrans',
+                        'payment_method' => 'bank_transfer',
                         'amount_idr' => $order->amount_idr,
                         'status' => PaymentStatus::Success,
                         'settled_at' => now()->subDays(15),

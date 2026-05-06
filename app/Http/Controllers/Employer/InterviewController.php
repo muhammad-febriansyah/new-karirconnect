@@ -10,10 +10,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Interviews\BulkScheduleInterviewRequest;
 use App\Http\Requests\Interviews\ScheduleInterviewRequest;
 use App\Http\Requests\Interviews\SubmitScorecardRequest;
+use App\Models\AiInterviewTemplate;
 use App\Models\Application;
 use App\Models\Company;
 use App\Models\CompanyMember;
+use App\Models\GoogleCalendarToken;
 use App\Models\Interview;
+use App\Notifications\InterviewStageChangedNotification;
 use App\Services\Interviews\InterviewIcsExporter;
 use App\Services\Interviews\InterviewService;
 use Carbon\Carbon;
@@ -21,6 +24,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -64,7 +68,23 @@ class InterviewController extends Controller
             'filters' => ['status' => $statusFilter, 'group_by' => $groupBy],
             'statusOptions' => InterviewStatus::selectItems(),
             'stageOptions' => InterviewStage::selectItems(),
+            'googleCalendar' => $this->googleCalendarStatus($request),
         ]);
+    }
+
+    /**
+     * @return array{connected: bool, email: ?string}
+     */
+    private function googleCalendarStatus(Request $request): array
+    {
+        $token = GoogleCalendarToken::query()
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        return [
+            'connected' => $token !== null,
+            'email' => $token?->calendar_email,
+        ];
     }
 
     public function changeStage(Request $request, Interview $interview): RedirectResponse
@@ -75,7 +95,24 @@ class InterviewController extends Controller
             'stage' => ['required', 'string', 'in:'.implode(',', array_column(InterviewStage::cases(), 'value'))],
         ]);
 
-        $interview->forceFill(['stage' => $data['stage']])->save();
+        $previousStage = $interview->stage;
+        $newStage = InterviewStage::from($data['stage']);
+
+        // Skip notification when stage didn't actually change (idempotent drag).
+        if ($previousStage === $newStage) {
+            return back()->with('success', 'Tahap interview diperbarui.');
+        }
+
+        $interview->forceFill(['stage' => $newStage])->save();
+
+        $candidate = $interview->loadMissing('application.employeeProfile.user')
+            ->application?->employeeProfile?->user;
+
+        $candidate?->notify(new InterviewStageChangedNotification(
+            $interview->fresh(['scheduledBy']),
+            $previousStage,
+            $newStage,
+        ));
 
         return back()->with('success', 'Tahap interview diperbarui.');
     }
@@ -85,26 +122,81 @@ class InterviewController extends Controller
         $company = $this->resolveCompany($request);
         abort_unless($company !== null, 404);
 
-        $applicationId = $request->integer('application');
-        $application = $applicationId
-            ? Application::query()
-                ->with(['employeeProfile.user:id,name,email', 'job:id,title,slug,company_id'])
-                ->whereHas('job', fn ($q) => $q->where('company_id', $company->id))
-                ->find($applicationId)
-            : null;
+        $presetMode = (string) $request->query('mode', '');
+        $presetMode = InterviewMode::tryFrom($presetMode)?->value;
+
+        $preselectedIds = $request->filled('application')
+            ? [(int) $request->integer('application')]
+            : $request->collect('application_ids')->map(fn ($v) => (int) $v)->filter()->values()->all();
+
+        $applications = Application::query()
+            ->with([
+                'employeeProfile.user:id,name,email,avatar_path',
+                'job:id,title,slug,company_id',
+            ])
+            ->whereHas('job', fn ($q) => $q->where('company_id', $company->id))
+            ->whereNotIn('status', ['rejected', 'withdrawn', 'hired'])
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get()
+            ->map(function (Application $app) {
+                $avatarPath = $app->employeeProfile?->user?->avatar_path;
+                $avatarUrl = $avatarPath
+                    ? rtrim((string) config('app.url'), '/').'/storage/'.ltrim((string) $avatarPath, '/')
+                    : null;
+
+                return [
+                    'id' => $app->id,
+                    'candidate_name' => $app->employeeProfile?->user?->name,
+                    'candidate_email' => $app->employeeProfile?->user?->email,
+                    'candidate_avatar_url' => $avatarUrl,
+                    'job_id' => $app->job?->id,
+                    'job_title' => $app->job?->title,
+                    'status' => $app->status?->value,
+                ];
+            })
+            ->values();
 
         return Inertia::render('employer/interviews/create', [
-            'application' => $application ? [
-                'id' => $application->id,
-                'candidate_name' => $application->employeeProfile?->user?->name,
-                'job' => ['id' => $application->job?->id, 'title' => $application->job?->title],
-            ] : null,
+            'applications' => $applications,
+            'preselectedIds' => $preselectedIds,
             'options' => [
                 'stages' => InterviewStage::selectItems(),
                 'modes' => InterviewMode::selectItems(),
                 'team' => $this->teamOptions($company),
+                'aiTemplates' => $this->aiTemplateOptions($company),
+            ],
+            'preset' => [
+                'mode' => $presetMode,
             ],
         ]);
+    }
+
+    /**
+     * @return array<int, array{id:int, name:string, mode:string, language:string, duration_minutes:int, question_count:int, job_id:?int, has_questions:bool}>
+     */
+    private function aiTemplateOptions(Company $company): array
+    {
+        return AiInterviewTemplate::query()
+            ->withCount('questions')
+            ->where('company_id', $company->id)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (AiInterviewTemplate $t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'mode' => $t->mode?->value ?? 'text',
+                'language' => $t->language,
+                'duration_minutes' => $t->duration_minutes,
+                'question_count' => $t->question_count,
+                'questions_count' => (int) $t->questions_count,
+                'job_id' => $t->job_id,
+                'is_default' => (bool) $t->is_default,
+                'has_questions' => $t->questions_count > 0,
+            ])
+            ->values()
+            ->all();
     }
 
     public function store(ScheduleInterviewRequest $request): RedirectResponse
@@ -167,6 +259,7 @@ class InterviewController extends Controller
                 'stages' => InterviewStage::selectItems(),
                 'modes' => InterviewMode::selectItems(),
                 'team' => $this->teamOptions($company),
+                'aiTemplates' => $this->aiTemplateOptions($company),
             ],
             'preselected_ids' => $request->collect('application_ids')
                 ->map(fn ($v) => (int) $v)
@@ -244,6 +337,7 @@ class InterviewController extends Controller
                 'location_address' => $data['location_address'] ?? null,
                 'location_map_url' => $data['location_map_url'] ?? null,
                 'interviewer_ids' => $data['interviewer_ids'] ?? [],
+                'ai_template_id' => $data['ai_template_id'] ?? null,
             ];
 
             try {
@@ -254,12 +348,24 @@ class InterviewController extends Controller
                     'scheduled_at' => $slotStart->toIso8601String(),
                 ];
             } catch (ValidationException $e) {
+                $reason = collect($e->errors())->flatten()->first() ?? 'Gagal dijadwalkan.';
+                Log::warning('interview.bulk.row_validation_failed', [
+                    'application_id' => $application->id,
+                    'candidate' => $application->employeeProfile?->user?->name,
+                    'errors' => $e->errors(),
+                ]);
                 $failed[] = [
                     'application_id' => $application->id,
                     'candidate' => $application->employeeProfile?->user?->name ?? 'Kandidat',
-                    'reason' => collect($e->errors())->flatten()->first() ?? 'Gagal dijadwalkan.',
+                    'reason' => $reason,
                 ];
             } catch (Throwable $e) {
+                Log::error('interview.bulk.row_unexpected_error', [
+                    'application_id' => $application->id,
+                    'candidate' => $application->employeeProfile?->user?->name,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
                 $failed[] = [
                     'application_id' => $application->id,
                     'candidate' => $application->employeeProfile?->user?->name ?? 'Kandidat',
@@ -283,7 +389,12 @@ class InterviewController extends Controller
         ];
 
         if (count($succeeded) === 0) {
-            return back()->withInput()->with('error', 'Tidak ada interview yang berhasil dijadwalkan.')
+            $firstReason = $failed[0]['reason'] ?? null;
+            $errorMsg = $firstReason
+                ? sprintf('Tidak ada interview yang berhasil dijadwalkan. Alasan: %s', $firstReason)
+                : 'Tidak ada interview yang berhasil dijadwalkan.';
+
+            return back()->withInput()->with('error', $errorMsg)
                 ->with('bulk_result', ['succeeded' => $succeeded, 'failed' => $failed]);
         }
 

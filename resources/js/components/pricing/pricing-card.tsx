@@ -9,13 +9,15 @@ import { cn } from '@/lib/utils';
 type PricingCardProps = {
     name: string;
     description?: string | null;
+    /** Optional tier label rendered as a small badge next to the plan name. */
+    tier?: string;
     /** Price in IDR. Pass 0 for "Free". */
     priceIdr: number;
     /** Billing cadence label, e.g. "per bulan" or "per 30 hari". */
     period?: string;
     /** Render a highlighted/featured variant for the recommended plan. */
     featured?: boolean;
-    /** Quota lines rendered above the feature list (e.g. "10 lowongan / bulan"). */
+    /** Quota chips rendered between price and feature list. Items with label "Tier" are filtered (use `tier` prop instead). */
     quotas?: Array<{ label: string; value: string }>;
     /** Bullet list of plan features. */
     features: string[];
@@ -29,13 +31,10 @@ type PricingCardProps = {
     className?: string;
 };
 
-/**
- * Single pricing plan card (Blueprint §15). Featured variant flips the visual
- * weight: solid surface, accent border, "Direkomendasikan" pill on top.
- */
 export function PricingCard({
     name,
     description,
+    tier,
     priceIdr,
     period = 'per bulan',
     featured = false,
@@ -48,72 +47,91 @@ export function PricingCard({
     className,
 }: PricingCardProps) {
     const isFree = priceIdr === 0;
+    const visibleQuotas = (quotas ?? []).filter((q) => q.label.toLowerCase() !== 'tier');
 
     return (
         <Card
             className={cn(
-                'relative flex flex-col overflow-hidden border-border/70 transition-shadow',
-                featured && 'border-primary shadow-md',
+                'relative flex h-full flex-col gap-0 overflow-hidden py-0 transition-all',
+                featured
+                    ? 'border-primary/60 shadow-lg ring-2 ring-primary/30 lg:-mt-3'
+                    : 'border-border/70 hover:border-primary/40 hover:shadow-md',
                 disabled && 'opacity-60',
                 className,
             )}
             data-featured={featured}
         >
             {featured && (
-                <div className="absolute right-4 top-4">
-                    <Badge className="gap-1 bg-primary/10 text-primary hover:bg-primary/15">
-                        <Sparkles className="size-3" aria-hidden />
-                        Direkomendasikan
-                    </Badge>
+                <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-primary to-primary/85 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground">
+                    <Sparkles className="size-3" aria-hidden />
+                    Paling Direkomendasikan
                 </div>
             )}
 
-            <CardHeader className="space-y-2 pb-4">
-                <h3 className="text-lg font-semibold leading-tight">{name}</h3>
-                {description && (
-                    <p className="text-sm text-muted-foreground">{description}</p>
-                )}
+            <CardHeader className="gap-1.5 px-5 pb-3 pt-5">
+                <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-semibold leading-tight">{name}</h3>
+                    {tier && (
+                        <Badge
+                            variant="outline"
+                            className="shrink-0 px-1.5 py-0 text-[10px] font-medium uppercase tracking-wider"
+                        >
+                            {tier}
+                        </Badge>
+                    )}
+                </div>
+                {description && <p className="text-sm text-muted-foreground">{description}</p>}
             </CardHeader>
 
-            <CardContent className="flex-1 space-y-5 pb-4">
+            <CardContent className="flex flex-1 flex-col gap-4 px-5 pb-4">
                 <div className="flex items-baseline gap-1.5">
                     {isFree ? (
-                        <span className="text-3xl font-bold tracking-tight tabular-nums">Gratis</span>
+                        <span className="text-3xl font-bold tracking-tight">Gratis</span>
                     ) : (
                         <>
-                            <span className="text-3xl font-bold tracking-tight tabular-nums">
+                            <span className="text-2xl font-bold tracking-tight tabular-nums sm:text-[1.65rem]">
                                 {formatRupiah(priceIdr)}
                             </span>
-                            <span className="text-sm text-muted-foreground">{period}</span>
+                            <span className="text-xs text-muted-foreground">{period}</span>
                         </>
                     )}
                 </div>
 
-                {quotas && quotas.length > 0 && (
-                    <dl className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/30 p-3 text-xs">
-                        {quotas.map((q) => (
-                            <div key={q.label}>
-                                <dt className="font-medium text-muted-foreground">{q.label}</dt>
-                                <dd className="mt-0.5 text-sm font-semibold tabular-nums">{q.value}</dd>
-                            </div>
+                {visibleQuotas.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                        {visibleQuotas.map((q) => (
+                            <span
+                                key={q.label}
+                                className="inline-flex items-baseline gap-1 rounded-full border bg-muted/40 px-2.5 py-1 text-xs"
+                            >
+                                <span className="font-semibold tabular-nums">{q.value}</span>
+                                <span className="text-muted-foreground">{q.label}</span>
+                            </span>
                         ))}
-                    </dl>
+                    </div>
                 )}
 
-                <ul className="space-y-2 text-sm">
-                    {features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2">
-                            <Check
-                                className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
-                                aria-hidden
-                            />
-                            <span className="text-foreground/90">{feature}</span>
-                        </li>
-                    ))}
-                </ul>
+                {features.length > 0 && (
+                    <ul className="space-y-2 text-sm">
+                        {features.map((feature) => (
+                            <li key={feature} className="flex items-start gap-2">
+                                <Check
+                                    className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                                    aria-hidden
+                                />
+                                <span className="text-foreground/90">{feature}</span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </CardContent>
 
-            <CardFooter className="border-t bg-muted/20 pt-4">
+            <CardFooter
+                className={cn(
+                    'mt-auto px-5 py-4',
+                    featured ? 'border-t border-primary/20 bg-primary/5' : 'border-t bg-muted/20',
+                )}
+            >
                 {cta ?? (
                     <Button
                         type="button"

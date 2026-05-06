@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['sidebar_state']);
 
         $middleware->validateCsrfTokens(except: [
-            'payments/duitku/callback',
+            'payments/midtrans/notification',
         ]);
 
         $middleware->web(append: [

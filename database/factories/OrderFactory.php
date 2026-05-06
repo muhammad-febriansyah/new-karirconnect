@@ -29,7 +29,7 @@ class OrderFactory extends Factory
             'quantity' => 1,
             'currency' => 'IDR',
             'status' => 'pending',
-            'payment_provider' => 'duitku',
+            'payment_provider' => 'midtrans',
             'expires_at' => now()->addHours(24),
         ];
     }

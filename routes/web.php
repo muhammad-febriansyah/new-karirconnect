@@ -115,12 +115,22 @@ Route::middleware(['auth', 'verified', 'onboarding', 'employer.onboarded'])->gro
     Route::delete('device-tokens', [DeviceTokenController::class, 'destroy'])->name('device-tokens.destroy');
 });
 
-Route::prefix('payments/duitku')->name('payments.duitku.')->group(function (): void {
-    Route::post('callback', [PaymentCallbackController::class, 'callback'])->name('callback');
-    Route::get('return', [PaymentCallbackController::class, 'return'])->name('return');
+Route::prefix('payments/midtrans')->name('payments.midtrans.')->group(function (): void {
+    Route::post('notification', [PaymentCallbackController::class, 'callback'])->name('notification');
+    Route::get('finish', [PaymentCallbackController::class, 'return'])->name('finish');
 });
 
 require __DIR__.'/admin.php';
 require __DIR__.'/employer.php';
 require __DIR__.'/employee.php';
 require __DIR__.'/settings.php';
+
+// Preview branded error pages locally without forcing APP_DEBUG=false.
+// Visit /_preview/errors/{403|404|419|429|500|503}
+if (app()->environment('local')) {
+    Route::get('/_preview/errors/{status}', function (int $status) {
+        return Inertia::render('errors/error', ['status' => $status])
+            ->toResponse(request())
+            ->setStatusCode($status);
+    })->whereIn('status', ['403', '404', '419', '429', '500', '503']);
+}

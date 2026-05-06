@@ -15,6 +15,7 @@ import {
     Wallet,
 } from 'lucide-react';
 import { MatchScoreBadge } from '@/components/shared/match-score-badge';
+import { SafeHtml } from '@/components/shared/safe-html';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -235,9 +236,10 @@ export default function ApplicationShow({ application }: Props) {
                                     <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-blue">
                                         <MessageSquare className="size-3.5" /> Cover Letter Anda
                                     </h3>
-                                    <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">
-                                        {application.cover_letter}
-                                    </p>
+                                    <SafeHtml
+                                        html={application.cover_letter}
+                                        className="prose prose-sm max-w-none text-sm leading-relaxed text-foreground/90 prose-headings:text-foreground prose-strong:text-foreground prose-a:text-brand-blue"
+                                    />
                                 </CardContent>
                             </Card>
                         )}

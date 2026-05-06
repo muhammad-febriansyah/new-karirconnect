@@ -21,12 +21,16 @@ class ApplicationController extends Controller
         private readonly EmployeeProfileService $profiles,
     ) {}
 
-    public function create(Request $request, Job $job): Response
+    public function create(Request $request, Job $job): Response|RedirectResponse
     {
         abort_unless($job->status === JobStatus::Published, 404);
 
         $user = $request->user();
-        abort_unless($user !== null && $user->role->value === 'employee', 403);
+        if ($user === null || $user->role->value !== 'employee') {
+            return redirect()
+                ->route('public.jobs.show', ['job' => $job->slug])
+                ->with('error', 'Hanya kandidat (jobseeker) yang dapat melamar lowongan ini. Silakan masuk dengan akun jobseeker atau daftar terlebih dahulu.');
+        }
 
         $profile = $this->profiles->ensureProfile($user);
         $profile->load(['cvs:id,employee_profile_id,label,source,file_path']);

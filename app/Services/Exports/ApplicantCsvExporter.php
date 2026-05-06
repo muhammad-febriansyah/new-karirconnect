@@ -80,7 +80,7 @@ class ApplicantCsvExporter
                         $app->expected_salary,
                         $app->ai_match_score,
                         $app->candidateCv?->file_path,
-                        str_replace(["\r", "\n"], ' ', (string) $app->cover_letter),
+                        trim(preg_replace('/\s+/', ' ', strip_tags((string) $app->cover_letter))),
                     ]);
                 }
             });

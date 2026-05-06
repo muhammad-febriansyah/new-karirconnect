@@ -11,7 +11,7 @@ use App\Observers\EmployeeProfileObserver;
 use App\Observers\JobObserver;
 use App\Services\Ai\Clients\FakeAiClient;
 use App\Services\Ai\Contracts\AiClient;
-use App\Services\Billing\Clients\FakeDuitkuClient;
+use App\Services\Billing\Clients\FakeMidtransClient;
 use App\Services\Billing\Contracts\PaymentGatewayClient;
 use App\Services\Settings\SettingService;
 use Carbon\CarbonImmutable;
@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\ExceptionResponse;
+use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,7 +40,7 @@ class AppServiceProvider extends ServiceProvider
             $this->app->singleton('ai.client', fn () => new FakeAiClient);
             $this->app->singleton(AiClient::class, fn ($app) => $app->make('ai.client'));
 
-            $this->app->singleton('billing.gateway', fn () => new FakeDuitkuClient);
+            $this->app->singleton('billing.gateway', fn () => new FakeMidtransClient);
             $this->app->singleton(PaymentGatewayClient::class, fn ($app) => $app->make('billing.gateway'));
         }
     }
@@ -50,6 +52,31 @@ class AppServiceProvider extends ServiceProvider
         $this->configureMail();
         $this->configureGates();
         $this->configureNotificationChannels();
+        $this->configureInertiaErrorPages();
+    }
+
+    /**
+     * Render branded Inertia error pages for HTTP failures. Skipped while
+     * APP_DEBUG is on so developers still get the Ignition stack trace; in
+     * production users see resources/js/pages/errors/error.tsx.
+     */
+    protected function configureInertiaErrorPages(): void
+    {
+        Inertia::handleExceptionsUsing(function (ExceptionResponse $response) {
+            $status = $response->statusCode();
+
+            if (! in_array($status, [403, 404, 419, 429, 500, 503], true)) {
+                return null;
+            }
+
+            if (config('app.debug') && in_array($status, [500, 503], true)) {
+                return null;
+            }
+
+            return $response->render('errors/error', [
+                'status' => $status,
+            ])->withSharedData();
+        });
     }
 
     /**

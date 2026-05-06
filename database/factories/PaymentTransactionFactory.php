@@ -18,9 +18,9 @@ class PaymentTransactionFactory extends Factory
     {
         return [
             'order_id' => Order::factory(),
-            'provider' => 'duitku',
+            'provider' => 'midtrans',
             'gateway_reference' => null,
-            'payment_method' => 'BC',
+            'payment_method' => 'bank_transfer',
             'amount_idr' => 499000,
             'status' => 'pending',
         ];

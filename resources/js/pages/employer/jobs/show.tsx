@@ -225,7 +225,7 @@ export default function EmployerJobShow({ job, screeningTypeOptions }: Props) {
                                 <Form
                                     {...JobBoostController.store.form(job.slug)}
                                     onBefore={() =>
-                                        confirm('Boost lowongan ini selama 30 hari (Rp 199.000)? Akan diarahkan ke pembayaran Duitku.')
+                                        confirm('Boost lowongan ini selama 30 hari (Rp 199.000)? Akan diarahkan ke pembayaran Midtrans.')
                                     }
                                 >
                                     {({ processing }) => (

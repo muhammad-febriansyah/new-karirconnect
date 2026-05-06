@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { useDraggable } from '@dnd-kit/core';
 import { Head, Link, router } from '@inertiajs/react';
-import { Bot, Calendar, ChevronsRight, GripVertical, Layers, MapPin, MoreVertical, Plus, Video } from 'lucide-react';
+import { Bot, Calendar, CheckCircle2, ChevronsRight, GripVertical, Layers, Link as LinkIcon, MapPin, MoreVertical, Plus, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { PageHeader } from '@/components/layout/page-header';
@@ -59,6 +59,7 @@ type Props = {
     filters: { status: string; group_by: 'stage' | 'status' };
     statusOptions: SelectOption[];
     stageOptions: SelectOption[];
+    googleCalendar: { connected: boolean; email: string | null };
 };
 
 const modeIcon = (mode: string | null) => {
@@ -82,7 +83,7 @@ const STAGE_TONE: Record<string, string> = {
     final: 'bg-emerald-50 dark:bg-emerald-950/30',
 };
 
-export default function InterviewsIndex({ columns: initialColumns, filters, stageOptions }: Props) {
+export default function InterviewsIndex({ columns: initialColumns, filters, stageOptions, googleCalendar }: Props) {
     const [columns, setColumns] = useState<Column[]>(initialColumns);
     const [activeCard, setActiveCard] = useState<InterviewCard | null>(null);
 
@@ -249,6 +250,57 @@ export default function InterviewsIndex({ columns: initialColumns, filters, stag
                         </div>
                     }
                 />
+
+                {/* Google Calendar status banner */}
+                {googleCalendar.connected ? (
+                    <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white">
+                                <CheckCircle2 className="size-4" />
+                            </span>
+                            <div>
+                                <p className="text-sm font-semibold text-emerald-900">
+                                    Google Calendar terhubung
+                                </p>
+                                <p className="text-xs text-emerald-800/80">
+                                    {googleCalendar.email
+                                        ? `${googleCalendar.email} · `
+                                        : ''}
+                                    Link Google Meet akan dibuat otomatis saat interview online dijadwalkan tanpa URL manual.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href="/employer/google-calendar"
+                            method="delete"
+                            as="button"
+                            className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-white px-3 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 sm:self-center"
+                        >
+                            Putuskan
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-3 rounded-2xl border border-brand-blue/20 bg-gradient-to-br from-brand-blue/5 to-brand-cyan/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue">
+                                <Video className="size-4" />
+                            </span>
+                            <div>
+                                <p className="text-sm font-semibold text-brand-navy">
+                                    Hubungkan Google Calendar
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Setelah terhubung, KarirConnect bisa membuat link Google Meet otomatis untuk interview online — tidak perlu copy-paste URL manual.
+                                </p>
+                            </div>
+                        </div>
+                        <Button asChild size="sm" className="h-9 shrink-0 rounded-lg bg-brand-blue hover:bg-brand-blue/90 sm:self-center">
+                            <a href="/employer/google-calendar/connect">
+                                <LinkIcon className="size-3.5" /> Hubungkan
+                            </a>
+                        </Button>
+                    </div>
+                )}
 
                 {dndEnabled ? (
                     <DndContext

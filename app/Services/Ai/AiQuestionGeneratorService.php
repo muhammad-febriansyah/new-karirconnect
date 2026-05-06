@@ -26,6 +26,14 @@ class AiQuestionGeneratorService
             return $session->questions->all();
         }
 
+        // Prefer recruiter-authored template questions when available — these are
+        // the ones recruiters wrote in /employer/ai-interview-templates. Only when
+        // the template has no questions do we fall back to AI generation.
+        $copied = $this->copyFromTemplate($session);
+        if ($copied !== null) {
+            return $copied;
+        }
+
         $client = $this->factory->make();
         $job = $session->job;
         $count = $session->template?->question_count ?? 6;
@@ -77,6 +85,45 @@ class AiQuestionGeneratorService
                     'context' => $row['context'] ?? null,
                     'expected_keywords' => $row['expected_keywords'] ?? null,
                     'max_duration_seconds' => (int) ($row['max_duration_seconds'] ?? 120),
+                ]);
+            }
+
+            return $created;
+        });
+    }
+
+    /**
+     * @return array<int, AiInterviewQuestion>|null null = template missing or has no questions, caller should fallback
+     */
+    private function copyFromTemplate(AiInterviewSession $session): ?array
+    {
+        $template = $session->template;
+        if ($template === null) {
+            return null;
+        }
+
+        $template->loadMissing('questions');
+        if ($template->questions->isEmpty()) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($session, $template): array {
+            $session->forceFill([
+                'ai_provider' => $session->ai_provider ?? 'template',
+                'ai_model' => $session->ai_model ?? 'recruiter-defined',
+                'system_prompt_snapshot' => $session->system_prompt_snapshot ?: $this->buildSystemPrompt($session),
+            ])->save();
+
+            $created = [];
+            foreach ($template->questions as $idx => $tq) {
+                $created[] = AiInterviewQuestion::query()->create([
+                    'session_id' => $session->id,
+                    'order_number' => $tq->order_number ?: ($idx + 1),
+                    'category' => $tq->category,
+                    'question' => $tq->question,
+                    'context' => $tq->context,
+                    'expected_keywords' => $tq->expected_keywords,
+                    'max_duration_seconds' => $tq->max_duration_seconds,
                 ]);
             }
 

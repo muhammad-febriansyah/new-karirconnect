@@ -22,12 +22,12 @@ class PaymentCallbackController extends Controller
      * Signatures + raw tokens leak data that could help an attacker forge
      * future callbacks if logs are ever exposed.
      */
-    private const REDACTED_FIELDS = ['signature', 'apiKey', 'api_key', 'merchant_password'];
+    private const REDACTED_FIELDS = ['signature', 'signature_key', 'apiKey', 'api_key', 'server_key', 'merchant_password'];
 
     public function __construct(private readonly BillingService $billing) {}
 
     /**
-     * Server-to-server webhook from Duitku. We map exceptions to HTTP status
+     * Server-to-server webhook from Midtrans. We map exceptions to HTTP status
      * codes deliberately so the gateway only retries when we want it to:
      *  - 401 invalid signature → forged/expired, do NOT retry
      *  - 404 unknown order → permanent, do NOT retry
@@ -73,7 +73,7 @@ class PaymentCallbackController extends Controller
      */
     public function return(Request $request): RedirectResponse
     {
-        $reference = (string) $request->query('merchantOrderId', '');
+        $reference = (string) $request->query('order_id', '');
 
         if ($reference === '') {
             return redirect()->route('home');

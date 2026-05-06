@@ -7,6 +7,7 @@ import {
     CameraOff,
     CheckCircle2,
     GraduationCap,
+    Info,
     Loader2,
     Mic,
     MicOff,
@@ -14,6 +15,7 @@ import {
     Radio,
     Send,
     Sparkles,
+    Type,
     Volume2,
     Wifi,
     WifiOff,
@@ -144,6 +146,18 @@ export default function AiInterviewRun(props: Props) {
     return <TextRun {...props} />;
 }
 
+const ANSWER_TARGET_MIN = 80; // chars — encourage more than a one-liner
+const ANSWER_TARGET_GOOD = 250;
+
+const CATEGORY_LABEL: Record<string, string> = {
+    opening: 'Pembuka',
+    technical: 'Teknis',
+    behavioral: 'Perilaku',
+    situational: 'Situasional',
+    culture: 'Budaya',
+    closing: 'Penutup',
+};
+
 function TextRun({ session, questions, currentQuestion }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const form = useForm({ answer: '', duration_seconds: 0 });
@@ -166,98 +180,294 @@ function TextRun({ session, questions, currentQuestion }: Props) {
     };
 
     const progressValue = (session.current_index / Math.max(session.total_questions, 1)) * 100;
+    const charCount = form.data.answer.length;
+    const wordCount = form.data.answer.trim().length === 0 ? 0 : form.data.answer.trim().split(/\s+/).length;
+    const meetsMin = charCount >= ANSWER_TARGET_MIN;
+    const meetsGood = charCount >= ANSWER_TARGET_GOOD;
 
     return (
         <>
             <Head title="Sesi AI Interview" />
 
-            <div className="space-y-5 p-4 sm:p-6">
+            <div className="space-y-5 p-3 pb-24 sm:p-5 lg:p-6 lg:pb-6">
                 <InterviewContextHeader session={session} />
 
-                <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
-                    <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
+                {/* Progress strip */}
+                <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
                             <div className="text-sm font-semibold text-slate-900">
                                 Pertanyaan {Math.min(session.current_index + 1, session.total_questions)} dari{' '}
                                 {session.total_questions}
                             </div>
                             <div className="text-xs text-slate-500">
-                                Jawab tiap pertanyaan dengan tenang. Bisa lanjut atau selesaikan kapan saja.
+                                Jawab dengan tenang. Bisa lanjut kapan saja.
                             </div>
                         </div>
                         {session.current_index >= session.total_questions && (
-                            <Button onClick={completeNow}>
+                            <Button onClick={completeNow} size="sm" className="shrink-0">
                                 <CheckCircle2 className="size-4" /> Selesaikan & Lihat Hasil
                             </Button>
                         )}
                     </div>
-                    <Progress value={progressValue} />
+                    <Progress value={progressValue} className="mt-3" />
+
+                    {/* Question chips */}
+                    <ol className="-mx-1 mt-4 flex gap-1.5 overflow-x-auto px-1 pb-1">
+                        {questions.map((q, idx) => {
+                            const active = currentQuestion?.id === q.id;
+                            const done = q.answered;
+                            return (
+                                <li
+                                    key={q.id}
+                                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                                        active
+                                            ? 'border-[color:#1080E0] bg-[color:#1080E0]/5 text-[color:#1080E0]'
+                                            : done
+                                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                              : 'border-slate-200 bg-white text-slate-500'
+                                    }`}
+                                >
+                                    <span
+                                        className={`flex size-4 items-center justify-center rounded-full text-[9px] font-bold ${
+                                            active
+                                                ? 'bg-gradient-to-br from-[#1080E0] to-[#10C0E0] text-white'
+                                                : done
+                                                  ? 'bg-emerald-500 text-white'
+                                                  : 'bg-slate-200 text-slate-600'
+                                        }`}
+                                    >
+                                        {done ? <CheckCircle2 className="size-2.5" /> : idx + 1}
+                                    </span>
+                                    {CATEGORY_LABEL[q.category] ?? q.category}
+                                </li>
+                            );
+                        })}
+                    </ol>
                 </div>
 
                 {currentQuestion ? (
-                    <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-                        <Section>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <Bot className="size-5 text-primary" />
-                                    <Badge variant="secondary">{currentQuestion.category}</Badge>
-                                    <Badge variant="outline">Maks {currentQuestion.max_duration_seconds}s</Badge>
+                    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start xl:grid-cols-[minmax(0,1fr)_340px]">
+                        {/* Main */}
+                        <div className="min-w-0 space-y-4">
+                            {/* AI message bubble */}
+                            <div className="flex items-start gap-3">
+                                <div
+                                    className="flex size-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                                    style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
+                                >
+                                    <Bot className="size-5" />
                                 </div>
-                                <h2 className="text-xl font-semibold leading-relaxed">{currentQuestion.question}</h2>
+                                <div className="flex-1 space-y-2">
+                                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                        <span className="font-semibold text-slate-700">KarirConnect AI</span>
+                                        <Badge variant="secondary" className="capitalize">
+                                            {CATEGORY_LABEL[currentQuestion.category] ?? currentQuestion.category}
+                                        </Badge>
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
+                                            <Radio className="size-3" /> Maks {currentQuestion.max_duration_seconds}s
+                                        </span>
+                                    </div>
+                                    <div className="rounded-2xl rounded-tl-sm border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5">
+                                        <h2 className="text-lg font-semibold leading-relaxed text-slate-900 sm:text-xl">
+                                            {currentQuestion.question}
+                                        </h2>
+                                    </div>
+                                </div>
                             </div>
 
-                            <form onSubmit={onSubmit} className="mt-6 space-y-4">
-                                <TextareaField
-                                    label="Jawaban Anda"
-                                    rows={8}
-                                    placeholder="Tulis jawaban Anda di sini."
+                            {/* Answer composer */}
+                            <form
+                                id="ai-answer-form"
+                                onSubmit={onSubmit}
+                                className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5"
+                            >
+                                <div className="mb-2 flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-900" htmlFor="answer-input">
+                                        Jawaban Anda
+                                    </label>
+                                    <span className="text-[11px] text-slate-500">
+                                        Tulis natural seperti ngobrol — tidak harus formal.
+                                    </span>
+                                </div>
+                                <textarea
+                                    id="answer-input"
+                                    rows={9}
+                                    placeholder="Mulai dari pengalaman atau konteks yang relevan, lalu jelaskan apa yang Anda lakukan dan dampaknya…"
                                     value={form.data.answer}
                                     onChange={(e) => form.setData('answer', e.target.value)}
-                                    error={form.errors.answer}
+                                    className="block w-full resize-y rounded-xl border border-slate-200 bg-slate-50/40 px-3.5 py-3 text-sm leading-relaxed shadow-inner placeholder:text-slate-400 focus:border-[color:#1080E0]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[color:#1080E0]/15"
                                 />
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <span className="text-xs text-muted-foreground">{form.data.answer.length} karakter</span>
-                                    <Button type="submit" disabled={submitting || form.data.answer.trim().length === 0}>
-                                        {submitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                                        Kirim Jawaban
-                                    </Button>
+                                {form.errors.answer && (
+                                    <p className="mt-1.5 text-xs text-rose-600">{form.errors.answer}</p>
+                                )}
+
+                                {/* Quality meter */}
+                                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+                                    <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                                        <span className="inline-flex items-center gap-1">
+                                            <span
+                                                className={`size-1.5 rounded-full ${
+                                                    meetsGood
+                                                        ? 'bg-emerald-500'
+                                                        : meetsMin
+                                                          ? 'bg-amber-500'
+                                                          : 'bg-slate-300'
+                                                }`}
+                                            />
+                                            <span
+                                                className={
+                                                    meetsGood
+                                                        ? 'font-medium text-emerald-700'
+                                                        : meetsMin
+                                                          ? 'font-medium text-amber-700'
+                                                          : ''
+                                                }
+                                            >
+                                                {meetsGood
+                                                    ? 'Detail bagus 🎯'
+                                                    : meetsMin
+                                                      ? 'Lanjutkan, sudah cukup'
+                                                      : 'Tulis sedikit lagi'}
+                                            </span>
+                                        </span>
+                                        <span className="hidden sm:inline">·</span>
+                                        <span className="font-mono">
+                                            {wordCount} kata · {charCount} karakter
+                                        </span>
+                                    </div>
+                                    <div className="hidden sm:flex sm:justify-end">
+                                        <Button
+                                            type="submit"
+                                            disabled={submitting || form.data.answer.trim().length === 0}
+                                            className="text-white"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #1080E0, #10C0E0)',
+                                            }}
+                                        >
+                                            {submitting ? (
+                                                <Loader2 className="size-4 animate-spin" />
+                                            ) : (
+                                                <Send className="size-4" />
+                                            )}
+                                            Kirim Jawaban
+                                        </Button>
+                                    </div>
                                 </div>
                             </form>
-                        </Section>
+                        </div>
 
-                        <aside className="space-y-3">
-                            <Card>
-                                <CardContent className="space-y-2 p-4">
-                                    <h3 className="text-sm font-semibold">Daftar Pertanyaan</h3>
-                                    <ol className="space-y-1 text-sm">
-                                        {questions.map((q) => (
-                                            <li key={q.id} className="flex items-center gap-2">
-                                                {q.answered ? (
-                                                    <CheckCircle2 className="size-3.5 text-success" />
-                                                ) : (
-                                                    <span className="size-3.5 rounded-full border border-muted-foreground/40" />
-                                                )}
-                                                <span className={q.answered ? 'text-muted-foreground line-through' : ''}>
-                                                    {q.order_number}. {q.category}
-                                                </span>
-                                            </li>
-                                        ))}
+                        {/* Sidebar */}
+                        <aside className="min-w-0 space-y-3 lg:sticky lg:top-4 lg:self-start">
+                            <Card className="border-slate-200/70 shadow-sm">
+                                <CardContent className="p-4">
+                                    <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                                        Daftar Pertanyaan
+                                    </h3>
+                                    <ol className="space-y-1.5">
+                                        {questions.map((q, idx) => {
+                                            const active = currentQuestion?.id === q.id;
+                                            return (
+                                                <li
+                                                    key={q.id}
+                                                    className={`flex items-start gap-2.5 rounded-lg p-2 text-xs transition-colors ${
+                                                        active ? 'bg-[color:#1080E0]/5' : ''
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                                                            q.answered
+                                                                ? 'bg-emerald-500 text-white'
+                                                                : active
+                                                                  ? 'bg-gradient-to-br from-[#1080E0] to-[#10C0E0] text-white'
+                                                                  : 'border border-slate-300 bg-white text-slate-500'
+                                                        }`}
+                                                    >
+                                                        {q.answered ? <CheckCircle2 className="size-3" /> : idx + 1}
+                                                    </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div
+                                                            className={`text-[10px] font-semibold uppercase tracking-wider ${
+                                                                active
+                                                                    ? 'text-[color:#1080E0]'
+                                                                    : q.answered
+                                                                      ? 'text-emerald-700'
+                                                                      : 'text-slate-500'
+                                                            }`}
+                                                        >
+                                                            {CATEGORY_LABEL[q.category] ?? q.category}
+                                                        </div>
+                                                        <p
+                                                            className={`mt-0.5 leading-snug ${
+                                                                q.answered
+                                                                    ? 'text-slate-400 line-through'
+                                                                    : active
+                                                                      ? 'font-medium text-slate-900'
+                                                                      : 'text-slate-600'
+                                                            }`}
+                                                        >
+                                                            {q.question.length > 80
+                                                                ? `${q.question.slice(0, 80)}…`
+                                                                : q.question}
+                                                        </p>
+                                                    </div>
+                                                </li>
+                                            );
+                                        })}
                                     </ol>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-slate-200/70 bg-slate-50/60 shadow-sm">
+                                <CardContent className="space-y-1.5 p-4 text-xs leading-relaxed text-slate-600">
+                                    <div className="text-sm font-semibold text-slate-900">Tips Singkat</div>
+                                    <p>· Mulai dari konteks: situasi, peran, dan masalah.</p>
+                                    <p>· Jelaskan tindakan spesifik yang Anda ambil.</p>
+                                    <p>· Tutup dengan hasil/dampak (angka kalau ada).</p>
+                                    <p>· Jangan pakai bullet — paragraf alami lebih efektif.</p>
                                 </CardContent>
                             </Card>
                         </aside>
                     </div>
                 ) : (
-                    <Section>
-                        <div className="text-center">
-                            <CheckCircle2 className="mx-auto size-10 text-success" />
-                            <h2 className="mt-3 text-lg font-semibold">Semua pertanyaan selesai!</h2>
-                            <p className="mt-1 text-sm text-muted-foreground">Klik tombol di bawah untuk melihat analisis lengkap dari AI.</p>
-                            <Button className="mt-4" onClick={completeNow}>
+                    <Card className="border-emerald-200/70 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/40 shadow-sm">
+                        <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                            <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow">
+                                <CheckCircle2 className="size-7" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-900">
+                                    Semua pertanyaan selesai!
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Klik tombol di bawah untuk melihat analisis lengkap dari AI.
+                                </p>
+                            </div>
+                            <Button onClick={completeNow} className="mt-1" size="lg">
                                 <CheckCircle2 className="size-4" /> Selesaikan & Lihat Hasil
                             </Button>
-                        </div>
-                    </Section>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Mobile sticky submit bar */}
+                {currentQuestion && (
+                    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-white/95 px-3 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur sm:hidden">
+                        <Button
+                            type="submit"
+                            form="ai-answer-form"
+                            disabled={submitting || form.data.answer.trim().length === 0}
+                            className="h-11 w-full rounded-xl text-white"
+                            style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
+                        >
+                            {submitting ? (
+                                <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                                <Send className="size-4" />
+                            )}
+                            Kirim Jawaban
+                        </Button>
+                    </div>
                 )}
             </div>
         </>
@@ -786,6 +996,7 @@ function VoiceRun({ session, questions }: Props) {
 
                 {!connected && !connecting && (
                     <DeviceCheckPanel
+                        sessionId={session.id}
                         networkCheck={networkCheck}
                         networkLatency={networkLatency}
                         micCheck={micCheck}
@@ -1156,6 +1367,7 @@ function VoiceRun({ session, questions }: Props) {
 }
 
 type DeviceCheckPanelProps = {
+    sessionId: number;
     networkCheck: CheckState;
     networkLatency: number | null;
     micCheck: CheckState;
@@ -1202,6 +1414,7 @@ function StatusPill({ state }: { state: CheckState }) {
 }
 
 function DeviceCheckPanel({
+    sessionId,
     networkCheck,
     networkLatency,
     micCheck,
@@ -1217,6 +1430,23 @@ function DeviceCheckPanel({
     error,
     onStart,
 }: DeviceCheckPanelProps) {
+    const [switchingMode, setSwitchingMode] = useState(false);
+
+    const switchToText = () => {
+        if (!confirm('Beralih ke mode teks? Kandidat akan mengetik jawaban alih-alih bicara. Perubahan ini tidak bisa dibatalkan untuk sesi ini.')) {
+            return;
+        }
+        setSwitchingMode(true);
+        router.post(
+            `/employee/ai-interviews/${sessionId}/switch-to-text`,
+            {},
+            {
+                preserveScroll: false,
+                onFinish: () => setSwitchingMode(false),
+            },
+        );
+    };
+
     const networkLabel =
         networkCheck === 'ok'
             ? networkLatency !== null
@@ -1252,6 +1482,46 @@ function DeviceCheckPanel({
                             </p>
                         </div>
                     </div>
+
+                    {/* Noise / mic fallback */}
+                    {micCheck === 'fail' ? (
+                        <div className="flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-2 text-sm text-amber-900">
+                                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                                <div>
+                                    <div className="font-semibold">Mic tidak bisa diakses?</div>
+                                    <div className="text-xs">Kamu bisa lanjut wawancara dalam mode teks (mengetik jawaban) tanpa kehilangan progress.</div>
+                                </div>
+                            </div>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={switchToText}
+                                disabled={switchingMode}
+                                className="shrink-0"
+                            >
+                                {switchingMode ? <Loader2 className="size-4 animate-spin" /> : <Type className="size-4" />}
+                                Lanjut dengan Mode Teks
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-2 text-xs text-slate-600">
+                                <Info className="mt-0.5 size-4 shrink-0 text-slate-400" />
+                                <span>Lingkungan bising atau mic bermasalah? Kamu bisa beralih ke mode teks kapan saja sebelum mulai.</span>
+                            </div>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={switchToText}
+                                disabled={switchingMode}
+                                className="shrink-0 text-slate-700"
+                            >
+                                {switchingMode ? <Loader2 className="size-4 animate-spin" /> : <Type className="size-4" />}
+                                Beralih ke Teks
+                            </Button>
+                        </div>
+                    )}
 
                     <div className="space-y-3">
                         {/* Network */}

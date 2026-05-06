@@ -52,7 +52,7 @@ class UpdateSettingsRequest extends FormRequest
 
         $rules['group'] = [
             'required',
-            Rule::in(['general', 'branding', 'seo', 'ai', 'payment', 'email', 'feature_flags', 'legal']),
+            Rule::in(['general', 'branding', 'seo', 'social', 'ai', 'payment', 'email', 'security', 'feature_flags', 'legal']),
         ];
 
         return $rules;

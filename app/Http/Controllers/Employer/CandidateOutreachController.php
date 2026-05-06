@@ -10,9 +10,54 @@ use App\Notifications\CandidateOutreachReceivedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CandidateOutreachController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        $company = $this->resolveCompany($request);
+        abort_unless($company !== null, 404);
+
+        $messages = CandidateOutreachMessage::query()
+            ->with([
+                'candidateUser:id,name,email',
+                'candidateProfile:id,user_id,headline,city_id',
+                'candidateProfile.city:id,name',
+                'sender:id,name',
+                'job:id,title,slug',
+            ])
+            ->where('company_id', $company->id)
+            ->latest('sent_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('employer/outreach/index', [
+            'messages' => $messages->through(fn (CandidateOutreachMessage $m) => [
+                'id' => $m->id,
+                'candidate_name' => $m->candidateUser?->name,
+                'candidate_email' => $m->candidateUser?->email,
+                'candidate_headline' => $m->candidateProfile?->headline,
+                'candidate_city' => $m->candidateProfile?->city?->name,
+                'candidate_profile_id' => $m->candidate_profile_id,
+                'sender_name' => $m->sender?->name,
+                'subject' => $m->subject,
+                'body' => $m->body,
+                'status' => $m->status,
+                'job_title' => $m->job?->title,
+                'job_slug' => $m->job?->slug,
+                'sent_at' => optional($m->sent_at)->toIso8601String(),
+                'replied_at' => optional($m->replied_at)->toIso8601String(),
+                'reply_body' => $m->reply_body,
+            ]),
+            'stats' => [
+                'total' => CandidateOutreachMessage::query()->where('company_id', $company->id)->count(),
+                'replied' => CandidateOutreachMessage::query()->where('company_id', $company->id)->whereNotNull('replied_at')->count(),
+            ],
+        ]);
+    }
+
     public function store(Request $request, EmployeeProfile $profile): RedirectResponse
     {
         $company = $this->resolveCompany($request);
