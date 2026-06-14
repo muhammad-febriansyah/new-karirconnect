@@ -127,7 +127,7 @@ Route::middleware(['auth', 'verified', 'role:employer', 'employer.onboarded'])
             Route::delete('{template}', [MessageTemplateController::class, 'destroy'])->name('destroy');
         });
 
-        Route::middleware(['company.approved', 'subscription.active:starter'])->group(function (): void {
+        Route::middleware(['company.approved', 'subscription.active:pro'])->group(function (): void {
             Route::prefix('talent-search')->name('talent-search.')->group(function (): void {
                 Route::get('/', [TalentSearchController::class, 'index'])->name('index');
                 Route::get('saved', [SavedCandidateController::class, 'index'])->name('saved');

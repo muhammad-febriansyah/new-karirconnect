@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Calendar, Check, CheckCircle2, CreditCard, Receipt, Sparkles, TrendingUp, X } from 'lucide-react';
+import { Calendar, Check, CheckCircle2, CreditCard, Lock, Receipt, Sparkles, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import BillingController from '@/actions/App/Http/Controllers/Employer/BillingController';
 import { PageHeader } from '@/components/layout/page-header';
@@ -105,6 +105,13 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
         () => [...plans].sort((a, b) => a.price_idr - b.price_idr),
         [plans],
     );
+
+    const allFeatures = useMemo(
+        () => Array.from(new Set(sortedPlans.flatMap((p) => p.features ?? []))),
+        [sortedPlans],
+    );
+
+    const lockedFeaturesFor = (plan: Plan) => allFeatures.filter((f) => !(plan.features ?? []).includes(f));
 
     const orderStats = useMemo(() => {
         const paid = orders.filter((o) => o.status === 'paid');
@@ -235,6 +242,7 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
                                                     { label: 'AI Interview', value: String(plan.ai_interview_credits) },
                                                 ]}
                                                 features={plan.features}
+                                                lockedFeatures={lockedFeaturesFor(plan)}
                                                 ctaLabel={isCurrent ? 'Paket Aktif' : 'Pilih Paket'}
                                                 cta={
                                                     isCurrent ? (
@@ -339,9 +347,7 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
                                             currentSlug={currentPlanSlugMatch}
                                         />
                                         {/* Feature rows from union of all features */}
-                                        {Array.from(
-                                            new Set(sortedPlans.flatMap((p) => p.features ?? [])),
-                                        ).map((feature) => (
+                                        {allFeatures.map((feature) => (
                                             <ComparisonRow
                                                 key={feature}
                                                 label={feature}
@@ -349,7 +355,7 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
                                                     p.features?.includes(feature) ? (
                                                         <Check className="mx-auto size-4 text-emerald-600" />
                                                     ) : (
-                                                        <X className="mx-auto size-4 text-muted-foreground/40" />
+                                                        <Lock className="mx-auto size-4 text-muted-foreground/40" />
                                                     )
                                                 }
                                                 plans={sortedPlans}

@@ -1,4 +1,4 @@
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Lock, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,8 @@ type PricingCardProps = {
     quotas?: Array<{ label: string; value: string }>;
     /** Bullet list of plan features. */
     features: string[];
+    /** Features unavailable on this plan, shown locked with an upgrade hint. */
+    lockedFeatures?: string[];
     /** Disabled state (e.g. plan unavailable for the user's role). */
     disabled?: boolean;
     /** CTA label. Default 'Pilih Paket'. */
@@ -40,6 +42,7 @@ export function PricingCard({
     featured = false,
     quotas,
     features,
+    lockedFeatures = [],
     disabled = false,
     ctaLabel = 'Pilih Paket',
     cta,
@@ -111,7 +114,7 @@ export function PricingCard({
                     </div>
                 )}
 
-                {features.length > 0 && (
+                {(features.length > 0 || lockedFeatures.length > 0) && (
                     <ul className="space-y-2 text-sm">
                         {features.map((feature) => (
                             <li key={feature} className="flex items-start gap-2">
@@ -122,7 +125,20 @@ export function PricingCard({
                                 <span className="text-foreground/90">{feature}</span>
                             </li>
                         ))}
+                        {lockedFeatures.map((feature) => (
+                            <li key={feature} className="flex items-start gap-2 text-muted-foreground">
+                                <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
+                                <span className="line-through decoration-muted-foreground/40">{feature}</span>
+                            </li>
+                        ))}
                     </ul>
+                )}
+
+                {lockedFeatures.length > 0 && (
+                    <p className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                        <Sparkles className="size-3.5 shrink-0" aria-hidden />
+                        Upgrade ke Pro untuk membuka fitur terkunci
+                    </p>
                 )}
             </CardContent>
 
