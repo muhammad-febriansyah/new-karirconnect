@@ -1,5 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowRight, BriefcaseBusiness, Building2, Mail, Sparkles, UserRoundSearch, Building } from 'lucide-react';
+import { AlertCircle, ArrowRight, BriefcaseBusiness, Building2, Mail, Sparkles, UserRoundSearch, Building } from 'lucide-react';
 import GoogleMark from '@/components/google-mark';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -145,6 +145,23 @@ export default function Register({
                                         {description}
                                     </p>
                                 )}
+                            </div>
+                        )}
+
+                        {Object.keys(errors).length > 0 && (
+                            <div
+                                role="alert"
+                                className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                            >
+                                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                                <div className="space-y-1">
+                                    <p className="font-semibold">Pendaftaran gagal</p>
+                                    <ul className="space-y-0.5 text-destructive/90">
+                                        {[...new Set(Object.values(errors).filter(Boolean))].map((message) => (
+                                            <li key={message}>{message}</li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
                         )}
 
