@@ -20,6 +20,7 @@ type Props = {
     description?: string;
     googleUrl?: string;
     loginUrl?: string;
+    locale?: string;
     roleOptions?: Array<{
         label: string;
         description: string;
@@ -53,6 +54,7 @@ export default function Register({
     description,
     googleUrl,
     loginUrl = login().url,
+    locale = 'id',
 }: Props) {
     if (mode === 'chooser') {
         return (
@@ -147,6 +149,7 @@ export default function Register({
                         )}
 
                         <input type="hidden" name="role" value={role} />
+                        <input type="hidden" name="locale" value={locale} />
 
                         <div className="grid gap-5">
                             <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-brand-blue/5 px-4 py-3">

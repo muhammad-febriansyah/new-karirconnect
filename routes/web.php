@@ -33,6 +33,7 @@ Route::middleware('guest')->group(function (): void {
         'description' => 'Bangun profil profesional, lamar lowongan, dan akses fitur AI untuk karier Anda.',
         'googleUrl' => route('auth.google.register', ['audience' => 'jobseeker']),
         'loginUrl' => route('login'),
+        'locale' => app()->getLocale(),
     ]))->name('register.jobseeker');
 
     Route::get('register/perusahaan', fn () => Inertia::render('auth/register', [
@@ -43,6 +44,7 @@ Route::middleware('guest')->group(function (): void {
         'description' => 'Mulai posting lowongan, kelola kandidat, dan percepat proses rekrutmen tim Anda.',
         'googleUrl' => route('auth.google.register', ['audience' => 'perusahaan']),
         'loginUrl' => route('login'),
+        'locale' => app()->getLocale(),
     ]))->name('register.company');
 
     Route::prefix('auth/google')->name('auth.google.')->group(function (): void {
