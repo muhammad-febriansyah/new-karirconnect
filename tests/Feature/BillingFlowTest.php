@@ -65,7 +65,7 @@ function makeFakeCallback(string $reference, int $amount, string $transactionSta
 
 test('paid plan checkout creates pending order with payment url', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
 
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
@@ -77,7 +77,7 @@ test('paid plan checkout creates pending order with payment url', function () {
 
 test('free plan checkout activates subscription immediately', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'free')->first();
+    $plan = SubscriptionPlan::factory()->create(['slug' => 'free', 'price_idr' => 0]);
 
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
@@ -89,7 +89,7 @@ test('free plan checkout activates subscription immediately', function () {
 
 test('valid midtrans callback marks order paid and activates plan', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $payload = makeFakeCallback($order->reference, $order->amount_idr);
@@ -110,7 +110,7 @@ test('valid midtrans callback marks order paid and activates plan', function () 
 
 test('invalid signature is rejected and order stays awaiting', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $payload = makeFakeCallback($order->reference, $order->amount_idr);
@@ -126,7 +126,7 @@ test('invalid signature is rejected and order stays awaiting', function () {
 
 test('amount mismatch is rejected with 422 and no entitlement applied', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     // Build payload with a different amount but signature that verifies for the
@@ -154,7 +154,7 @@ test('unknown order reference returns 404', function () {
 
 test('replaying same callback does not double-apply entitlement', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $payload = makeFakeCallback($order->reference, $order->amount_idr);
@@ -168,7 +168,7 @@ test('replaying same callback does not double-apply entitlement', function () {
 
 test('failed callback marks order failed and creates no subscription', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $payload = makeFakeCallback($order->reference, $order->amount_idr, 'deny');
@@ -203,7 +203,7 @@ test('job boost order marks job featured after successful payment', function () 
 
 test('employer can view billing index with their plans and orders', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $this->actingAs($owner)
@@ -213,7 +213,7 @@ test('employer can view billing index with their plans and orders', function () 
 
 test('employer cannot view another company order detail', function () {
     ['owner' => $owner, 'company' => $company] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     $order = app(BillingService::class)->checkoutPlan($company, $owner, $plan);
 
     $other = User::factory()->employer()->create();
@@ -226,7 +226,7 @@ test('employer cannot view another company order detail', function () {
 
 test('checkout endpoint redirects to gateway payment url', function () {
     ['owner' => $owner] = makeBillingContext();
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
 
     $response = $this->actingAs($owner)
         ->post(route('employer.billing.checkout', ['plan' => $plan->slug]));

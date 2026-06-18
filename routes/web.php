@@ -117,8 +117,10 @@ Route::middleware(['auth', 'verified', 'onboarding', 'employer.onboarded'])->gro
     Route::delete('device-tokens', [DeviceTokenController::class, 'destroy'])->name('device-tokens.destroy');
 });
 
+// Browser return URL only. The server-to-server notification webhook lives in
+// routes/api.php so it skips web session + CSRF middleware (Midtrans can't send
+// a CSRF token).
 Route::prefix('payments/midtrans')->name('payments.midtrans.')->group(function (): void {
-    Route::post('notification', [PaymentCallbackController::class, 'callback'])->name('notification');
     Route::get('finish', [PaymentCallbackController::class, 'return'])->name('finish');
 });
 
