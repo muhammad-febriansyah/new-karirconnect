@@ -31,6 +31,9 @@ test('connect redirects to google when oauth credentials configured', function (
 test('connect shows error when oauth not configured', function () {
     app(SettingService::class)->set('integrations', 'google_client_id', '');
     app(SettingService::class)->set('integrations', 'google_client_secret', '');
+    // Also clear the config fallback so "not configured" holds even when the
+    // host .env ships Google credentials.
+    config(['services.google.client_id' => null, 'services.google.client_secret' => null]);
 
     $employer = User::factory()->employer()->create();
     Company::factory()->approved()->create(['owner_id' => $employer->id]);

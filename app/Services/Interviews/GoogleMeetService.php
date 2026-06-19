@@ -173,8 +173,8 @@ class GoogleMeetService
     private function credentials(): array
     {
         return [
-            $this->settings->get('integrations.google_client_id') ?: env('GOOGLE_CLIENT_ID'),
-            $this->settings->get('integrations.google_client_secret') ?: env('GOOGLE_CLIENT_SECRET'),
+            $this->settings->get('integrations.google_client_id') ?: config('services.google.client_id'),
+            $this->settings->get('integrations.google_client_secret') ?: config('services.google.client_secret'),
         ];
     }
 
