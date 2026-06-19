@@ -3,18 +3,19 @@
 namespace App\Actions\AiInterview;
 
 use App\Enums\AiInterviewStatus;
+use App\Jobs\FinalizeAiInterviewJob;
 use App\Models\AiInterviewSession;
-use App\Notifications\AiInterviewCompletedNotification;
-use App\Services\Ai\AiInterviewAnalysisService;
-use Illuminate\Support\Facades\DB;
 
 class FinalizeAiInterviewAction
 {
-    public function __construct(private readonly AiInterviewAnalysisService $analyzer) {}
-
     /**
-     * Mark a session complete, generate the final analysis, and notify the
-     * employer when the session is tied to a real application (not practice).
+     * Close out the interview and hand the heavy AI work (per-answer scoring,
+     * final analysis, employer notification) to a queued job so the candidate
+     * gets an instant response instead of blocking on several model calls.
+     *
+     * Under the sync queue driver (tests) the job runs inline, so the analysis
+     * is available immediately on return. In production the session sits in
+     * `analyzing` until the worker finishes and the result page polls for it.
      */
     public function execute(AiInterviewSession $session): AiInterviewSession
     {
@@ -22,29 +23,17 @@ class FinalizeAiInterviewAction
             return $session->fresh(['analysis', 'questions.response']);
         }
 
-        return DB::transaction(function () use ($session): AiInterviewSession {
-            $startedAt = $session->started_at;
+        $startedAt = $session->started_at;
 
-            $session->forceFill([
-                'status' => AiInterviewStatus::Completed,
-                'completed_at' => $session->completed_at ?? now(),
-                'duration_seconds' => $startedAt
-                    ? max(0, now()->diffInSeconds($startedAt))
-                    : $session->duration_seconds,
-            ])->save();
+        $session->forceFill([
+            'status' => AiInterviewStatus::Analyzing,
+            'duration_seconds' => $startedAt
+                ? max(0, now()->diffInSeconds($startedAt))
+                : $session->duration_seconds,
+        ])->save();
 
-            $this->analyzer->analyze($session);
+        FinalizeAiInterviewJob::dispatch($session->id);
 
-            if (! $session->is_practice && $session->job !== null) {
-                $session->load(['job.company.owner', 'analysis', 'candidateProfile.user']);
-                $owner = $session->job->company?->owner;
-
-                $owner?->notify(new AiInterviewCompletedNotification(
-                    $session->fresh(['analysis', 'candidateProfile.user', 'job']),
-                ));
-            }
-
-            return $session->fresh(['analysis', 'questions.response']);
-        });
+        return $session->fresh(['analysis', 'questions.response']);
     }
 }

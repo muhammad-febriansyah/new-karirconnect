@@ -11,6 +11,7 @@ enum AiInterviewStatus: string
     case Pending = 'pending';
     case Invited = 'invited';
     case InProgress = 'in_progress';
+    case Analyzing = 'analyzing';
     case Completed = 'completed';
     case Expired = 'expired';
     case Cancelled = 'cancelled';
@@ -21,6 +22,7 @@ enum AiInterviewStatus: string
             self::Pending => 'Menunggu',
             self::Invited => 'Diundang',
             self::InProgress => 'Sedang Berlangsung',
+            self::Analyzing => 'Menganalisis',
             self::Completed => 'Selesai',
             self::Expired => 'Kedaluwarsa',
             self::Cancelled => 'Dibatalkan',

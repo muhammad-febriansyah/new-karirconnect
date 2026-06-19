@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Bot, Download, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Bot, Download, Sparkles } from 'lucide-react';
 import { InterviewRadarChart } from '@/components/charts/interview-radar';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
@@ -11,9 +11,10 @@ import { formatDateTime } from '@/lib/format-date';
 import { formatStatus } from '@/lib/format-status';
 
 type Analysis = {
-    overall_score: number;
-    fit_score: number;
-    recommendation: string;
+    status?: string;
+    overall_score: number | null;
+    fit_score: number | null;
+    recommendation: string | null;
     summary: string;
     strengths: string[] | null;
     weaknesses: string[] | null;
@@ -71,7 +72,20 @@ export default function EmployerAiInterviewShow({ session, analysis, responses }
                     }
                 />
 
-                {analysis ? (
+                {analysis?.status === 'needs_review' ? (
+                    <Card className="border-amber-200 bg-amber-50/50">
+                        <CardContent className="flex items-start gap-3 p-5">
+                            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+                            <div className="space-y-1">
+                                <div className="text-sm font-semibold text-slate-900">Analisis otomatis perlu tinjauan manual</div>
+                                <p className="text-sm text-muted-foreground">
+                                    Sistem AI gagal menghasilkan skor untuk sesi ini. Silakan tinjau jawaban kandidat
+                                    pada daftar di bawah secara manual.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : analysis ? (
                     <>
                         <div className="grid gap-4 md:grid-cols-3">
                             <Card>

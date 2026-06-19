@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -24,7 +24,7 @@ import {
     Trophy,
     Users,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { InterviewRadarChart } from '@/components/charts/interview-radar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,9 +49,10 @@ type Props = {
         answered_questions: number;
     };
     analysis: {
-        overall_score: number;
-        fit_score: number;
-        recommendation: string;
+        status?: string;
+        overall_score: number | null;
+        fit_score: number | null;
+        recommendation: string | null;
         summary: string;
         strengths: string[];
         weaknesses: string[];
@@ -62,6 +63,7 @@ type Props = {
         culture_fit_score: number | null;
         red_flags: string[];
     } | null;
+    analysis_pending?: boolean;
     responses: Array<{
         order_number: number;
         category: string;
@@ -150,11 +152,22 @@ const formatDuration = (seconds: number | null) => {
     return secs === 0 ? `${mins} menit` : `${mins}m ${secs}s`;
 };
 
-export default function AiInterviewResult({ session, analysis, responses }: Props) {
+export default function AiInterviewResult({ session, analysis, analysis_pending, responses }: Props) {
     const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'questions'>('overview');
     const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
 
-    const recommendation = analysis ? RECOMMENDATION_META[analysis.recommendation] ?? RECOMMENDATION_META.neutral : null;
+    // Analysis runs in a background queue job; poll until it lands so the
+    // candidate doesn't have to refresh manually.
+    useEffect(() => {
+        if (!analysis_pending) return;
+        const timer = window.setInterval(() => {
+            router.reload({ only: ['analysis', 'analysis_pending', 'responses', 'session'] });
+        }, 4000);
+        return () => window.clearInterval(timer);
+    }, [analysis_pending]);
+
+    const needsReview = analysis?.status === 'needs_review';
+    const recommendation = analysis ? RECOMMENDATION_META[analysis.recommendation ?? 'neutral'] ?? RECOMMENDATION_META.neutral : null;
     const recTone = recommendation ? TONE_STYLES[recommendation.tone] : TONE_STYLES.neutral;
 
     const subScoreEntries = useMemo(() => {
@@ -354,7 +367,8 @@ export default function AiInterviewResult({ session, analysis, responses }: Prop
                                 <div>
                                     <h3 className="text-base font-semibold text-slate-900">Analisis sedang diproses</h3>
                                     <p className="mt-1 text-sm text-slate-500">
-                                        AI sedang menganalisis jawabanmu. Refresh halaman dalam beberapa saat.
+                                        AI sedang menganalisis jawabanmu. Halaman ini akan diperbarui otomatis saat
+                                        hasil siap.
                                     </p>
                                 </div>
                                 <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
@@ -399,6 +413,21 @@ export default function AiInterviewResult({ session, analysis, responses }: Prop
                             </CardContent>
                         </Card>
                     )
+                ) : needsReview ? (
+                    <Card className="border-amber-200 bg-amber-50/50">
+                        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+                            <div className="flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                <AlertTriangle className="size-6" />
+                            </div>
+                            <div className="max-w-md space-y-1">
+                                <h3 className="text-base font-semibold text-slate-900">Analisis perlu tinjauan manual</h3>
+                                <p className="text-sm text-slate-600">
+                                    Sistem AI belum bisa menyelesaikan analisis otomatis untuk sesi ini. Jawabanmu
+                                    tersimpan dengan aman dan dapat ditinjau langsung pada tab per-pertanyaan di bawah.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 ) : (
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
                         <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-grid">

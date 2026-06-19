@@ -225,6 +225,7 @@ class AiInterviewController extends Controller
         // Hasil skor & analisis hanya boleh dilihat kandidat pada mode latihan.
         // Untuk wawancara nyata (terhubung dengan lamaran), hasil dikembalikan ke recruiter saja.
         $analysisPayload = ($isPractice && $session->analysis) ? [
+            'status' => $session->analysis->status,
             'overall_score' => $session->analysis->overall_score,
             'fit_score' => $session->analysis->fit_score,
             'recommendation' => $session->analysis->recommendation,
@@ -264,6 +265,9 @@ class AiInterviewController extends Controller
                 'answered_questions' => $session->questions->filter(fn ($q) => $q->response !== null)->count(),
             ],
             'analysis' => $analysisPayload,
+            'analysis_pending' => $isPractice
+                && $session->analysis === null
+                && in_array($session->status?->value, ['analyzing', 'in_progress', 'completed'], true),
             'responses' => $responsesPayload,
         ]);
     }

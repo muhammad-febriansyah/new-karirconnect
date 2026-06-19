@@ -1,7 +1,9 @@
 <?php
 
+use App\Jobs\FinalizeAiInterviewJob;
 use App\Models\AiAuditLog;
 use App\Models\AiCoachSession;
+use App\Models\AiInterviewQuestion;
 use App\Models\AiInterviewSession;
 use App\Models\Company;
 use App\Models\EmployeeProfile;
@@ -12,9 +14,12 @@ use App\Services\Ai\AiAnswerEvaluatorService;
 use App\Services\Ai\AiCareerCoachService;
 use App\Services\Ai\AiInterviewAnalysisService;
 use App\Services\Ai\AiQuestionGeneratorService;
+use App\Services\Ai\Contracts\AiClient;
+use App\Services\Ai\Contracts\AiResponse;
 use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
 use Database\Seeders\SettingSeeder;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function (): void {
     $this->seed([
@@ -316,4 +321,122 @@ test('user cannot send to another user coach session', function () {
             'message' => 'Hi',
         ])
         ->assertForbidden();
+});
+
+test('answer endpoint defers scoring (no inline AI call)', function () {
+    ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+    $candidate = $profile->user;
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+        'is_practice' => true,
+    ]);
+    app(AiQuestionGeneratorService::class)->generate($session);
+    $question = $session->questions()->first();
+
+    $this->actingAs($candidate)
+        ->post(route('employee.ai-interviews.answer', ['session' => $session->id, 'question' => $question->id]), [
+            'answer' => 'Jawaban kandidat yang relevan dan terstruktur.',
+        ])
+        ->assertRedirect();
+
+    $response = $question->fresh()->response;
+    expect($response)->not->toBeNull();
+    expect($response->answer_text)->not->toBeNull();
+    // Scoring is deferred to the finalize job, so no score yet.
+    expect($response->ai_score)->toBeNull();
+    expect($response->evaluated_at)->toBeNull();
+});
+
+test('completing an interview queues the finalize job', function () {
+    Queue::fake();
+
+    ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+    $candidate = $profile->user;
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+        'is_practice' => true,
+        'started_at' => now()->subMinutes(5),
+    ]);
+    app(AiQuestionGeneratorService::class)->generate($session);
+
+    $this->actingAs($candidate)
+        ->post(route('employee.ai-interviews.complete', ['session' => $session->id]))
+        ->assertRedirect();
+
+    Queue::assertPushed(FinalizeAiInterviewJob::class);
+    expect($session->fresh()->status?->value)->toBe('analyzing');
+});
+
+test('analysis falls back to needs_review when the model returns invalid output', function () {
+    ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+
+    // Bind a client that always returns non-JSON so retries are exhausted.
+    app()->instance('ai.client', new class implements AiClient
+    {
+        public function chat(array $messages, array $options = []): AiResponse
+        {
+            return new AiResponse(content: 'totally not json');
+        }
+
+        public function provider(): string
+        {
+            return 'fake-broken';
+        }
+
+        public function model(): string
+        {
+            return 'fake-broken-1';
+        }
+    });
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+    ]);
+    AiInterviewQuestion::factory()->create(['session_id' => $session->id, 'order_number' => 1]);
+
+    $analysis = app(AiInterviewAnalysisService::class)->analyze($session->fresh());
+
+    expect($analysis->status)->toBe('needs_review');
+    expect($analysis->overall_score)->toBeNull();
+    expect($analysis->recommendation)->toBeNull();
+    expect($session->fresh()->status?->value)->toBe('completed');
+});
+
+test('evaluator flags answer for manual review when the model fails', function () {
+    ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+
+    app()->instance('ai.client', new class implements AiClient
+    {
+        public function chat(array $messages, array $options = []): AiResponse
+        {
+            return new AiResponse(content: 'nope');
+        }
+
+        public function provider(): string
+        {
+            return 'fake-broken';
+        }
+
+        public function model(): string
+        {
+            return 'fake-broken-1';
+        }
+    });
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+    ]);
+    $question = AiInterviewQuestion::factory()->create(['session_id' => $session->id, 'order_number' => 1]);
+
+    $response = app(AiAnswerEvaluatorService::class)->evaluate($session, $question, 'Jawaban saya.');
+
+    expect($response->ai_score)->toBeNull();
+    expect($response->evaluated_at)->not->toBeNull();
+    expect($response->ai_feedback)->toContain('tinjauan manual');
 });

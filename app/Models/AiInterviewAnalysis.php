@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'session_id',
+    'status',
     'overall_score',
     'fit_score',
     'recommendation',
