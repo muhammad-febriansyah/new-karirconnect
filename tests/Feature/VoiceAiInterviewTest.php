@@ -61,6 +61,9 @@ it('mints OpenAI realtime client_secret for a voice session', function (): void 
     expect($body['session']['type'])->toBe('realtime');
     expect($body['session']['audio']['output']['voice'])->toBe('marin');
     expect($body['session']['audio']['input']['transcription']['language'])->toBe('id');
+    // Semantic VAD keeps noise/fillers from cutting the AI off mid-sentence.
+    expect($body['session']['audio']['input']['turn_detection']['type'])->toBe('semantic_vad');
+    expect($body['session']['audio']['input']['turn_detection']['eagerness'])->toBe('low');
 });
 
 it('rejects client_secret request when session mode is text', function (): void {

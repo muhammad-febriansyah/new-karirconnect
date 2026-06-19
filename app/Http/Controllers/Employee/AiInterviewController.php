@@ -331,11 +331,14 @@ class AiInterviewController extends Controller
                                 'prompt' => $languageConfig['transcription_prompt'],
                             ],
                             'noise_reduction' => ['type' => 'near_field'],
+                            // Semantic VAD uses a model to detect a real end-of-turn
+                            // instead of raw silence, so background noise and fillers
+                            // ("hmm", "iya", "eee") no longer cut the AI off mid-sentence.
+                            // eagerness=low waits longer before assuming the candidate is
+                            // done, while still allowing an intentional barge-in.
                             'turn_detection' => [
-                                'type' => 'server_vad',
-                                'threshold' => 0.88,
-                                'prefix_padding_ms' => 400,
-                                'silence_duration_ms' => 1400,
+                                'type' => 'semantic_vad',
+                                'eagerness' => 'low',
                                 'create_response' => true,
                                 'interrupt_response' => true,
                             ],
@@ -488,6 +491,12 @@ Use a professional, calm, and supportive tone — warm but never overly casual.
 ## Interview Questions (ask in this exact order):
 {$questions}
 
+## Handling Speech & Pauses:
+- Ignore filler words and short affirmations ("hmm", "uh", "yeah", "okay", "let me think") and background noise. They are NOT a complete answer.
+- Do NOT respond, acknowledge, or move on while the candidate is clearly still thinking or speaking. Wait for a real, complete answer.
+- Only continue after the candidate has given a substantive answer and clearly finished their turn.
+- If there is a long silence with no real answer, gently prompt once ("Take your time — whenever you're ready.") instead of repeating the question.
+
 ## Session Flow:
 - Open with this exact greeting (do NOT skip introducing yourself): "{$openingEn}"
 - Immediately after the greeting, ask Q1. Prefix every question with its number: "Q1:", "Q2:", etc.
@@ -511,6 +520,12 @@ Gunakan nada profesional, tenang, dan suportif — hangat tapi tidak terlalu san
 
 ## Daftar Pertanyaan Wawancara (tanyakan sesuai urutan berikut):
 {$questions}
+
+## Menangani Suara & Jeda:
+- Abaikan kata pengisi dan afirmasi singkat ("hmm", "eee", "iya", "oke", "sebentar", "anu") serta suara latar/noise. Itu BUKAN jawaban lengkap.
+- JANGAN merespons, memotong, atau lanjut ke pertanyaan berikutnya selama kandidat masih berpikir atau sedang berbicara. Tunggu jawaban yang benar-benar lengkap.
+- Lanjut hanya setelah kandidat memberi jawaban substantif dan jelas sudah selesai bicara.
+- Jika hening lama tanpa jawaban nyata, beri dorongan halus sekali ("Tidak perlu terburu-buru, jawab saat sudah siap ya.") — jangan langsung mengulang pertanyaan.
 
 ## Alur Sesi:
 - Buka dengan kalimat pembuka berikut persis (jangan skip perkenalan diri): "{$openingId}"
