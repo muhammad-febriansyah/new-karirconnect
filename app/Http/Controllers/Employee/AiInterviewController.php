@@ -162,9 +162,18 @@ class AiInterviewController extends Controller
         $data = $request->validate([
             'answer' => ['required', 'string', 'max:8000'],
             'duration_seconds' => ['nullable', 'integer', 'between:0,1800'],
+            'paste_count' => ['nullable', 'integer', 'between:0,1000'],
+            'focus_loss_count' => ['nullable', 'integer', 'between:0,1000'],
         ]);
 
-        $this->submitAnswer->execute($session, $question, $data['answer'], $data['duration_seconds'] ?? null);
+        $this->submitAnswer->execute(
+            $session,
+            $question,
+            $data['answer'],
+            $data['duration_seconds'] ?? null,
+            $data['paste_count'] ?? null,
+            $data['focus_loss_count'] ?? null,
+        );
 
         return back()->with('success', 'Jawaban tersimpan.');
     }

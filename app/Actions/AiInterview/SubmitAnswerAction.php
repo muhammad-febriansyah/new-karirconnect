@@ -26,6 +26,8 @@ class SubmitAnswerAction
         AiInterviewQuestion $question,
         string $answer,
         ?int $durationSeconds = null,
+        ?int $pasteCount = null,
+        ?int $focusLossCount = null,
     ): AiInterviewResponse {
         if ($question->session_id !== $session->id) {
             throw ValidationException::withMessages(['question' => 'Pertanyaan tidak cocok dengan sesi.']);
@@ -46,6 +48,8 @@ class SubmitAnswerAction
             [
                 'answer_text' => $answer,
                 'duration_seconds' => $durationSeconds,
+                'paste_count' => $pasteCount,
+                'focus_loss_count' => $focusLossCount,
                 'evaluated_at' => null,
             ],
         );

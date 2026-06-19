@@ -89,11 +89,10 @@ class FakeAiClient implements AiClient
         return [
             'ai_score' => 72,
             'sub_scores' => [
-                'relevance' => 75,
-                'clarity' => 70,
-                'technical_accuracy' => 70,
+                'technical' => 70,
                 'communication' => 75,
-                'depth' => 65,
+                'problem_solving' => 68,
+                'culture_fit' => 74,
             ],
             'ai_feedback' => 'Jawaban relevan dan terstruktur, namun bisa lebih dalam pada aspek teknis.',
         ];

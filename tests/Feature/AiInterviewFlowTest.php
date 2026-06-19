@@ -94,7 +94,7 @@ test('answer evaluator persists ai_score and sub_scores', function () {
     );
 
     expect($response->ai_score)->toBe(72);
-    expect($response->sub_scores)->toBeArray()->toHaveKey('relevance');
+    expect($response->sub_scores)->toBeArray()->toHaveKeys(['technical', 'communication', 'problem_solving', 'culture_fit']);
     expect($response->ai_feedback)->not->toBeEmpty();
     expect($response->duration_seconds)->toBe(180);
 });
@@ -439,4 +439,64 @@ test('evaluator flags answer for manual review when the model fails', function (
     expect($response->ai_score)->toBeNull();
     expect($response->evaluated_at)->not->toBeNull();
     expect($response->ai_feedback)->toContain('tinjauan manual');
+});
+
+test('answer endpoint persists integrity signals (paste / tab-switch)', function () {
+    ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+    $candidate = $profile->user;
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+        'is_practice' => true,
+    ]);
+    app(AiQuestionGeneratorService::class)->generate($session);
+    $question = $session->questions()->first();
+
+    $this->actingAs($candidate)
+        ->post(route('employee.ai-interviews.answer', ['session' => $session->id, 'question' => $question->id]), [
+            'answer' => 'Jawaban kandidat.',
+            'paste_count' => 2,
+            'focus_loss_count' => 3,
+        ])
+        ->assertRedirect();
+
+    $response = $question->fresh()->response;
+    expect($response->paste_count)->toBe(2);
+    expect($response->focus_loss_count)->toBe(3);
+});
+
+test('analysis radar is grounded in per-answer sub-scores', function () {
+    ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+    ]);
+    app(AiQuestionGeneratorService::class)->generate($session);
+
+    // Score one answer so its sub-scores feed the radar average.
+    $question = $session->questions()->first();
+    app(AiAnswerEvaluatorService::class)->evaluate($session->fresh(), $question, 'Jawaban lengkap.', 60);
+
+    $analysis = app(AiInterviewAnalysisService::class)->analyze($session->fresh());
+
+    // FakeAiClient evaluation fixture: communication=75, technical=70.
+    expect($analysis->communication_score)->toBe(75);
+    expect($analysis->technical_score)->toBe(70);
+});
+
+test('final analysis runs on the configured analysis model', function () {
+    ['profile' => $profile, 'job' => $job] = makeAiInterviewContext();
+
+    $session = AiInterviewSession::factory()->inProgress()->create([
+        'candidate_profile_id' => $profile->id,
+        'job_id' => $job->id,
+    ]);
+    AiInterviewQuestion::factory()->create(['session_id' => $session->id, 'order_number' => 1]);
+
+    app(AiInterviewAnalysisService::class)->analyze($session->fresh());
+
+    $log = AiAuditLog::query()->where('feature', 'ai_interview')->latest('id')->first();
+    expect($log->model)->toBe('gpt-4o');
 });

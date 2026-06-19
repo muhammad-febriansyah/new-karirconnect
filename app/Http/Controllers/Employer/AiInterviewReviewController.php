@@ -64,6 +64,8 @@ class AiInterviewReviewController extends Controller
                 'ai_score' => $q->response?->ai_score,
                 'sub_scores' => $q->response?->sub_scores,
                 'ai_feedback' => $q->response?->ai_feedback,
+                'paste_count' => $q->response?->paste_count,
+                'focus_loss_count' => $q->response?->focus_loss_count,
             ])->values(),
         ]);
     }

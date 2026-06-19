@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Models\AiInterviewAnalysis;
 use App\Models\AiInterviewSession;
 use App\Services\Ai\Concerns\CallsAiForJson;
+use App\Services\Settings\SettingService;
 
 class AiInterviewAnalysisService
 {
@@ -13,6 +14,7 @@ class AiInterviewAnalysisService
     public function __construct(
         private readonly AiClientFactory $factory,
         private readonly AiAuditService $audit,
+        private readonly SettingService $settings,
     ) {}
 
     /**
@@ -49,15 +51,23 @@ class AiInterviewAnalysisService
             ['role' => 'user', 'content' => 'Job: '.($session->job?->title ?? 'N/A')."\n\nFull transcript:\n\n{$transcript}"],
         ];
 
+        // The final analysis drives the hire recommendation, so it runs on the
+        // stronger `ai.model_analysis` model (default gpt-4o) instead of the
+        // cheaper model used for high-volume question generation / per-answer scoring.
+        $analysisModel = (string) ($this->settings->get('ai.model_analysis')
+            ?: $this->settings->get('ai.model_interview', 'gpt-4o'));
+
         $payload = $this->callAiForJson(
             $this->audit,
             $client,
             'ai_interview',
             $messages,
-            ['intent' => 'analysis'],
+            ['intent' => 'analysis', 'model' => $analysisModel],
             $session->candidateProfile?->user_id,
             isValid: fn (array $p): bool => isset($p['overall_score']) && is_numeric($p['overall_score']),
         );
+
+        $dimensionAverages = $this->averageSubScores($session);
 
         $attributes = $payload === null
             ? [
@@ -85,10 +95,14 @@ class AiInterviewAnalysisService
                 'strengths' => $payload['strengths'] ?? null,
                 'weaknesses' => $payload['weaknesses'] ?? null,
                 'skill_assessment' => $payload['skill_assessment'] ?? null,
-                'communication_score' => $payload['communication_score'] ?? null,
-                'technical_score' => $payload['technical_score'] ?? null,
-                'problem_solving_score' => $payload['problem_solving_score'] ?? null,
-                'culture_fit_score' => $payload['culture_fit_score'] ?? null,
+                // Radar dimensions are grounded in the actual per-answer sub-scores
+                // (same four keys the evaluator emits) so the chart reflects scored
+                // evidence; fall back to the model's session-level estimate when an
+                // answer was never scored.
+                'communication_score' => $dimensionAverages['communication'] ?? $payload['communication_score'] ?? null,
+                'technical_score' => $dimensionAverages['technical'] ?? $payload['technical_score'] ?? null,
+                'problem_solving_score' => $dimensionAverages['problem_solving'] ?? $payload['problem_solving_score'] ?? null,
+                'culture_fit_score' => $dimensionAverages['culture_fit'] ?? $payload['culture_fit_score'] ?? null,
                 'red_flags' => $payload['red_flags'] ?? null,
                 'generated_at' => now(),
             ];
@@ -104,5 +118,42 @@ class AiInterviewAnalysisService
         ])->save();
 
         return $analysis;
+    }
+
+    /**
+     * Average the per-answer sub-scores into the four canonical radar
+     * dimensions. Returns only dimensions that were actually scored.
+     *
+     * @return array<string, int>
+     */
+    private function averageSubScores(AiInterviewSession $session): array
+    {
+        $dimensions = ['technical', 'communication', 'problem_solving', 'culture_fit'];
+        $sums = [];
+        $counts = [];
+
+        foreach ($session->questions as $question) {
+            $subScores = $question->response?->sub_scores;
+
+            if (! is_array($subScores)) {
+                continue;
+            }
+
+            foreach ($dimensions as $dimension) {
+                if (! isset($subScores[$dimension]) || ! is_numeric($subScores[$dimension])) {
+                    continue;
+                }
+
+                $sums[$dimension] = ($sums[$dimension] ?? 0) + (int) $subScores[$dimension];
+                $counts[$dimension] = ($counts[$dimension] ?? 0) + 1;
+            }
+        }
+
+        $averages = [];
+        foreach ($sums as $dimension => $sum) {
+            $averages[$dimension] = (int) round($sum / $counts[$dimension]);
+        }
+
+        return $averages;
     }
 }

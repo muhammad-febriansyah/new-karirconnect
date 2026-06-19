@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'audio_url',
     'transcript',
     'duration_seconds',
+    'paste_count',
+    'focus_loss_count',
     'ai_score',
     'sub_scores',
     'ai_feedback',
@@ -35,6 +37,8 @@ class AiInterviewResponse extends Model
             'evaluated_at' => 'datetime',
             'ai_score' => 'integer',
             'duration_seconds' => 'integer',
+            'paste_count' => 'integer',
+            'focus_loss_count' => 'integer',
         ];
     }
 

@@ -44,6 +44,8 @@ type Props = {
         ai_score: number | null;
         sub_scores: Record<string, number> | null;
         ai_feedback: string | null;
+        paste_count: number | null;
+        focus_loss_count: number | null;
     }>;
 };
 
@@ -140,29 +142,49 @@ export default function EmployerAiInterviewShow({ session, analysis, responses }
                             </Section>
                         </div>
 
-                        <Section title="Detail Per Pertanyaan">
-                            <div className="space-y-3">
-                                {responses.map((r) => (
+                    </>
+                ) : (
+                    <Section><p className="text-sm text-muted-foreground">Analisis belum tersedia.</p></Section>
+                )}
+
+                {responses.length > 0 && (
+                    <Section title="Detail Per Pertanyaan">
+                        <div className="space-y-3">
+                            {responses.map((r) => {
+                                const pasted = (r.paste_count ?? 0) > 0;
+                                const switched = (r.focus_loss_count ?? 0) > 0;
+
+                                return (
                                     <Card key={r.order_number}>
                                         <CardContent className="space-y-2 p-4">
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <div className="text-sm font-semibold">
                                                     Q{r.order_number}
                                                     <Badge variant="secondary" className="ml-2">{r.category}</Badge>
                                                 </div>
-                                                {r.ai_score !== null && <Badge>{r.ai_score}/100</Badge>}
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    {pasted && (
+                                                        <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-800">
+                                                            <AlertTriangle className="size-3" /> Tempel {r.paste_count}×
+                                                        </Badge>
+                                                    )}
+                                                    {switched && (
+                                                        <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-800">
+                                                            <AlertTriangle className="size-3" /> Pindah tab {r.focus_loss_count}×
+                                                        </Badge>
+                                                    )}
+                                                    {r.ai_score !== null && <Badge>{r.ai_score}/100</Badge>}
+                                                </div>
                                             </div>
                                             <p className="font-medium">{r.question}</p>
                                             {r.answer && <p className="rounded bg-muted/40 p-2 text-sm">{r.answer}</p>}
                                             {r.ai_feedback && <p className="text-xs text-muted-foreground">AI: {r.ai_feedback}</p>}
                                         </CardContent>
                                     </Card>
-                                ))}
-                            </div>
-                        </Section>
-                    </>
-                ) : (
-                    <Section><p className="text-sm text-muted-foreground">Analisis belum tersedia.</p></Section>
+                                );
+                            })}
+                        </div>
+                    </Section>
                 )}
 
                 <p className="text-xs text-muted-foreground flex items-center gap-1">

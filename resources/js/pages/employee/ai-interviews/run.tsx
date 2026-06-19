@@ -160,7 +160,19 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 function TextRun({ session, questions, currentQuestion }: Props) {
     const [submitting, setSubmitting] = useState(false);
-    const form = useForm({ answer: '', duration_seconds: 0 });
+    const form = useForm({ answer: '', duration_seconds: 0, paste_count: 0, focus_loss_count: 0 });
+
+    // Soft integrity signals: count clipboard pastes and tab/window switches
+    // while answering. These are surfaced to recruiters as hints, never used to
+    // auto-reject a candidate.
+    useEffect(() => {
+        const onBlur = () => form.setData('focus_loss_count', (form.data.focus_loss_count ?? 0) + 1);
+        window.addEventListener('blur', onBlur);
+        return () => window.removeEventListener('blur', onBlur);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [form.data.focus_loss_count]);
+
+    const onPaste = () => form.setData('paste_count', (form.data.paste_count ?? 0) + 1);
 
     const onSubmit = (e: FormEvent) => {
         if (!currentQuestion) return;
@@ -170,7 +182,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
             preserveScroll: true,
             onFinish: () => {
                 setSubmitting(false);
-                form.reset('answer');
+                form.reset('answer', 'paste_count', 'focus_loss_count');
             },
         });
     };
@@ -296,6 +308,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
                                     placeholder="Mulai dari pengalaman atau konteks yang relevan, lalu jelaskan apa yang Anda lakukan dan dampaknya…"
                                     value={form.data.answer}
                                     onChange={(e) => form.setData('answer', e.target.value)}
+                                    onPaste={onPaste}
                                     className="block w-full resize-y rounded-xl border border-slate-200 bg-slate-50/40 px-3.5 py-3 text-sm leading-relaxed shadow-inner placeholder:text-slate-400 focus:border-[color:#1080E0]/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[color:#1080E0]/15"
                                 />
                                 {form.errors.answer && (
