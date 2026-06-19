@@ -425,7 +425,11 @@ class AiInterviewController extends Controller
                 : $session->live_transcript,
         ])->save();
 
-        return redirect()->route('employee.ai-interviews.complete', ['session' => $session->id]);
+        // Finalize inline then redirect to the result page with a GET. Redirecting
+        // to the POST-only `complete` route would issue a GET and 405.
+        $this->finalize->execute($session);
+
+        return redirect()->route('employee.ai-interviews.result', ['session' => $session->id]);
     }
 
     private function authorizeOwn(Request $request, AiInterviewSession $session): void

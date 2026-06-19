@@ -117,7 +117,7 @@ it('uploads voice recording and stores public URL on session', function (): void
     expect($session->recording_url)->toStartWith('/storage/ai-interview-recordings/');
 });
 
-it('submits voice answers with live_transcript and redirects to complete', function (): void {
+it('submits voice answers with live_transcript and redirects to result', function (): void {
     $session = AiInterviewSession::factory()->create([
         'candidate_profile_id' => $this->profile->id,
         'mode' => 'voice',
@@ -144,7 +144,7 @@ it('submits voice answers with live_transcript and redirects to complete', funct
             'live_transcript' => 'AI: Apa motivasimu? Kandidat: Saya termotivasi...',
         ]);
 
-    $response->assertRedirect("/employee/ai-interviews/{$session->id}/complete");
+    $response->assertRedirect("/employee/ai-interviews/{$session->id}/result");
 
     $session->refresh();
     expect($session->live_transcript)->toContain('Saya termotivasi');
