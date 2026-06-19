@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CompanySubscription;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Database\Seeders\SettingSeeder;
@@ -115,4 +116,17 @@ test('admin can update and delete a pricing plan', function () {
         ->assertRedirect();
 
     expect(SubscriptionPlan::query()->whereKey($plan->id)->exists())->toBeFalse();
+});
+
+test('cannot delete a pricing plan that is still in use by a company subscription', function () {
+    $admin = User::factory()->admin()->create();
+    $plan = SubscriptionPlan::factory()->create(['slug' => 'in-use-test']);
+    CompanySubscription::factory()->create(['plan_id' => $plan->id]);
+
+    $this->actingAs($admin)
+        ->delete('/admin/pricing-plans/in-use-test')
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    expect(SubscriptionPlan::query()->whereKey($plan->id)->exists())->toBeTrue();
 });

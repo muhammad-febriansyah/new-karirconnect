@@ -90,7 +90,7 @@ export default function AdminPricingPlansIndex({ plans, totals }: Props) {
 
     const remove = () => {
         if (!pendingDelete) return;
-        router.delete(`/admin/pricing-plans/${pendingDelete.id}`, {
+        router.delete(`/admin/pricing-plans/${pendingDelete.slug}`, {
             preserveScroll: true,
             onFinish: () => setPendingDelete(null),
         });
@@ -286,7 +286,7 @@ export default function AdminPricingPlansIndex({ plans, totals }: Props) {
                                                     variant="outline"
                                                     className="h-8 border-brand-blue/20 bg-brand-blue/5 text-brand-blue hover:bg-brand-blue/10 hover:text-brand-blue"
                                                 >
-                                                    <Link href={`/admin/pricing-plans/${plan.id}/edit`} aria-label={`Edit ${plan.name}`}>
+                                                    <Link href={`/admin/pricing-plans/${plan.slug}/edit`} aria-label={`Edit ${plan.name}`}>
                                                         <Pencil className="size-3.5" /> Ubah
                                                     </Link>
                                                 </Button>

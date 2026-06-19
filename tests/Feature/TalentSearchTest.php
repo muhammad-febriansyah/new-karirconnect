@@ -27,7 +27,7 @@ beforeEach(function (): void {
     ]);
 });
 
-function makeTalentEmployer(?string $planSlug = 'starter'): array
+function makeTalentEmployer(?string $planSlug = 'pro'): array
 {
     $owner = User::factory()->employer()->create();
     $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
@@ -100,17 +100,26 @@ test('subscription middleware blocks employer without active plan', function () 
         ->assertRedirect(route('employer.billing.index'));
 });
 
-test('starter plan can access talent search', function () {
-    ['owner' => $owner] = makeTalentEmployer('starter');
+test('pro plan can access talent search', function () {
+    ['owner' => $owner] = makeTalentEmployer('pro');
     makeCandidate();
 
     $this->actingAs($owner)->get('/employer/talent-search')->assertOk();
 });
 
+test('basic plan is redirected to billing (pro-only feature)', function () {
+    ['owner' => $owner] = makeTalentEmployer('basic');
+    makeCandidate();
+
+    $this->actingAs($owner)
+        ->get('/employer/talent-search')
+        ->assertRedirect(route('employer.billing.index'));
+});
+
 test('expired subscription is treated as inactive', function () {
     $owner = User::factory()->employer()->create();
     $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
     CompanySubscription::factory()->create([
         'company_id' => $company->id,
         'plan_id' => $plan->id,

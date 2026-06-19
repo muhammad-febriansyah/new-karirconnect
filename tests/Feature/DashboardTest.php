@@ -126,7 +126,7 @@ test('employee dashboard counts applications by status', function () {
 test('employer dashboard reports billing usage', function () {
     $owner = User::factory()->employer()->create();
     $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
-    $plan = SubscriptionPlan::query()->where('slug', 'starter')->first();
+    $plan = SubscriptionPlan::query()->where('slug', 'basic')->first();
 
     CompanySubscription::factory()->create([
         'company_id' => $company->id,

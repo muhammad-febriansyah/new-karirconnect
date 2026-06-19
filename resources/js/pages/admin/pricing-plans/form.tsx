@@ -57,7 +57,7 @@ export default function AdminPricingPlanForm({ mode, plan, tierOptions }: Props)
         e.preventDefault();
         const payload = { ...data, features: features.filter((f) => f.trim() !== '') };
         if (isEdit && plan) {
-            router.patch(`/admin/pricing-plans/${plan.id}`, payload);
+            router.patch(`/admin/pricing-plans/${plan.slug}`, payload);
         } else {
             router.post('/admin/pricing-plans', payload);
         }

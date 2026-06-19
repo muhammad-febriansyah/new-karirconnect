@@ -400,10 +400,18 @@ function TemplateCard({ template, expanded, onToggle, onEdit, onDelete, category
         <Card className={cn('overflow-hidden transition', expanded && 'shadow-md ring-1 ring-sky-200')}>
             <CardContent className="p-0">
                 {/* Header (clickable) */}
-                <button
-                    type="button"
+                <div
+                    role="button"
+                    tabIndex={0}
                     onClick={onToggle}
-                    className="flex w-full flex-col gap-3 p-4 text-left transition hover:bg-slate-50/70 sm:flex-row sm:items-center sm:gap-4 sm:p-5"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onToggle();
+                        }
+                    }}
+                    aria-expanded={expanded}
+                    className="flex w-full cursor-pointer flex-col gap-3 p-4 text-left transition hover:bg-slate-50/70 sm:flex-row sm:items-center sm:gap-4 sm:p-5"
                 >
                     <div className={cn('flex size-11 shrink-0 items-center justify-center rounded-xl', modeMeta.chip)}>
                         <ModeIcon className="size-5" />
@@ -474,7 +482,7 @@ function TemplateCard({ template, expanded, onToggle, onEdit, onDelete, category
                             {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                         </div>
                     </div>
-                </button>
+                </div>
 
                 {/* Expanded: question editor */}
                 {expanded && (

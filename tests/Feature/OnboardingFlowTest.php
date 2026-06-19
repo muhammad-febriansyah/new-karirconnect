@@ -18,6 +18,7 @@ it('redirects unverified users to verify-email after register', function (): voi
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'role' => 'employee',
+        'locale' => 'id',
     ]);
 
     $user = User::query()->where('email', 'budi@example.com')->first();

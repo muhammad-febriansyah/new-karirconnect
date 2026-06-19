@@ -7,6 +7,7 @@ use Database\Factories\SubscriptionPlanFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'name',
@@ -30,6 +31,14 @@ class SubscriptionPlan extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * @return HasMany<CompanySubscription, $this>
+     */
+    public function companySubscriptions(): HasMany
+    {
+        return $this->hasMany(CompanySubscription::class, 'plan_id');
     }
 
     /**

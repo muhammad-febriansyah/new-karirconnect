@@ -14,7 +14,7 @@ import {
 import { useDraggable } from '@dnd-kit/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { Bot, Calendar, CheckCircle2, ChevronsRight, GripVertical, Layers, Link as LinkIcon, MapPin, MoreVertical, Plus, Video } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
@@ -87,6 +87,12 @@ export default function InterviewsIndex({ columns: initialColumns, filters, stag
     const [columns, setColumns] = useState<Column[]>(initialColumns);
     const [activeCard, setActiveCard] = useState<InterviewCard | null>(null);
 
+    // Enable drag-and-drop only after client mount. @dnd-kit generates internal
+    // aria ids that differ between SSR and client, so rendering it during SSR
+    // causes a hydration mismatch. Gate it to client-only to keep markup stable.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     // Re-sync when server returns a new view (e.g. after group_by toggle)
     useMemo(() => setColumns(initialColumns), [initialColumns]);
 
@@ -155,7 +161,7 @@ export default function InterviewsIndex({ columns: initialColumns, filters, stag
     };
 
     const totalItems = columns.reduce((sum, c) => sum + c.items.length, 0);
-    const dndEnabled = filters.group_by === 'stage';
+    const dndEnabled = filters.group_by === 'stage' && mounted;
 
     const KanbanBody = (
         <Section className="overflow-x-auto">

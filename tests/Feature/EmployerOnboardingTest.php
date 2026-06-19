@@ -18,6 +18,7 @@ it('auto-creates a pending company on employer registration', function (): void 
         'password_confirmation' => 'Password123!',
         'role' => 'employer',
         'company_name' => 'PT Maju Bersama',
+        'locale' => 'id',
     ]);
 
     $user = User::query()->where('email', 'pic@company.test')->firstOrFail();

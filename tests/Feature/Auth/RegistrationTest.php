@@ -46,6 +46,7 @@ test('new jobseekers can register', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => UserRole::Employee->value,
+        'locale' => 'id',
     ]);
 
     $this->assertAuthenticated();
@@ -61,6 +62,7 @@ test('new companies can register', function () {
         'password_confirmation' => 'password',
         'role' => UserRole::Employer->value,
         'company_name' => 'PT Maju Jaya',
+        'locale' => 'id',
     ]);
 
     $this->assertAuthenticated();

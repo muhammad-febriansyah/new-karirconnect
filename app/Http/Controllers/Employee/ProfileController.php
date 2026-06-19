@@ -25,6 +25,7 @@ class ProfileController extends Controller
                 ...$profile->toArray(),
                 'gender' => $profile->gender?->value,
                 'experience_level' => $profile->experience_level?->value,
+                'date_of_birth' => optional($profile->date_of_birth)->format('Y-m-d'),
             ],
             'provinces' => Province::query()
                 ->orderBy('name')

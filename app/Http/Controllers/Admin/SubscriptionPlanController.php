@@ -65,6 +65,11 @@ class SubscriptionPlanController extends Controller
 
     public function destroy(SubscriptionPlan $plan): RedirectResponse
     {
+        if ($plan->companySubscriptions()->exists()) {
+            return to_route('admin.pricing-plans.index')
+                ->with('error', 'Paket tidak dapat dihapus karena masih digunakan oleh langganan perusahaan. Nonaktifkan paket sebagai gantinya.');
+        }
+
         $plan->delete();
 
         return to_route('admin.pricing-plans.index')->with('success', 'Paket dihapus.');
