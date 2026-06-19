@@ -97,9 +97,15 @@ class AiInterviewController extends Controller
         return redirect()->route('employee.ai-interviews.run', ['session' => $session->id]);
     }
 
-    public function run(Request $request, AiInterviewSession $session): Response
+    public function run(Request $request, AiInterviewSession $session): Response|RedirectResponse
     {
         $this->authorizeOwn($request, $session);
+
+        // Already finished (or analysis running) — send to the result page instead
+        // of re-rendering an empty runner.
+        if (in_array($session->status?->value, ['analyzing', 'completed'], true)) {
+            return redirect()->route('employee.ai-interviews.result', ['session' => $session->id]);
+        }
 
         $jobLoad = ['questions.response', 'job:id,title,company_id,experience_level,description', 'job.company:id,name,logo_path'];
 

@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Defensive: skip if the table already exists (handles environments where
+        // it was created out-of-band before this migration was recorded).
+        if (Schema::hasTable('skill_assessment_answers')) {
+            return;
+        }
+
         Schema::create('skill_assessment_answers', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('assessment_id')->constrained('skill_assessments')->cascadeOnDelete();
