@@ -80,6 +80,7 @@ type Filters = {
     employment_type: string | null;
     work_arrangement: string | null;
     experience_level: string | null;
+    min_education: string | null;
     salary_min: number | null;
     skill_ids: number[];
     featured_only: boolean | null;
@@ -97,6 +98,7 @@ type Props = {
         employment_types: Option[];
         work_arrangements: Option[];
         experience_levels: Option[];
+        education_levels: Option[];
     };
 };
 
@@ -227,6 +229,7 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
             filters.employment_type ||
             filters.work_arrangement ||
             filters.experience_level ||
+            filters.min_education ||
             filters.salary_min ||
             filters.featured_only ||
             (filters.skill_ids?.length ?? 0) > 0,
@@ -397,6 +400,12 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
                             value={filters.work_arrangement}
                             options={options.work_arrangements}
                             onChange={(v) => apply({ work_arrangement: v })}
+                        />
+                        <FilterSelect
+                            placeholder="Pendidikan"
+                            value={filters.min_education}
+                            options={options.education_levels}
+                            onChange={(v) => apply({ min_education: v })}
                         />
                         <FilterSelect
                             placeholder="Lokasi"

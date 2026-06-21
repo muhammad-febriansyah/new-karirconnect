@@ -3,7 +3,11 @@
 namespace App\Services\Public;
 
 use App\Enums\CompanyStatus;
+use App\Enums\EducationLevel;
+use App\Enums\EmploymentType;
+use App\Enums\ExperienceLevel;
 use App\Enums\JobStatus;
+use App\Enums\WorkArrangement;
 use App\Models\CareerResource;
 use App\Models\Company;
 use App\Models\CompanyReview;
@@ -11,6 +15,7 @@ use App\Models\EmployeeProfile;
 use App\Models\Faq;
 use App\Models\Job;
 use App\Models\JobCategory;
+use App\Models\Province;
 use App\Models\SalarySubmission;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -22,7 +27,7 @@ use Illuminate\Support\Str;
  */
 class HomeService
 {
-    private const CACHE_KEY = 'home_snapshot_v1';
+    private const CACHE_KEY = 'home_snapshot_v2';
 
     private const CACHE_TTL_SECONDS = 300;
 
@@ -40,7 +45,26 @@ class HomeService
             'testimonials' => $this->testimonials(),
             'articles' => $this->articles(),
             'faqs' => $this->faqs(),
+            'search_options' => $this->searchOptions(),
         ]);
+    }
+
+    /**
+     * Filter options for the hero search bar. Mirrors the job-browse filters
+     * so a search on the homepage lands on /jobs with valid query params.
+     *
+     * @return array<string, mixed>
+     */
+    private function searchOptions(): array
+    {
+        return [
+            'provinces' => Province::query()->orderBy('name')->get(['id', 'name'])
+                ->map(fn (Province $p) => ['value' => (string) $p->id, 'label' => $p->name])->all(),
+            'employment_types' => EmploymentType::selectItems(),
+            'work_arrangements' => WorkArrangement::selectItems(),
+            'experience_levels' => ExperienceLevel::selectItems(),
+            'education_levels' => EducationLevel::selectItems(),
+        ];
     }
 
     /**

@@ -22,6 +22,7 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
  *     employment_type?: string|array<int, string>|null,
  *     work_arrangement?: string|array<int, string>|null,
  *     experience_level?: string|array<int, string>|null,
+ *     min_education?: string|array<int, string>|null,
  *     salary_min?: int|null,
  *     skill_ids?: array<int, int>|null,
  *     featured_only?: bool|null,
@@ -53,6 +54,7 @@ class JobBrowseFilter
         $this->applyEnumFilter($query, 'employment_type', $filters['employment_type'] ?? null);
         $this->applyEnumFilter($query, 'work_arrangement', $filters['work_arrangement'] ?? null);
         $this->applyEnumFilter($query, 'experience_level', $filters['experience_level'] ?? null);
+        $this->applyEnumFilter($query, 'min_education', $filters['min_education'] ?? null);
         $this->applySalary($query, $filters['salary_min'] ?? null);
         $this->applySkills($query, $filters['skill_ids'] ?? null);
         $this->applyFeatured($query, $filters['featured_only'] ?? null);

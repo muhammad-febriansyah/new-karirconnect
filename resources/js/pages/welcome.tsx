@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, CheckCircle2, ChevronDown, Clock, FileSearch, FileText, MapPin, Quote, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
+import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, Check, CheckCircle2, ChevronDown, Clock, FileSearch, FileText, MapPin, Quote, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
 import { Spotlight } from '@/components/aceternity/spotlight';
 import { motion } from 'motion/react';
 import { type FormEvent, useState } from 'react';
@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 import type { SharedPageProps } from '@/types';
@@ -76,6 +79,16 @@ type FaqEntry = {
     category: string | null;
 };
 
+type SelectOption = { value: string; label: string };
+
+type SearchOptions = {
+    provinces: SelectOption[];
+    employment_types: SelectOption[];
+    work_arrangements: SelectOption[];
+    experience_levels: SelectOption[];
+    education_levels: SelectOption[];
+};
+
 type Home = {
     metrics: { open_jobs: number; active_companies: number; candidates: number; salary_reports: number };
     featured_jobs: FeaturedJob[];
@@ -85,6 +98,7 @@ type Home = {
     testimonials: Testimonial[];
     articles: Article[];
     faqs: FaqEntry[];
+    search_options: SearchOptions;
 };
 
 type Props = {
@@ -370,13 +384,136 @@ function FaqItem({ item }: { item: FaqEntry }) {
     );
 }
 
+/**
+ * Searchable location picker for the hero search bar. Uses Command inside a
+ * Popover so the user can type to filter the province list.
+ */
+function LocationCombobox({
+    value,
+    options,
+    onChange,
+}: {
+    value: string | null;
+    options: SelectOption[];
+    onChange: (value: string | null) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const active = options.find((o) => o.value === value);
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <button
+                    type="button"
+                    className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-background px-3 py-2 text-left text-sm transition-all hover:border-brand-blue/40 focus:outline-none data-[state=open]:border-brand-blue/40 data-[state=open]:ring-2 data-[state=open]:ring-brand-blue/15"
+                >
+                    <MapPin className="size-4 shrink-0 text-muted-foreground/70" />
+                    <span className={cn('flex-1 truncate', !active && 'text-muted-foreground/60')}>
+                        {active?.label ?? 'Semua Lokasi'}
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 opacity-50" />
+                </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <Command>
+                    <CommandInput placeholder="Cari lokasi…" />
+                    <CommandList>
+                        <CommandEmpty>Lokasi tidak ditemukan.</CommandEmpty>
+                        <CommandGroup>
+                            <CommandItem
+                                value="Semua Lokasi"
+                                onSelect={() => {
+                                    onChange(null);
+                                    setOpen(false);
+                                }}
+                            >
+                                <Check className={cn('size-4', value === null ? 'opacity-100' : 'opacity-0')} />
+                                Semua Lokasi
+                            </CommandItem>
+                            {options.map((o) => (
+                                <CommandItem
+                                    key={o.value}
+                                    value={o.label}
+                                    onSelect={() => {
+                                        onChange(o.value);
+                                        setOpen(false);
+                                    }}
+                                >
+                                    <Check className={cn('size-4', value === o.value ? 'opacity-100' : 'opacity-0')} />
+                                    {o.label}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+/**
+ * Pill-style dropdown for the hero search filters. Mirrors the kitalulus
+ * filter row — value is held in local state and applied on search submit.
+ */
+function HeroFilter({
+    placeholder,
+    value,
+    options,
+    onChange,
+}: {
+    placeholder: string;
+    value: string | null;
+    options: SelectOption[];
+    onChange: (value: string | null) => void;
+}) {
+    const active = options.find((o) => o.value === value);
+
+    return (
+        <Select value={value ?? undefined} onValueChange={(v) => onChange(v === '__all' ? null : v)}>
+            <SelectTrigger
+                className={cn(
+                    'h-9 w-auto gap-1.5 rounded-full border-border/60 bg-background px-4 text-xs font-medium text-brand-navy shadow-sm transition-colors hover:border-brand-blue/40 data-[state=open]:border-brand-blue/40',
+                    active && 'border-brand-blue/50 bg-brand-blue/5 text-brand-blue',
+                )}
+            >
+                <SelectValue placeholder={placeholder}>{active?.label ?? placeholder}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="__all">{placeholder} (semua)</SelectItem>
+                {options.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+}
+
 export default function Welcome({ home }: Props) {
     const { auth } = usePage<SharedPageProps>().props;
+    const options = home.search_options;
     const [search, setSearch] = useState('');
+    const [provinceId, setProvinceId] = useState<string | null>(null);
+    const [minEducation, setMinEducation] = useState<string | null>(null);
+    const [workArrangement, setWorkArrangement] = useState<string | null>(null);
+    const [employmentType, setEmploymentType] = useState<string | null>(null);
+    const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
+
+    const goToJobs = (overrides: Record<string, string | number> = {}) => {
+        const params: Record<string, string | number> = {};
+        if (search.trim()) params.search = search.trim();
+        if (provinceId) params.province_id = provinceId;
+        if (minEducation) params.min_education = minEducation;
+        if (workArrangement) params.work_arrangement = workArrangement;
+        if (employmentType) params.employment_type = employmentType;
+        if (experienceLevel) params.experience_level = experienceLevel;
+        router.get('/jobs', { ...params, ...overrides }, { preserveState: false });
+    };
 
     const submitSearch = (e: FormEvent) => {
         e.preventDefault();
-        router.get('/jobs', search ? { search } : {}, { preserveState: false });
+        goToJobs();
     };
 
     return (
@@ -419,7 +556,7 @@ export default function Welcome({ home }: Props) {
                 <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#1080E0" />
 
                 <div className="relative z-10">
-                    <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 pt-12 pb-10 text-center sm:px-6 sm:pt-16 lg:pt-20 lg:pb-16">
+                    <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 pt-12 pb-10 text-center sm:px-6 sm:pt-16 lg:pt-20 lg:pb-16">
                         {/* Status pill */}
                         <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-1 py-1 pr-4 text-xs shadow-sm backdrop-blur">
                             <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
@@ -449,22 +586,27 @@ export default function Welcome({ home }: Props) {
                         </p>
 
                         {/* Search panel — boxed for prominence */}
-                        <div className="w-full max-w-2xl rounded-2xl border border-border/70 bg-background p-3 shadow-xl shadow-brand-blue/[0.08] ring-1 ring-brand-blue/10 sm:p-4">
+                        <div className="w-full max-w-4xl rounded-2xl border border-border/70 bg-background p-3 shadow-xl shadow-brand-blue/[0.08] ring-1 ring-brand-blue/10 sm:p-4">
                             <form
                                 onSubmit={submitSearch}
-                                className={cn(
-                                    'group/search relative flex flex-col items-stretch gap-2 sm:flex-row sm:items-center',
-                                )}
+                                className="group/search relative flex flex-col items-stretch gap-2 sm:flex-row sm:items-center"
                             >
+                                {/* Keyword input */}
                                 <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-background px-3 py-1 transition-all focus-within:border-brand-blue/40 focus-within:ring-2 focus-within:ring-brand-blue/15">
                                     <Search className="size-4 shrink-0 text-muted-foreground/70 transition-colors group-focus-within/search:text-brand-blue" />
                                     <Input
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Cari posisi, perusahaan, atau kota…"
+                                        placeholder="Cari nama pekerjaan/perusahaan"
                                         className="border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
                                     />
                                 </div>
+                                {/* Location combobox (searchable) */}
+                                <LocationCombobox
+                                    value={provinceId}
+                                    options={options.provinces}
+                                    onChange={setProvinceId}
+                                />
                                 <Button
                                     type="submit"
                                     className="h-11 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan px-7 font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105 hover:shadow-lg hover:shadow-brand-blue/30 sm:w-auto"
@@ -472,6 +614,34 @@ export default function Welcome({ home }: Props) {
                                     <Search className="size-4" /> Cari
                                 </Button>
                             </form>
+
+                            {/* Filter row */}
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-border/60 pt-3">
+                                <HeroFilter
+                                    placeholder="Minimum Pendidikan"
+                                    value={minEducation}
+                                    options={options.education_levels}
+                                    onChange={setMinEducation}
+                                />
+                                <HeroFilter
+                                    placeholder="Kebijakan Kerja"
+                                    value={workArrangement}
+                                    options={options.work_arrangements}
+                                    onChange={setWorkArrangement}
+                                />
+                                <HeroFilter
+                                    placeholder="Tipe Kerja"
+                                    value={employmentType}
+                                    options={options.employment_types}
+                                    onChange={setEmploymentType}
+                                />
+                                <HeroFilter
+                                    placeholder="Level Pekerjaan"
+                                    value={experienceLevel}
+                                    options={options.experience_levels}
+                                    onChange={setExperienceLevel}
+                                />
+                            </div>
                         </div>
 
                         {/* Popular chips */}

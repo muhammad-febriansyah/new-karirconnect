@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Public;
 
+use App\Enums\EducationLevel;
 use App\Enums\EmploymentType;
 use App\Enums\ExperienceLevel;
 use App\Enums\JobStatus;
@@ -123,6 +124,7 @@ class JobBrowseController extends Controller
             'employment_type' => $request->input('employment_type') ?: null,
             'work_arrangement' => $request->input('work_arrangement') ?: null,
             'experience_level' => $request->input('experience_level') ?: null,
+            'min_education' => $request->input('min_education') ?: null,
             'salary_min' => $request->integer('salary_min') ?: null,
             'skill_ids' => array_filter((array) $request->input('skill_ids', [])),
             'featured_only' => $request->boolean('featured_only') ?: null,
@@ -209,6 +211,7 @@ class JobBrowseController extends Controller
             'employment_types' => EmploymentType::selectItems(),
             'work_arrangements' => WorkArrangement::selectItems(),
             'experience_levels' => ExperienceLevel::selectItems(),
+            'education_levels' => EducationLevel::selectItems(),
         ];
     }
 }
