@@ -1,21 +1,11 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
-    ArrowRight,
     CheckCircle2,
-    Clock,
     HeadphonesIcon,
-    Linkedin,
-    Mail,
-    MapPin,
     MessageSquare,
-    Phone,
     Send,
-    Shield,
     Sparkles,
-    Twitter,
     Users,
-    Zap,
-    type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { InputField } from '@/components/form/input-field';
@@ -63,42 +53,6 @@ const SUBJECTS = [
         icon: MessageSquare,
         tone: 'bg-amber-100 text-amber-700',
     },
-];
-
-const CHANNELS: Array<{
-    label: string;
-    value: string;
-    icon: LucideIcon;
-    href: string;
-    note: string;
-}> = [
-    {
-        label: 'Email Umum',
-        value: 'halo@karirconnect.id',
-        icon: Mail,
-        href: 'mailto:halo@karirconnect.id',
-        note: 'Respons rata-rata < 24 jam',
-    },
-    {
-        label: 'Telepon',
-        value: '+62 21 5089 1234',
-        icon: Phone,
-        href: 'tel:+622150891234',
-        note: 'Sen–Jum, 09.00–17.00 WIB',
-    },
-    {
-        label: 'WhatsApp Bisnis',
-        value: '+62 812 3456 7890',
-        icon: MessageSquare,
-        href: 'https://wa.me/6281234567890',
-        note: 'Khusus rekrutmen perusahaan',
-    },
-];
-
-const PROMISES = [
-    { icon: Clock, text: 'Respons rata-rata di bawah 24 jam' },
-    { icon: Shield, text: 'Data Anda kami jaga sesuai kebijakan privasi' },
-    { icon: Zap, text: 'Tim manusia membaca setiap pesan, bukan bot' },
 ];
 
 const FAQ_ITEMS = [
@@ -180,39 +134,10 @@ export default function PublicContact() {
                     </p>
                 </section>
 
-                {/* ===== Channel cards ===== */}
-                <section className="grid gap-3 sm:grid-cols-3">
-                    {CHANNELS.map((c) => (
-                        <a
-                            key={c.label}
-                            href={c.href}
-                            target={c.href.startsWith('http') ? '_blank' : undefined}
-                            rel={c.href.startsWith('http') ? 'noreferrer' : undefined}
-                            className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-lg hover:shadow-brand-blue/5"
-                        >
-                            <span
-                                aria-hidden
-                                className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
-                            />
-                            <span className="flex size-10 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
-                                <c.icon className="size-5" />
-                            </span>
-                            <p className="mt-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                                {c.label}
-                            </p>
-                            <p className="mt-1 truncate text-base font-semibold text-foreground transition-colors group-hover:text-brand-blue">
-                                {c.value}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">{c.note}</p>
-                            <ArrowRight className="absolute right-4 top-1/2 size-4 -translate-y-1/2 text-brand-blue opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                        </a>
-                    ))}
-                </section>
-
-                {/* ===== Main grid: form + sidebar ===== */}
-                <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+                {/* ===== Contact form ===== */}
+                <section>
                     {/* Form card */}
-                    <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
+                    <div className="mx-auto w-full max-w-3xl rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
                         <div className="flex items-start gap-3">
                             <span className="flex size-9 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
                                 <Send className="size-4" />
@@ -352,89 +277,6 @@ export default function PublicContact() {
                             </div>
                         </form>
                     </div>
-
-                    {/* Sidebar */}
-                    <aside className="space-y-4">
-                        {/* Promise card */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
-                                    <Sparkles className="size-4" />
-                                </span>
-                                <h3 className="text-sm font-semibold">Janji Tim Kami</h3>
-                            </div>
-                            <ul className="mt-3 space-y-3">
-                                {PROMISES.map((p, i) => (
-                                    <li key={i} className="flex items-start gap-2.5 text-sm">
-                                        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                                            <p.icon className="size-3.5" />
-                                        </span>
-                                        <span className="leading-relaxed text-foreground/85">
-                                            {p.text}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Office card */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                            <div className="flex items-center gap-2">
-                                <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
-                                    <MapPin className="size-4" />
-                                </span>
-                                <h3 className="text-sm font-semibold">Kantor Pusat</h3>
-                            </div>
-                            <p className="mt-3 text-sm leading-relaxed text-foreground/85">
-                                Menara Karya, Lantai 24
-                                <br />
-                                Jl. H.R. Rasuna Said Blok X-5 Kav. 1-2
-                                <br />
-                                Jakarta Selatan 12950, Indonesia
-                            </p>
-                            <div className="mt-3 flex items-center gap-2 border-t border-border/60 pt-3">
-                                <Clock className="size-4 text-muted-foreground" />
-                                <p className="text-xs text-muted-foreground">
-                                    Senin – Jumat · 09.00 – 17.00 WIB
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Social card */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                            <h3 className="text-sm font-semibold">Ikuti Kami</h3>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Insight karier dan update fitur setiap minggu.
-                            </p>
-                            <div className="mt-3 flex gap-2">
-                                <a
-                                    href="https://linkedin.com/company/karirconnect"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    aria-label="LinkedIn"
-                                    className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
-                                >
-                                    <Linkedin className="size-4" />
-                                </a>
-                                <a
-                                    href="https://twitter.com/karirconnect"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    aria-label="Twitter"
-                                    className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
-                                >
-                                    <Twitter className="size-4" />
-                                </a>
-                                <a
-                                    href="mailto:halo@karirconnect.id"
-                                    aria-label="Email"
-                                    className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-card text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:text-brand-blue"
-                                >
-                                    <Mail className="size-4" />
-                                </a>
-                            </div>
-                        </div>
-                    </aside>
                 </section>
 
                 {/* ===== Mini FAQ ===== */}

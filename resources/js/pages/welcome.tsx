@@ -2,10 +2,8 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, CheckCircle2, ChevronDown, Clock, FileSearch, FileText, MapPin, Quote, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
 import { Spotlight } from '@/components/aceternity/spotlight';
 import { motion } from 'motion/react';
-import { type FormEvent, lazy, Suspense, useEffect, useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { Marquee } from '@/components/ui/marquee';
-
-const Globe3D = lazy(() => import('@/components/ui/3d-globe').then((m) => ({ default: m.Globe3D })));
 import { SeoHead } from '@/components/seo-head';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -156,43 +154,6 @@ const salaryRange = (min: number | null, max: number | null) => {
     if (min && max) return `${idr(min)} – ${idr(max)}`;
     return idr(min ?? max);
 };
-
-const PIN_SRC = '/marker-pin.svg';
-
-const GLOBE_MARKERS = [
-    // Indonesian hubs
-    { lat: -6.2088, lng: 106.8456, src: PIN_SRC, label: 'Jakarta' },
-    { lat: -6.9175, lng: 107.6191, src: PIN_SRC, label: 'Bandung' },
-    { lat: -7.2575, lng: 112.7521, src: PIN_SRC, label: 'Surabaya' },
-    { lat: 3.5952, lng: 98.6722, src: PIN_SRC, label: 'Medan' },
-    { lat: -7.7956, lng: 110.3695, src: PIN_SRC, label: 'Yogyakarta' },
-    { lat: -8.65, lng: 115.2167, src: PIN_SRC, label: 'Denpasar' },
-    { lat: -5.1477, lng: 119.4327, src: PIN_SRC, label: 'Makassar' },
-    { lat: 0.5333, lng: 101.45, src: PIN_SRC, label: 'Pekanbaru' },
-    // Regional reach
-    { lat: 1.3521, lng: 103.8198, src: PIN_SRC, label: 'Singapore' },
-    { lat: 3.139, lng: 101.6869, src: PIN_SRC, label: 'Kuala Lumpur' },
-    { lat: 14.5995, lng: 120.9842, src: PIN_SRC, label: 'Manila' },
-    { lat: 35.6762, lng: 139.6503, src: PIN_SRC, label: 'Tokyo' },
-];
-
-const GLOBE_CONFIG_3D = {
-    atmosphereColor: '#10C0E0',
-    atmosphereIntensity: 1.4,
-    showAtmosphere: true,
-    atmosphereBlur: 2.5,
-    bumpScale: 4,
-    autoRotateSpeed: 0.4,
-    initialRotation: { x: 0, y: 110 },
-};
-
-function GlobeFallback() {
-    return (
-        <div className="flex aspect-square w-full items-center justify-center">
-            <div className="size-32 animate-pulse rounded-full bg-gradient-to-br from-brand-blue/30 to-brand-cyan/20 blur-xl" />
-        </div>
-    );
-}
 
 function ProfileFieldsPreview() {
     return (
@@ -409,31 +370,9 @@ function FaqItem({ item }: { item: FaqEntry }) {
     );
 }
 
-function CityPill({ name, count, tone, delay = '0ms' }: { name: string; count: string; tone: string; delay?: string }) {
-    return (
-        <div
-            className="flex items-center gap-2 rounded-full bg-background/95 px-3 py-1.5 text-xs shadow-md ring-1 ring-border/60 backdrop-blur animate-in fade-in slide-in-from-bottom-2"
-            style={{ animationDelay: delay, animationDuration: '600ms', animationFillMode: 'both' }}
-        >
-            <span className="relative flex size-2">
-                <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-60', tone)} />
-                <span className={cn('relative inline-flex size-2 rounded-full', tone)} />
-            </span>
-            <span className="font-semibold text-brand-navy">{name}</span>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">{count}</span>
-        </div>
-    );
-}
-
 export default function Welcome({ home }: Props) {
     const { auth } = usePage<SharedPageProps>().props;
     const [search, setSearch] = useState('');
-    const [globeReady, setGlobeReady] = useState(false);
-
-    useEffect(() => {
-        setGlobeReady(true);
-    }, []);
 
     const submitSearch = (e: FormEvent) => {
         e.preventDefault();
@@ -480,134 +419,90 @@ export default function Welcome({ home }: Props) {
                 <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#1080E0" />
 
                 <div className="relative z-10">
-                    <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-12 pb-10 sm:px-6 sm:pt-16 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:pt-20 lg:pb-14">
-                        {/* LEFT: Copy + search */}
-                        <div className="space-y-6 text-center lg:col-span-7 lg:text-left">
-                            {/* Status pill */}
-                            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-1 py-1 pr-4 text-xs shadow-sm backdrop-blur">
-                                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-                                    <Sparkles className="size-3" /> Baru
+                    <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 pt-12 pb-10 text-center sm:px-6 sm:pt-16 lg:pt-20 lg:pb-16">
+                        {/* Status pill */}
+                        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-1 py-1 pr-4 text-xs shadow-sm backdrop-blur">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                                <Sparkles className="size-3" /> Baru
+                            </span>
+                            <span className="font-medium text-brand-navy">AI Career Coach gratis untuk semua kandidat</span>
+                            <ArrowRight className="size-3 text-muted-foreground" />
+                        </div>
+
+                        {/* Heading */}
+                        <h1 className="text-3xl font-bold leading-[1.1] tracking-tight text-brand-navy sm:text-4xl lg:text-[3.4rem]">
+                            Karir Impianmu Dimulai dari{' '}
+                            <span className="relative inline-block">
+                                <span className="relative z-10 bg-gradient-to-r from-brand-blue to-brand-cyan bg-clip-text text-transparent">
+                                    Sini
                                 </span>
-                                <span className="font-medium text-brand-navy">AI Career Coach gratis untuk semua kandidat</span>
-                                <ArrowRight className="size-3 text-muted-foreground" />
-                            </div>
+                                <span
+                                    aria-hidden
+                                    className="absolute -bottom-1 left-0 right-0 h-3 bg-gradient-to-r from-brand-cyan/40 to-brand-blue/30 blur-sm"
+                                />
+                            </span>
+                        </h1>
 
-                            {/* Heading */}
-                            <h1 className="text-3xl font-bold leading-[1.1] tracking-tight text-brand-navy sm:text-4xl lg:text-[3.2rem]">
-                                Karier impian Anda dimulai dari{' '}
-                                <span className="relative inline-block">
-                                    <span className="relative z-10 bg-gradient-to-r from-brand-blue to-brand-cyan bg-clip-text text-transparent">
-                                        satu pencarian
-                                    </span>
-                                    <span
-                                        aria-hidden
-                                        className="absolute -bottom-1 left-0 right-0 h-3 bg-gradient-to-r from-brand-cyan/40 to-brand-blue/30 blur-sm"
-                                    />
-                                </span>
-                            </h1>
+                        <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                            AI Coach, latihan interview, insight gaji riil & ribuan lowongan terverifikasi di
+                            seluruh Indonesia.
+                        </p>
 
-                            <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base lg:mx-0">
-                                AI Coach, latihan interview, insight gaji riil & ribuan lowongan terverifikasi di
-                                seluruh Indonesia.
-                            </p>
-
-                            {/* Search */}
+                        {/* Search panel — boxed for prominence */}
+                        <div className="w-full max-w-2xl rounded-2xl border border-border/70 bg-background p-3 shadow-xl shadow-brand-blue/[0.08] ring-1 ring-brand-blue/10 sm:p-4">
                             <form
                                 onSubmit={submitSearch}
                                 className={cn(
-                                    'group/search relative mx-auto flex max-w-2xl items-center gap-2 rounded-full border border-border/60 bg-background/95 p-2 shadow-lg shadow-brand-blue/[0.08] backdrop-blur lg:mx-0',
-                                    'transition-all duration-200',
-                                    'focus-within:border-brand-blue/40 focus-within:shadow-xl focus-within:shadow-brand-blue/15 focus-within:ring-4 focus-within:ring-brand-blue/10',
+                                    'group/search relative flex flex-col items-stretch gap-2 sm:flex-row sm:items-center',
                                 )}
                             >
-                                <Search className="ml-3 size-4 text-muted-foreground/70 transition-colors group-focus-within/search:text-brand-blue" />
-                                <Input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Cari posisi, perusahaan, atau kota…"
-                                    className="border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
-                                />
+                                <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-background px-3 py-1 transition-all focus-within:border-brand-blue/40 focus-within:ring-2 focus-within:ring-brand-blue/15">
+                                    <Search className="size-4 shrink-0 text-muted-foreground/70 transition-colors group-focus-within/search:text-brand-blue" />
+                                    <Input
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder="Cari posisi, perusahaan, atau kota…"
+                                        className="border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
+                                    />
+                                </div>
                                 <Button
                                     type="submit"
-                                    className="h-11 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan px-6 font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105 hover:shadow-lg hover:shadow-brand-blue/30"
+                                    className="h-11 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan px-7 font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105 hover:shadow-lg hover:shadow-brand-blue/30 sm:w-auto"
                                 >
                                     <Search className="size-4" /> Cari
                                 </Button>
                             </form>
-
-                            {/* Popular chips */}
-                            <div className="flex flex-wrap items-center justify-center gap-2 text-xs lg:justify-start">
-                                <span className="text-muted-foreground">Populer:</span>
-                                {['Backend Engineer', 'UI/UX Designer', 'Digital Marketing', 'Data Analyst'].map((q) => (
-                                    <button
-                                        key={q}
-                                        type="button"
-                                        onClick={() => router.get('/jobs', { search: q }, { preserveState: false })}
-                                        className="rounded-full border border-border/60 bg-background/80 px-3 py-1 font-medium text-brand-navy backdrop-blur transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:text-brand-blue hover:shadow-sm"
-                                    >
-                                        {q}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Compact inline stats */}
-                            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-2 text-sm lg:justify-start">
-                                {[
-                                    { icon: BriefcaseBusiness, label: 'Lowongan', value: home.metrics.open_jobs },
-                                    { icon: Building2, label: 'Perusahaan', value: home.metrics.active_companies },
-                                    { icon: Users, label: 'Kandidat', value: home.metrics.candidates },
-                                    { icon: TrendingUp, label: 'Lapor gaji', value: home.metrics.salary_reports },
-                                ].map((m) => (
-                                    <div key={m.label} className="flex items-center gap-2">
-                                        <m.icon className="size-3.5 text-brand-blue" />
-                                        <span className="font-bold text-brand-navy">{compact(m.value)}</span>
-                                        <span className="text-muted-foreground">{m.label}</span>
-                                    </div>
-                                ))}
-                            </div>
                         </div>
 
-                        {/* RIGHT: GitHub-style globe */}
-                        <div className="relative lg:col-span-5">
-                            <div className="relative mx-auto aspect-square w-full max-w-[560px]">
-                                {/* Glow halo behind globe */}
-                                <div
-                                    aria-hidden
-                                    className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-brand-blue/30 via-brand-cyan/10 to-transparent blur-3xl"
-                                />
+                        {/* Popular chips */}
+                        <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                            <span className="text-muted-foreground">Populer:</span>
+                            {['Backend Engineer', 'UI/UX Designer', 'Digital Marketing', 'Data Analyst'].map((q) => (
+                                <button
+                                    key={q}
+                                    type="button"
+                                    onClick={() => router.get('/jobs', { search: q }, { preserveState: false })}
+                                    className="rounded-full border border-border/60 bg-background/80 px-3 py-1 font-medium text-brand-navy backdrop-blur transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:text-brand-blue hover:shadow-sm"
+                                >
+                                    {q}
+                                </button>
+                            ))}
+                        </div>
 
-                                {/* 3D Earth globe with markers */}
-                                <div className="absolute inset-0">
-                                    {globeReady ? (
-                                        <Suspense fallback={<GlobeFallback />}>
-                                            <Globe3D markers={GLOBE_MARKERS} config={GLOBE_CONFIG_3D} className="!h-full" />
-                                        </Suspense>
-                                    ) : (
-                                        <GlobeFallback />
-                                    )}
+                        {/* Compact inline stats */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-2 text-sm">
+                            {[
+                                { icon: BriefcaseBusiness, label: 'Lowongan', value: home.metrics.open_jobs },
+                                { icon: Building2, label: 'Perusahaan', value: home.metrics.active_companies },
+                                { icon: Users, label: 'Kandidat', value: home.metrics.candidates },
+                                { icon: TrendingUp, label: 'Lapor gaji', value: home.metrics.salary_reports },
+                            ].map((m) => (
+                                <div key={m.label} className="flex items-center gap-2">
+                                    <m.icon className="size-3.5 text-brand-blue" />
+                                    <span className="font-bold text-brand-navy">{compact(m.value)}</span>
+                                    <span className="text-muted-foreground">{m.label}</span>
                                 </div>
-
-                                {/* Floating city pills */}
-                                <div className="absolute left-0 top-4 hidden flex-col gap-2 sm:flex">
-                                    <CityPill name="Jakarta" count="234 lowongan" tone="bg-emerald-500" />
-                                    <CityPill name="Bandung" count="58 lowongan" tone="bg-brand-blue" delay="200ms" />
-                                </div>
-                                <div className="absolute right-0 bottom-12 hidden flex-col gap-2 sm:flex">
-                                    <CityPill name="Surabaya" count="92 lowongan" tone="bg-violet-500" delay="100ms" />
-                                    <CityPill name="Bali" count="34 lowongan" tone="bg-amber-500" delay="300ms" />
-                                </div>
-                            </div>
-
-                            {/* Caption */}
-                            <div className="mt-3 text-center text-xs text-muted-foreground">
-                                <span className="inline-flex items-center gap-1.5">
-                                    <span className="relative flex size-1.5">
-                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-                                        <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
-                                    </span>
-                                    Lowongan tersebar di 30+ kota di Indonesia
-                                </span>
-                            </div>
+                            ))}
                         </div>
                     </div>
 

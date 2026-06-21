@@ -10,7 +10,6 @@ import {
     Facebook,
     Instagram,
     Linkedin,
-    Mail,
     MapPin,
     Menu,
     Music2,
@@ -514,34 +513,17 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                             ribuan posisi.
                         </p>
 
-                        <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background/60 p-3 backdrop-blur-sm sm:max-w-sm">
-                            <a
-                                href="mailto:halo@karirconnect.id"
-                                className="group inline-flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-sm transition-colors hover:bg-brand-blue/5 hover:text-brand-blue"
-                            >
-                                <span className="flex size-8 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue transition-colors group-hover:bg-brand-blue/15">
-                                    <Mail className="size-4" />
-                                </span>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Email
-                                    </span>
-                                    <span className="font-medium text-foreground group-hover:text-brand-blue">
-                                        halo@karirconnect.id
-                                    </span>
-                                </div>
-                            </a>
-                            <div className="inline-flex items-center gap-2.5 rounded-lg px-1.5 py-1 text-sm">
-                                <span className="flex size-8 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
-                                    <MapPin className="size-4" />
-                                </span>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Lokasi
-                                    </span>
-                                    <span className="font-medium text-foreground">Jakarta, Indonesia</span>
-                                </div>
-                            </div>
+                        <div className="flex items-start gap-2.5 sm:max-w-sm">
+                            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
+                                <MapPin className="size-4" />
+                            </span>
+                            <address className="text-sm not-italic leading-relaxed text-muted-foreground">
+                                Menara Cakrawala 12th Floor Unit 5A,
+                                <br />
+                                Jl. M.H. Thamrin Kav. 9, Kb. Sirih, Kec. Menteng,
+                                <br />
+                                Jakarta Pusat 10340, Indonesia
+                            </address>
                         </div>
 
                         {socialLinks.length > 0 && (
