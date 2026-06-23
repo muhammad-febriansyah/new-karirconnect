@@ -87,7 +87,7 @@ class SettingSeeder extends Seeder
             'social' => [
                 'linkedin_url' => [
                     'label' => 'LinkedIn',
-                    'value' => 'https://www.linkedin.com/company/karirconnect',
+                    'value' => 'https://www.linkedin.com/company/karirconnectid',
                     'is_public' => true,
                     'description' => 'URL profil LinkedIn perusahaan. Kosongkan untuk menyembunyikan ikon.',
                 ],
@@ -113,7 +113,7 @@ class SettingSeeder extends Seeder
                 ],
                 'tiktok_url' => [
                     'label' => 'TikTok',
-                    'value' => 'https://www.tiktok.com/@karirconnect',
+                    'value' => 'https://www.tiktok.com/@karirconnect.official',
                     'is_public' => true,
                 ],
             ],

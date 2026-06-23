@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Eye, FileCheck, Loader2, Upload } from 'lucide-react';
+import { BadgeCheck, Clock, Eye, FileCheck, Loader2, Upload } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { StatusBadge } from '@/components/feedback/status-badge';
@@ -43,6 +43,20 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'destructive' | 'muted
     rejected: 'destructive',
 };
 
+const VERIFICATION_LABEL: Record<string, string> = {
+    unverified: 'Belum Diverifikasi',
+    pending: 'Menunggu Verifikasi',
+    verified: 'Terverifikasi',
+    rejected: 'Verifikasi Ditolak',
+};
+
+const VERIFICATION_TONE: Record<string, 'success' | 'warning' | 'destructive' | 'muted'> = {
+    unverified: 'muted',
+    pending: 'warning',
+    verified: 'success',
+    rejected: 'destructive',
+};
+
 export default function VerificationPage({ company, documents }: Props) {
     const form = useForm<{ document_type: string; file: File | null }>({
         document_type: '',
@@ -73,6 +87,10 @@ export default function VerificationPage({ company, documents }: Props) {
         });
     };
 
+    const status = company.verification_status ?? 'unverified';
+    const isVerified = status === 'verified';
+    const isPending = status === 'pending';
+
     return (
         <>
             <Head title="Verifikasi Perusahaan" />
@@ -82,38 +100,70 @@ export default function VerificationPage({ company, documents }: Props) {
                     title="Verifikasi Perusahaan"
                     description="Unggah dokumen legal untuk mendapatkan lencana 'Verified' yang meningkatkan kepercayaan kandidat."
                     actions={
-                        <StatusBadge tone={company.verification_status === 'verified' ? 'success' : 'muted'}>
-                            {company.verification_status}
+                        <StatusBadge tone={VERIFICATION_TONE[status] ?? 'muted'}>
+                            {VERIFICATION_LABEL[status] ?? status}
                         </StatusBadge>
                     }
                 />
 
-                <Section title="Unggah Dokumen Baru">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <SelectField
-                            label="Jenis Dokumen"
-                            required
-                            value={form.data.document_type}
-                            onValueChange={(v) => form.setData('document_type', v)}
-                            options={DOCUMENT_TYPES}
-                            error={form.errors.document_type}
-                        />
-                        <FileUploadField
-                            label="File (PDF / JPG / PNG, max 5MB)"
-                            required
-                            accept="application/pdf,image/png,image/jpeg"
-                            value={form.data.file}
-                            onChange={(f) => form.setData('file', f)}
-                            error={form.errors.file}
-                        />
-                        <div className="flex justify-end">
-                            <ActionButton type="submit" intent="create" disabled={form.processing}>
-                                {form.processing ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-                                Unggah Dokumen
-                            </ActionButton>
+                {isVerified && (
+                    <div className="flex items-start gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
+                            <BadgeCheck className="size-6" />
                         </div>
-                    </form>
-                </Section>
+                        <div className="space-y-1">
+                            <p className="font-semibold text-emerald-900">Perusahaan Anda sudah terverifikasi</p>
+                            <p className="text-sm text-emerald-800">
+                                Legalitas sudah ditinjau dan disetujui admin. Semua fitur perekrut aktif —
+                                Anda tidak perlu mengunggah dokumen lagi.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {isPending && (
+                    <div className="flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white">
+                            <Clock className="size-6" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="font-semibold text-amber-900">Dokumen sedang ditinjau admin</p>
+                            <p className="text-sm text-amber-800">
+                                Tim kami akan menyelesaikan review dalam 1×24 jam. Anda tidak perlu mengunggah ulang
+                                kecuali diminta.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {!isVerified && !isPending && (
+                    <Section title="Unggah Dokumen Baru">
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <SelectField
+                                label="Jenis Dokumen"
+                                required
+                                value={form.data.document_type}
+                                onValueChange={(v) => form.setData('document_type', v)}
+                                options={DOCUMENT_TYPES}
+                                error={form.errors.document_type}
+                            />
+                            <FileUploadField
+                                label="File (PDF / JPG / PNG, max 5MB)"
+                                required
+                                accept="application/pdf,image/png,image/jpeg"
+                                value={form.data.file}
+                                onChange={(f) => form.setData('file', f)}
+                                error={form.errors.file}
+                            />
+                            <div className="flex justify-end">
+                                <ActionButton type="submit" intent="create" disabled={form.processing}>
+                                    {form.processing ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                                    Unggah Dokumen
+                                </ActionButton>
+                            </div>
+                        </form>
+                    </Section>
+                )}
 
                 <Section title="Riwayat Dokumen">
                     {documents.length === 0 ? (

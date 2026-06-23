@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\City;
 use App\Models\Province;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
+use RuntimeException;
 
 class ProvinceCitySeeder extends Seeder
 {
@@ -25,12 +27,39 @@ class ProvinceCitySeeder extends Seeder
             update: ['name', 'updated_at'],
         );
 
-        $provinceIds = Province::query()->pluck('id', 'code');
+        /** @var Collection<string, int> $provinceIdByCode */
+        $provinceIdByCode = Province::query()->pluck('id', 'code');
+        /** @var Collection<string, int> $provinceIdByName */
+        $provinceIdByName = Province::query()->pluck('id', 'name');
 
+        $cities = $this->cityDefinitions();
+
+        // Reconcile legacy capital rows (seeded as the bare city name, e.g. "Medan")
+        // with the canonical dataset name (e.g. "Kota Medan") *before* upserting so
+        // the existing row is updated in place — preserving its id and any foreign
+        // keys (companies.city_id, jobs.city_id, …) instead of leaving a duplicate.
+        foreach ($provinces as $province) {
+            $provinceId = $provinceIdByCode[$province['code']];
+            $canonicalCapital = 'Kota '.$province['capital'];
+
+            if (! $cities->get($province['name'], collect())->contains($canonicalCapital)) {
+                continue;
+            }
+
+            City::query()
+                ->where('province_id', $provinceId)
+                ->where('name', $province['capital'])
+                ->update(['name' => $canonicalCapital, 'is_capital' => true]);
+        }
+
+        // Ensure every province keeps at least its capital (covers provinces with no
+        // entry in the regency dataset, e.g. the post-2022 Papua provinces).
         City::query()->upsert(
             $provinces->map(fn (array $province): array => [
-                'province_id' => $provinceIds[$province['code']],
-                'name' => $province['capital'],
+                'province_id' => $provinceIdByCode[$province['code']],
+                'name' => $cities->get($province['name'], collect())->contains('Kota '.$province['capital'])
+                    ? 'Kota '.$province['capital']
+                    : $province['capital'],
                 'is_capital' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -38,6 +67,57 @@ class ProvinceCitySeeder extends Seeder
             uniqueBy: ['province_id', 'name'],
             update: ['is_capital', 'updated_at'],
         );
+
+        $rows = [];
+
+        foreach ($cities as $provinceName => $cityNames) {
+            $provinceId = $provinceIdByName[$provinceName] ?? null;
+
+            if ($provinceId === null) {
+                throw new RuntimeException("Unknown province in cities dataset: {$provinceName}");
+            }
+
+            foreach ($cityNames as $cityName) {
+                $rows[] = [
+                    'province_id' => $provinceId,
+                    'name' => $cityName,
+                    'is_capital' => false,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            City::query()->upsert(
+                $chunk,
+                uniqueBy: ['province_id', 'name'],
+                update: ['updated_at'],
+            );
+        }
+    }
+
+    /**
+     * Full regency/city dataset (kabupaten & kota) keyed by province name.
+     *
+     * Sourced from the public Indonesian administrative-region dataset and
+     * bundled at database/data/indonesia_cities.json so seeding stays offline
+     * and reproducible.
+     *
+     * @return Collection<string, Collection<int, string>>
+     */
+    private function cityDefinitions(): Collection
+    {
+        $path = database_path('data/indonesia_cities.json');
+
+        if (! is_file($path)) {
+            throw new RuntimeException("Missing cities dataset: {$path}");
+        }
+
+        /** @var array<string, array<int, string>> $data */
+        $data = json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+
+        return collect($data)->map(fn (array $names): Collection => collect($names));
     }
 
     /**

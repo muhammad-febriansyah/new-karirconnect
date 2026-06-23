@@ -37,9 +37,9 @@ const roleMeta = {
         icon: UserRoundSearch,
     },
     employer: {
-        badge: 'Perusahaan',
-        nameLabel: 'Nama PIC / Perusahaan',
-        namePlaceholder: 'Nama perusahaan atau penanggung jawab',
+        badge: 'Perusahaan Perekrut',
+        nameLabel: 'Nama PIC',
+        namePlaceholder: 'Nama PIC (penanggung jawab)',
         emailPlaceholder: 'hr@perusahaan.com',
         icon: Building2,
     },
@@ -222,7 +222,7 @@ export default function Register({
                                             required
                                             autoComplete="organization"
                                             name="company_name"
-                                            placeholder="PT Maju Bersama"
+                                            placeholder="Nama perusahaan"
                                             className="h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
                                         />
                                     </div>
@@ -337,7 +337,9 @@ export default function Register({
     );
 }
 
+// The register pages render their own mode-specific heading (chooser vs form),
+// so the shared auth layout heading is left empty to avoid a duplicate title.
 Register.layout = {
-    title: 'Daftar akun baru',
-    description: 'Pilih tipe akun lalu lanjutkan proses pendaftaran Anda.',
+    title: '',
+    description: '',
 };

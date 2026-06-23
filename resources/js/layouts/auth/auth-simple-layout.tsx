@@ -31,9 +31,23 @@ export default function AuthSimpleLayout({
     const props = usePage().props as unknown as {
         app?: AppMeta;
         branding?: Branding;
+        role?: string;
     };
     const appName = props.app?.name ?? 'KarirConnect';
     const logoPath = props.branding?.logo_path;
+
+    // Hero copy adapts to the registration audience; other auth pages
+    // (login, password reset) keep the default jobseeker-facing line.
+    const heroLead =
+        props.role === 'employer' || props.role === 'employee'
+            ? 'Satu langkah untuk mendapatkan'
+            : 'Satu langkah lebih dekat ke';
+    const heroHighlight =
+        props.role === 'employer'
+            ? 'kandidat terbaik'
+            : props.role === 'employee'
+              ? 'karir terbaik'
+              : 'pekerjaan idaman';
 
     return (
         <div className="relative min-h-svh bg-background lg:grid lg:grid-cols-[1.05fr_1fr]">
@@ -91,10 +105,10 @@ export default function AuthSimpleLayout({
                         Bangun karier impianmu
                     </span>
                     <h2 className="text-4xl font-bold leading-tight tracking-tight xl:text-[2.7rem]">
-                        Satu langkah lebih dekat ke{' '}
+                        {heroLead}{' '}
                         <span className="relative inline-block">
                             <span className="relative bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent">
-                                pekerjaan idaman
+                                {heroHighlight}
                             </span>
                             <svg
                                 aria-hidden
@@ -183,9 +197,11 @@ export default function AuthSimpleLayout({
                             <span className="size-1 rounded-full bg-brand-blue" />
                             Selamat datang
                         </span>
-                        <h1 className="text-[1.7rem] font-bold tracking-tight text-brand-navy">
-                            {title}
-                        </h1>
+                        {title && (
+                            <h1 className="text-[1.7rem] font-bold tracking-tight text-brand-navy">
+                                {title}
+                            </h1>
+                        )}
                         {description && (
                             <p className="text-sm leading-relaxed text-muted-foreground">
                                 {description}

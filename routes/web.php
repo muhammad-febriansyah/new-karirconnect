@@ -39,8 +39,8 @@ Route::middleware('guest')->group(function (): void {
     Route::get('register/perusahaan', fn () => Inertia::render('auth/register', [
         'mode' => 'form',
         'role' => UserRole::Employer->value,
-        'roleLabel' => UserRole::Employer->label(),
-        'title' => 'Daftar sebagai Perusahaan',
+        'roleLabel' => 'Perusahaan Perekrut',
+        'title' => 'Daftar sebagai Perusahaan Perekrut',
         'description' => 'Mulai posting lowongan, kelola kandidat, dan percepat proses rekrutmen tim Anda.',
         'googleUrl' => route('auth.google.register', ['audience' => 'perusahaan']),
         'loginUrl' => route('login'),

@@ -1006,10 +1006,7 @@ export default function Welcome({ home }: Props) {
                 <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
                     <div className="mb-7 flex items-end justify-between">
                         <div>
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-brand-blue">
-                                Pilihan Editor
-                            </span>
-                            <h2 className="mt-1 text-2xl font-bold tracking-tight text-brand-navy sm:text-3xl">
+                            <h2 className="text-2xl font-bold tracking-tight text-brand-navy sm:text-3xl">
                                 Lowongan Pilihan
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
@@ -1251,16 +1248,16 @@ export default function Welcome({ home }: Props) {
                             className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-background to-transparent sm:w-24"
                         />
 
-                        <Marquee pauseOnHover className="[--duration:60s] [--gap:1rem] sm:[--gap:1.5rem]">
-                            {home.testimonials.map((t, i) => (
-                                <TestimonialCard key={i} testimonial={t} />
-                            ))}
-                        </Marquee>
-                        <Marquee reverse pauseOnHover className="mt-3 [--duration:80s] [--gap:1rem] sm:[--gap:1.5rem]">
-                            {home.testimonials.slice().reverse().map((t, i) => (
-                                <TestimonialCard key={`r-${i}`} testimonial={t} />
-                            ))}
-                        </Marquee>
+                        {/* Swipeable row — manual scroll instead of an auto-running marquee. */}
+                        <div className="mx-auto max-w-6xl">
+                            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:gap-6 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                {home.testimonials.map((t, i) => (
+                                    <div key={i} className="snap-start">
+                                        <TestimonialCard testimonial={t} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </motion.div>
                 </section>
             )}

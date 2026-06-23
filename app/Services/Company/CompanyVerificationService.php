@@ -2,6 +2,7 @@
 
 namespace App\Services\Company;
 
+use App\Enums\CompanyStatus;
 use App\Enums\CompanyVerificationStatus;
 use App\Enums\ReviewStatus;
 use App\Models\Company;
@@ -39,6 +40,12 @@ class CompanyVerificationService
         return $verification;
     }
 
+    /**
+     * Approve a verification document. This both verifies the document *and*
+     * approves the company so the owner is unblocked in a single action —
+     * the document review is the vetting step, so a verified document also
+     * lifts the pending hold that gates employer features.
+     */
     public function approve(CompanyVerification $verification, User $reviewer, ?string $note = null): CompanyVerification
     {
         $verification->forceFill([
@@ -52,6 +59,8 @@ class CompanyVerificationService
         $company->forceFill([
             'verification_status' => CompanyVerificationStatus::Verified,
             'verified_at' => now(),
+            'status' => CompanyStatus::Approved,
+            'approved_at' => $company->approved_at ?? now(),
         ])->save();
 
         CompanyBadge::query()->firstOrCreate(
@@ -59,6 +68,17 @@ class CompanyVerificationService
             [
                 'name' => 'Verified Employer',
                 'description' => 'Dokumen perusahaan sudah diverifikasi admin.',
+                'tone' => 'success',
+                'awarded_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        CompanyBadge::query()->firstOrCreate(
+            ['company_id' => $company->id, 'code' => 'approved-company'],
+            [
+                'name' => 'Approved Company',
+                'description' => 'Perusahaan telah lolos review admin dan aktif di platform.',
                 'tone' => 'success',
                 'awarded_at' => now(),
                 'is_active' => true,
@@ -81,8 +101,12 @@ class CompanyVerificationService
 
         $company = $verification->company;
         if ($company->verifications()->where('status', ReviewStatus::Approved)->doesntExist()) {
+            // No approved document left to stand on — pull the company back to
+            // pending so the previously granted approval no longer unblocks it.
             $company->forceFill([
                 'verification_status' => CompanyVerificationStatus::Rejected,
+                'status' => CompanyStatus::Pending,
+                'approved_at' => null,
             ])->save();
         }
 
