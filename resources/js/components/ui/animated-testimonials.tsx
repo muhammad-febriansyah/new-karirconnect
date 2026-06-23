@@ -1,6 +1,6 @@
 "use client";
 
-import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
+import { ArrowLeft as IconArrowLeft, ArrowRight as IconArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 import { useEffect, useState } from "react";
