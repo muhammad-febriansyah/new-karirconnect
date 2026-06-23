@@ -1,8 +1,9 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, Check, CheckCircle2, ChevronDown, Clock, FileSearch, FileText, MapPin, Quote, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
+import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, Check, CheckCircle2, ChevronDown, Clock, FileSearch, FileText, MapPin, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
 import { Spotlight } from '@/components/aceternity/spotlight';
 import { motion } from 'motion/react';
 import { type FormEvent, useState } from 'react';
+import { AnimatedTestimonials } from '@/components/ui/animated-testimonials';
 import { Marquee } from '@/components/ui/marquee';
 import { SeoHead } from '@/components/seo-head';
 import { Badge } from '@/components/ui/badge';
@@ -320,39 +321,6 @@ function CompanyCard({ company }: { company: TopCompany }) {
     );
 }
 
-function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
-    return (
-        <div className="flex w-[300px] shrink-0 flex-col gap-3 rounded-2xl border border-border/60 bg-background p-4 shadow-sm sm:w-[360px] sm:p-5">
-            <div className="flex items-center justify-between">
-                <Quote className="size-5 text-brand-blue/40" />
-                <div className="flex gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                            key={i}
-                            className={cn(
-                                'size-3.5',
-                                i < testimonial.rating ? 'fill-amber-400 text-amber-400' : 'text-muted/40',
-                            )}
-                        />
-                    ))}
-                </div>
-            </div>
-            <p className="line-clamp-4 text-sm leading-relaxed text-brand-navy">{testimonial.text}</p>
-            <div className="mt-1 flex items-center gap-3 border-t border-border/60 pt-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-xs font-bold text-white shadow-sm">
-                    {testimonial.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-brand-navy">{testimonial.name}</div>
-                    <div className="truncate text-xs text-muted-foreground">
-                        {testimonial.role} · {testimonial.company}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 function FaqItem({ item }: { item: FaqEntry }) {
     const [open, setOpen] = useState(false);
     return (
@@ -392,10 +360,12 @@ function LocationCombobox({
     value,
     options,
     onChange,
+    onBlue = false,
 }: {
     value: string | null;
     options: SelectOption[];
     onChange: (value: string | null) => void;
+    onBlue?: boolean;
 }) {
     const [open, setOpen] = useState(false);
     const active = options.find((o) => o.value === value);
@@ -405,10 +375,15 @@ function LocationCombobox({
             <PopoverTrigger asChild>
                 <button
                     type="button"
-                    className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-background px-3 py-2 text-left text-sm transition-all hover:border-brand-blue/40 focus:outline-none data-[state=open]:border-brand-blue/40 data-[state=open]:ring-2 data-[state=open]:ring-brand-blue/15"
+                    className={cn(
+                        'flex flex-1 items-center gap-2 text-left text-sm transition-all focus:outline-none',
+                        onBlue
+                            ? 'h-12 rounded-xl bg-white px-4 text-brand-navy shadow-sm data-[state=open]:ring-2 data-[state=open]:ring-white/60'
+                            : 'rounded-xl border border-border/60 bg-background px-3 py-2 hover:border-brand-blue/40 data-[state=open]:border-brand-blue/40 data-[state=open]:ring-2 data-[state=open]:ring-brand-blue/15',
+                    )}
                 >
-                    <MapPin className="size-4 shrink-0 text-muted-foreground/70" />
-                    <span className={cn('flex-1 truncate', !active && 'text-muted-foreground/60')}>
+                    <MapPin className={cn('size-4 shrink-0', onBlue ? 'text-brand-blue' : 'text-muted-foreground/70')} />
+                    <span className={cn('flex-1 truncate', !active && (onBlue ? 'text-muted-foreground' : 'text-muted-foreground/60'))}>
                         {active?.label ?? 'Semua Lokasi'}
                     </span>
                     <ChevronDown className="size-4 shrink-0 opacity-50" />
@@ -460,11 +435,13 @@ function HeroFilter({
     value,
     options,
     onChange,
+    onBlue = false,
 }: {
     placeholder: string;
     value: string | null;
     options: SelectOption[];
     onChange: (value: string | null) => void;
+    onBlue?: boolean;
 }) {
     const active = options.find((o) => o.value === value);
 
@@ -472,8 +449,12 @@ function HeroFilter({
         <Select value={value ?? undefined} onValueChange={(v) => onChange(v === '__all' ? null : v)}>
             <SelectTrigger
                 className={cn(
-                    'h-9 w-auto gap-1.5 rounded-full border-border/60 bg-background px-4 text-xs font-medium text-brand-navy shadow-sm transition-colors hover:border-brand-blue/40 data-[state=open]:border-brand-blue/40',
-                    active && 'border-brand-blue/50 bg-brand-blue/5 text-brand-blue',
+                    'h-11 w-auto gap-1.5 rounded-full px-5 text-sm font-semibold transition-colors',
+                    onBlue
+                        ? 'border border-white/50 bg-white/25 text-white shadow-sm backdrop-blur-sm hover:bg-white/35 data-[state=open]:bg-white/35 data-[placeholder]:text-white [&>svg]:text-white'
+                        : 'h-9 border-border/60 bg-background px-4 text-xs text-brand-navy shadow-sm hover:border-brand-blue/40 data-[state=open]:border-brand-blue/40',
+                    !onBlue && active && 'border-brand-blue/50 bg-brand-blue/5 text-brand-blue',
+                    onBlue && active && 'bg-white text-brand-blue [&>svg]:text-brand-blue',
                 )}
             >
                 <SelectValue placeholder={placeholder}>{active?.label ?? placeholder}</SelectValue>
@@ -558,26 +539,21 @@ export default function Welcome({ home }: Props) {
                 <div className="relative z-10">
                     <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 pt-12 pb-10 text-center sm:px-6 sm:pt-16 lg:pt-20 lg:pb-16">
                         {/* Status pill */}
-                        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-1 py-1 pr-4 text-xs shadow-sm backdrop-blur">
+                        <Link
+                            href="/register/jobseeker"
+                            className="group/badge inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-1 py-1 pr-4 text-xs shadow-sm backdrop-blur transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-md"
+                        >
                             <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                                 <Sparkles className="size-3" /> Baru
                             </span>
                             <span className="font-medium text-brand-navy">AI Career Coach gratis untuk semua kandidat</span>
-                            <ArrowRight className="size-3 text-muted-foreground" />
-                        </div>
+                            <ArrowRight className="size-3 text-muted-foreground transition-transform group-hover/badge:translate-x-0.5" />
+                        </Link>
 
                         {/* Heading */}
                         <h1 className="text-3xl font-bold leading-[1.1] tracking-tight text-brand-navy sm:text-4xl lg:text-[3.4rem]">
-                            Karir Impianmu Dimulai dari{' '}
-                            <span className="relative inline-block">
-                                <span className="relative z-10 bg-gradient-to-r from-brand-blue to-brand-cyan bg-clip-text text-transparent">
-                                    Sini
-                                </span>
-                                <span
-                                    aria-hidden
-                                    className="absolute -bottom-1 left-0 right-0 h-3 bg-gradient-to-r from-brand-cyan/40 to-brand-blue/30 blur-sm"
-                                />
-                            </span>
+                            Karir Impianmu <br />
+                            Dimulai <span className="text-brand-blue">dari Sini</span>
                         </h1>
 
                         <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -585,20 +561,20 @@ export default function Welcome({ home }: Props) {
                             seluruh Indonesia.
                         </p>
 
-                        {/* Search panel — boxed for prominence */}
-                        <div className="w-full max-w-4xl rounded-2xl border border-border/70 bg-background p-3 shadow-xl shadow-brand-blue/[0.08] ring-1 ring-brand-blue/10 sm:p-4">
+                        {/* Search panel — solid blue for prominence */}
+                        <div className="w-full max-w-4xl rounded-[1.75rem] bg-gradient-to-br from-brand-blue to-[#1565E0] p-4 shadow-xl shadow-brand-blue/30 sm:p-6">
                             <form
                                 onSubmit={submitSearch}
-                                className="group/search relative flex flex-col items-stretch gap-2 sm:flex-row sm:items-center"
+                                className="group/search relative flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
                             >
                                 {/* Keyword input */}
-                                <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-background px-3 py-1 transition-all focus-within:border-brand-blue/40 focus-within:ring-2 focus-within:ring-brand-blue/15">
-                                    <Search className="size-4 shrink-0 text-muted-foreground/70 transition-colors group-focus-within/search:text-brand-blue" />
+                                <div className="flex h-12 flex-1 items-center gap-2 rounded-xl bg-white px-4 shadow-sm transition-all focus-within:ring-2 focus-within:ring-white/60">
+                                    <Search className="size-5 shrink-0 text-brand-blue" />
                                     <Input
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         placeholder="Cari nama pekerjaan/perusahaan"
-                                        className="border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
+                                        className="border-0 bg-transparent text-sm text-brand-navy shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
                                     />
                                 </div>
                                 {/* Location combobox (searchable) */}
@@ -606,40 +582,45 @@ export default function Welcome({ home }: Props) {
                                     value={provinceId}
                                     options={options.provinces}
                                     onChange={setProvinceId}
+                                    onBlue
                                 />
                                 <Button
                                     type="submit"
-                                    className="h-11 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan px-7 font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105 hover:shadow-lg hover:shadow-brand-blue/30 sm:w-auto"
+                                    className="h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-7 text-base font-bold text-white shadow-md shadow-emerald-900/20 transition-all hover:from-emerald-500 hover:to-emerald-700 hover:shadow-lg sm:w-auto"
                                 >
-                                    <Search className="size-4" /> Cari
+                                    <Search className="size-5" /> Cari
                                 </Button>
                             </form>
 
                             {/* Filter row */}
-                            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-border/60 pt-3">
+                            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 border-t border-white/20 pt-4">
                                 <HeroFilter
                                     placeholder="Minimum Pendidikan"
                                     value={minEducation}
                                     options={options.education_levels}
                                     onChange={setMinEducation}
+                                    onBlue
                                 />
                                 <HeroFilter
                                     placeholder="Kebijakan Kerja"
                                     value={workArrangement}
                                     options={options.work_arrangements}
                                     onChange={setWorkArrangement}
+                                    onBlue
                                 />
                                 <HeroFilter
                                     placeholder="Tipe Kerja"
                                     value={employmentType}
                                     options={options.employment_types}
                                     onChange={setEmploymentType}
+                                    onBlue
                                 />
                                 <HeroFilter
                                     placeholder="Level Pekerjaan"
                                     value={experienceLevel}
                                     options={options.experience_levels}
                                     onChange={setExperienceLevel}
+                                    onBlue
                                 />
                             </div>
                         </div>
@@ -659,21 +640,54 @@ export default function Welcome({ home }: Props) {
                             ))}
                         </div>
 
-                        {/* Compact inline stats */}
-                        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-2 text-sm">
+                        {/* Stat strip — unified card for stronger perceived trust */}
+                        <div className="inline-flex flex-wrap items-stretch justify-center divide-x divide-border/60 overflow-hidden rounded-2xl border border-border/60 bg-background/70 shadow-sm backdrop-blur">
                             {[
-                                { icon: BriefcaseBusiness, label: 'Lowongan', value: home.metrics.open_jobs },
+                                { icon: BriefcaseBusiness, label: 'Lowongan aktif', value: home.metrics.open_jobs },
                                 { icon: Building2, label: 'Perusahaan', value: home.metrics.active_companies },
                                 { icon: Users, label: 'Kandidat', value: home.metrics.candidates },
                                 { icon: TrendingUp, label: 'Lapor gaji', value: home.metrics.salary_reports },
                             ].map((m) => (
-                                <div key={m.label} className="flex items-center gap-2">
-                                    <m.icon className="size-3.5 text-brand-blue" />
-                                    <span className="font-bold text-brand-navy">{compact(m.value)}</span>
-                                    <span className="text-muted-foreground">{m.label}</span>
+                                <div key={m.label} className="flex flex-col items-center gap-0.5 px-5 py-3 sm:px-7">
+                                    <div className="flex items-center gap-1.5">
+                                        <m.icon className="size-4 text-brand-blue" />
+                                        <span className="text-lg font-extrabold tracking-tight text-brand-navy sm:text-xl">
+                                            {compact(m.value)}
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] font-medium text-muted-foreground sm:text-xs">{m.label}</span>
                                 </div>
                             ))}
                         </div>
+
+                        {/* Company trust strip */}
+                        {home.top_companies.some((c) => c.logo) && (
+                            <div className="flex flex-col items-center gap-3 pt-1">
+                                <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+                                    Dipercaya perusahaan terkemuka
+                                </span>
+                                <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+                                    {home.top_companies
+                                        .filter((c) => c.logo)
+                                        .slice(0, 6)
+                                        .map((c) => (
+                                            <Link
+                                                key={c.slug}
+                                                href={`/companies/${c.slug}`}
+                                                title={c.name}
+                                                className="grayscale opacity-60 transition-all hover:opacity-100 hover:grayscale-0"
+                                            >
+                                                <img
+                                                    src={c.logo!}
+                                                    alt={c.name}
+                                                    loading="lazy"
+                                                    className="h-7 w-auto object-contain sm:h-8"
+                                                />
+                                            </Link>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Live job marquee */}
@@ -1237,27 +1251,16 @@ export default function Welcome({ home }: Props) {
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true, amount: 0.2 }}
                         transition={{ duration: 0.8, delay: 0.15 }}
-                        className="relative"
                     >
-                        <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-background to-transparent sm:w-24"
+                        <AnimatedTestimonials
+                            autoplay
+                            testimonials={home.testimonials.map((t) => ({
+                                quote: t.text,
+                                name: t.name,
+                                designation: `${t.role} · ${t.company}`,
+                                src: `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&size=500&background=1080E0&color=ffffff&bold=true&format=png`,
+                            }))}
                         />
-                        <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-background to-transparent sm:w-24"
-                        />
-
-                        {/* Swipeable row — manual scroll instead of an auto-running marquee. */}
-                        <div className="mx-auto max-w-6xl">
-                            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:gap-6 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                {home.testimonials.map((t, i) => (
-                                    <div key={i} className="snap-start">
-                                        <TestimonialCard testimonial={t} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
                     </motion.div>
                 </section>
             )}
