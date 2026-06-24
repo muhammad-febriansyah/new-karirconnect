@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, Check, CheckCircle2, ChevronDown, Clock, FileSearch, FileText, MapPin, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
+import { ArrowRight, Award, BookOpen, Bot, Brain, Briefcase, BriefcaseBusiness, Building2, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock, FileSearch, FileText, MapPin, Search, ShieldCheck, Sparkles, Star, Target, TrendingUp, UserPlus, Users, Wand2, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { AnimatedTestimonials } from '@/components/ui/animated-testimonials';
 import { Marquee } from '@/components/ui/marquee';
 import { SeoHead } from '@/components/seo-head';
@@ -428,6 +428,88 @@ function LocationCombobox({
  * Pill-style dropdown for the hero search filters. Mirrors the kitalulus
  * filter row — value is held in local state and applied on search submit.
  */
+const COMMUNITY_WA_URL = 'https://chat.whatsapp.com/HqhtnhdKT7PLQ30D2tYI6V';
+
+const communityBanners = [
+    { src: '/images/community/komunitas-join.jpeg', alt: 'Bergabung ke Komunitas Teman Karir terbesar di Indonesia' },
+    { src: '/images/community/career-insight.jpeg', alt: 'Career Insight setiap Jumat malam pukul 20:00 WIB via Zoom — Komunitas WhatsApp Teman Karir by KarirConnect' },
+];
+
+function CommunityCarousel() {
+    const [index, setIndex] = useState(0);
+    const [paused, setPaused] = useState(false);
+    const count = communityBanners.length;
+
+    useEffect(() => {
+        if (paused) {
+            return;
+        }
+        const timer = setInterval(() => setIndex((i) => (i + 1) % count), 5000);
+        return () => clearInterval(timer);
+    }, [paused, count]);
+
+    const go = (i: number) => setIndex(((i % count) + count) % count);
+
+    return (
+        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+            <div
+                className="group relative overflow-hidden rounded-2xl border border-border/60 shadow-sm"
+                onMouseEnter={() => setPaused(true)}
+                onMouseLeave={() => setPaused(false)}
+            >
+                <div
+                    className="flex transition-transform duration-500 ease-out"
+                    style={{ transform: `translateX(-${index * 100}%)` }}
+                >
+                    {communityBanners.map((banner) => (
+                        <a
+                            key={banner.src}
+                            href={COMMUNITY_WA_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full shrink-0"
+                        >
+                            <img src={banner.src} alt={banner.alt} loading="lazy" className="w-full object-cover" />
+                        </a>
+                    ))}
+                </div>
+
+                <button
+                    type="button"
+                    aria-label="Banner sebelumnya"
+                    onClick={() => go(index - 1)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-brand-navy opacity-0 shadow-md backdrop-blur transition-opacity hover:bg-white group-hover:opacity-100"
+                >
+                    <ChevronLeft className="size-5" />
+                </button>
+                <button
+                    type="button"
+                    aria-label="Banner berikutnya"
+                    onClick={() => go(index + 1)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-brand-navy opacity-0 shadow-md backdrop-blur transition-opacity hover:bg-white group-hover:opacity-100"
+                >
+                    <ChevronRight className="size-5" />
+                </button>
+
+                <div className="absolute inset-x-0 bottom-3 flex justify-center gap-2">
+                    {communityBanners.map((banner, i) => (
+                        <button
+                            key={banner.src}
+                            type="button"
+                            aria-label={`Ke banner ${i + 1}`}
+                            onClick={() => go(i)}
+                            className={cn(
+                                'h-2 rounded-full transition-all',
+                                i === index ? 'w-6 bg-white' : 'w-2 bg-white/60 hover:bg-white/80',
+                            )}
+                        />
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
 export default function Welcome({ home }: Props) {
     const { auth } = usePage<SharedPageProps>().props;
     const options = home.search_options;
@@ -706,6 +788,9 @@ export default function Welcome({ home }: Props) {
                     </div>
                 </div>
             </section>
+
+            {/* ===== Komunitas WhatsApp ===== */}
+            <CommunityCarousel />
 
             {/* ===== How It Works ===== */}
             <section className="border-y bg-muted/20 py-16 sm:py-20">
