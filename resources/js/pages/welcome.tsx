@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatStatus } from '@/lib/format-status';
@@ -429,65 +428,16 @@ function LocationCombobox({
  * Pill-style dropdown for the hero search filters. Mirrors the kitalulus
  * filter row — value is held in local state and applied on search submit.
  */
-function HeroFilter({
-    placeholder,
-    value,
-    options,
-    onChange,
-    onBlue = false,
-}: {
-    placeholder: string;
-    value: string | null;
-    options: SelectOption[];
-    onChange: (value: string | null) => void;
-    onBlue?: boolean;
-}) {
-    const active = options.find((o) => o.value === value);
-
-    return (
-        <Select value={value ?? undefined} onValueChange={(v) => onChange(v === '__all' ? null : v)}>
-            <SelectTrigger
-                className={cn(
-                    'h-11 w-full justify-between gap-1.5 rounded-full px-4 text-sm font-medium transition-colors sm:w-auto sm:justify-center sm:px-5',
-                    onBlue
-                        ? 'border border-white/50 bg-white/25 text-white shadow-sm backdrop-blur-sm hover:bg-white/35 data-[state=open]:bg-white/35 data-[placeholder]:text-white [&>svg]:text-white'
-                        : 'border border-border/70 bg-background text-muted-foreground shadow-sm hover:border-brand-blue/40 hover:text-brand-navy data-[state=open]:border-brand-blue/40 [&>svg]:text-muted-foreground/70',
-                    !onBlue && active && 'border-brand-blue/50 bg-brand-blue/5 text-brand-blue [&>svg]:text-brand-blue',
-                    onBlue && active && 'bg-white text-brand-blue [&>svg]:text-brand-blue',
-                )}
-            >
-                <SelectValue placeholder={placeholder}>{active?.label ?? placeholder}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="__all">{placeholder} (semua)</SelectItem>
-                {options.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    );
-}
-
 export default function Welcome({ home }: Props) {
     const { auth } = usePage<SharedPageProps>().props;
     const options = home.search_options;
     const [search, setSearch] = useState('');
     const [provinceId, setProvinceId] = useState<string | null>(null);
-    const [minEducation, setMinEducation] = useState<string | null>(null);
-    const [workArrangement, setWorkArrangement] = useState<string | null>(null);
-    const [employmentType, setEmploymentType] = useState<string | null>(null);
-    const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
 
     const goToJobs = (overrides: Record<string, string | number> = {}) => {
         const params: Record<string, string | number> = {};
         if (search.trim()) params.search = search.trim();
         if (provinceId) params.province_id = provinceId;
-        if (minEducation) params.min_education = minEducation;
-        if (workArrangement) params.work_arrangement = workArrangement;
-        if (employmentType) params.employment_type = employmentType;
-        if (experienceLevel) params.experience_level = experienceLevel;
         router.get('/jobs', { ...params, ...overrides }, { preserveState: false });
     };
 
@@ -572,11 +522,12 @@ export default function Welcome({ home }: Props) {
                         </Link>
 
                         {/* Heading */}
-                        <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-[4.25rem]">
-                            <span className="lg:whitespace-nowrap">Karir Impianmu Dimulai dari</span>
-                            <br />
-                            <span className="mt-1 inline-block bg-gradient-to-b from-[#bfe1ff] to-[#7fc0ff] bg-clip-text text-transparent drop-shadow-[0_4px_40px_rgba(127,192,255,0.6)]">
-                                Sini
+                        <h1 className="text-2xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-3xl lg:text-4xl xl:text-5xl">
+                            <span className="lg:whitespace-nowrap">
+                                Karir Impianmu Dimulai{' '}
+                                <span className="bg-gradient-to-b from-[#bfe1ff] to-[#7fc0ff] bg-clip-text text-transparent drop-shadow-[0_4px_40px_rgba(127,192,255,0.6)]">
+                                    dari Sini
+                                </span>
                             </span>
                         </h1>
 
@@ -614,34 +565,6 @@ export default function Welcome({ home }: Props) {
                                     <Search className="size-5" /> Cari
                                 </Button>
                             </form>
-
-                            {/* Filter row */}
-                            <div className="mt-4 grid grid-cols-2 gap-2.5 border-t border-border/60 pt-4 sm:flex sm:flex-wrap sm:items-center sm:justify-center">
-                                <HeroFilter
-                                    placeholder="Minimum Pendidikan"
-                                    value={minEducation}
-                                    options={options.education_levels}
-                                    onChange={setMinEducation}
-                                />
-                                <HeroFilter
-                                    placeholder="Kebijakan Kerja"
-                                    value={workArrangement}
-                                    options={options.work_arrangements}
-                                    onChange={setWorkArrangement}
-                                />
-                                <HeroFilter
-                                    placeholder="Tipe Kerja"
-                                    value={employmentType}
-                                    options={options.employment_types}
-                                    onChange={setEmploymentType}
-                                />
-                                <HeroFilter
-                                    placeholder="Level Pekerjaan"
-                                    value={experienceLevel}
-                                    options={options.experience_levels}
-                                    onChange={setExperienceLevel}
-                                />
-                            </div>
                         </div>
 
                         {/* Popular chips */}
