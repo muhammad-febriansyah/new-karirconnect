@@ -461,40 +461,40 @@ export default function Welcome({ home }: Props) {
                 }}
             />
 
-            {/* ===== Hero (royal-blue backdrop) ===== */}
-            <section className="relative overflow-hidden border-b bg-[#1a5bcf] bg-gradient-to-b from-[#1e63da] via-[#1a5bcf] to-[#154fb6]">
+            {/* ===== Hero (white backdrop) ===== */}
+            <section className="relative overflow-hidden border-b bg-white">
                 {/* Large smooth bubble shapes (concentric radial blobs) */}
                 <div
                     aria-hidden
                     className="pointer-events-none absolute -left-1/4 -top-1/3 size-[60rem] rounded-full"
-                    style={{ background: 'radial-gradient(circle, rgba(11,55,150,0.55) 0%, rgba(11,55,150,0.25) 38%, rgba(11,55,150,0) 65%)' }}
+                    style={{ background: 'radial-gradient(circle, rgba(96,165,255,0.16) 0%, rgba(96,165,255,0.07) 38%, rgba(96,165,255,0) 65%)' }}
                 />
                 <div
                     aria-hidden
                     className="pointer-events-none absolute right-[-18rem] -top-1/4 size-[58rem] rounded-full"
-                    style={{ background: 'radial-gradient(circle, rgba(96,165,255,0.42) 0%, rgba(96,165,255,0.18) 40%, rgba(96,165,255,0) 66%)' }}
+                    style={{ background: 'radial-gradient(circle, rgba(120,180,255,0.14) 0%, rgba(120,180,255,0.06) 40%, rgba(120,180,255,0) 66%)' }}
                 />
                 <div
                     aria-hidden
                     className="pointer-events-none absolute left-1/3 top-1/4 size-[40rem] rounded-full"
-                    style={{ background: 'radial-gradient(circle, rgba(120,180,255,0.2) 0%, rgba(120,180,255,0) 60%)' }}
+                    style={{ background: 'radial-gradient(circle, rgba(120,180,255,0.08) 0%, rgba(120,180,255,0) 60%)' }}
                 />
                 <div
                     aria-hidden
                     className="pointer-events-none absolute -bottom-1/3 -right-1/4 size-[52rem] rounded-full"
-                    style={{ background: 'radial-gradient(circle, rgba(86,160,255,0.4) 0%, rgba(86,160,255,0.16) 42%, rgba(86,160,255,0) 68%)' }}
+                    style={{ background: 'radial-gradient(circle, rgba(86,160,255,0.13) 0%, rgba(86,160,255,0.05) 42%, rgba(86,160,255,0) 68%)' }}
                 />
                 <div
                     aria-hidden
                     className="pointer-events-none absolute -bottom-1/4 -left-1/4 size-[46rem] rounded-full"
-                    style={{ background: 'radial-gradient(circle, rgba(11,55,150,0.45) 0%, rgba(11,55,150,0.18) 42%, rgba(11,55,150,0) 68%)' }}
+                    style={{ background: 'radial-gradient(circle, rgba(96,165,255,0.12) 0%, rgba(96,165,255,0.05) 42%, rgba(96,165,255,0) 68%)' }}
                 />
                 {/* Dotted grids (top-right + bottom-left) */}
                 <div
                     aria-hidden
                     className="pointer-events-none absolute right-8 top-12 hidden h-48 w-52 opacity-70 md:block"
                     style={{
-                        backgroundImage: 'radial-gradient(rgba(186,219,255,0.85) 2px, transparent 2px)',
+                        backgroundImage: 'radial-gradient(rgba(96,165,255,0.4) 2px, transparent 2px)',
                         backgroundSize: '22px 22px',
                     }}
                 />
@@ -502,7 +502,7 @@ export default function Welcome({ home }: Props) {
                     aria-hidden
                     className="pointer-events-none absolute bottom-12 left-8 hidden h-48 w-52 opacity-60 md:block"
                     style={{
-                        backgroundImage: 'radial-gradient(rgba(186,219,255,0.8) 2px, transparent 2px)',
+                        backgroundImage: 'radial-gradient(rgba(96,165,255,0.4) 2px, transparent 2px)',
                         backgroundSize: '22px 22px',
                     }}
                 />
@@ -512,32 +512,32 @@ export default function Welcome({ home }: Props) {
                         {/* Status pill */}
                         <Link
                             href="/register/jobseeker"
-                            className="group/badge inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-1 py-1 pr-4 text-xs shadow-sm backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-md"
+                            className="group/badge inline-flex items-center gap-2 rounded-full border border-brand-blue/20 bg-brand-blue/5 px-1 py-1 pr-4 text-xs shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-blue/10 hover:shadow-md"
                         >
-                            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-cyan to-[#5ec6ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-navy">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-blue to-[#1565E0] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                                 <Sparkles className="size-3" /> Baru
                             </span>
-                            <span className="font-medium text-white">AI Career Coach gratis untuk semua kandidat</span>
-                            <ArrowRight className="size-3 text-white/70 transition-transform group-hover/badge:translate-x-0.5" />
+                            <span className="font-medium text-brand-navy">AI Career Coach gratis untuk semua kandidat</span>
+                            <ArrowRight className="size-3 text-muted-foreground/60 transition-transform group-hover/badge:translate-x-0.5" />
                         </Link>
 
                         {/* Heading */}
-                        <h1 className="text-2xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-3xl lg:text-4xl xl:text-5xl">
+                        <h1 className="text-2xl font-extrabold leading-[1.1] tracking-tight text-brand-navy sm:text-3xl lg:text-4xl xl:text-5xl">
                             <span className="lg:whitespace-nowrap">
                                 Karir Impianmu Dimulai{' '}
-                                <span className="bg-gradient-to-b from-[#bfe1ff] to-[#7fc0ff] bg-clip-text text-transparent drop-shadow-[0_4px_40px_rgba(127,192,255,0.6)]">
+                                <span className="bg-gradient-to-b from-brand-blue to-[#1565E0] bg-clip-text text-transparent">
                                     dari Sini
                                 </span>
                             </span>
                         </h1>
 
-                        <p className="mx-auto max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
+                        <p className="mx-auto max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                             AI Coach, latihan interview, insight gaji riil & ribuan lowongan terverifikasi di
                             seluruh Indonesia.
                         </p>
 
                         {/* Search panel — white card on blue backdrop */}
-                        <div className="w-full max-w-5xl rounded-[2rem] bg-white p-5 shadow-2xl shadow-[#0a3a99]/30 sm:p-7">
+                        <div className="w-full max-w-5xl rounded-[2rem] border border-border/60 bg-white p-5 shadow-2xl shadow-brand-blue/10 sm:p-7">
                             <form
                                 onSubmit={submitSearch}
                                 className="group/search relative flex flex-col items-stretch gap-3 md:flex-row md:items-center"
@@ -569,13 +569,13 @@ export default function Welcome({ home }: Props) {
 
                         {/* Popular chips */}
                         <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                            <span className="text-white/70">Populer:</span>
+                            <span className="text-muted-foreground">Populer:</span>
                             {['Backend Engineer', 'UI/UX Designer', 'Digital Marketing', 'Data Analyst'].map((q) => (
                                 <button
                                     key={q}
                                     type="button"
                                     onClick={() => router.get('/jobs', { search: q }, { preserveState: false })}
-                                    className="rounded-full border border-white/30 bg-white/10 px-3 py-1 font-medium text-white backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-white/20 hover:shadow-sm"
+                                    className="rounded-full border border-border bg-background px-3 py-1 font-medium text-brand-navy transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:bg-brand-blue/5 hover:shadow-sm"
                                 >
                                     {q}
                                 </button>
@@ -591,11 +591,11 @@ export default function Welcome({ home }: Props) {
                                 { icon: TrendingUp, label: 'Lapor gaji', value: home.metrics.salary_reports },
                             ].map((m) => (
                                 <div key={m.label} className="flex items-center gap-2.5">
-                                    <m.icon className="size-6 shrink-0 text-[#7fc0ff]" strokeWidth={2} />
-                                    <span className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                                    <m.icon className="size-6 shrink-0 text-brand-blue" strokeWidth={2} />
+                                    <span className="text-2xl font-extrabold tracking-tight text-brand-navy sm:text-3xl">
                                         {compact(m.value)}
                                     </span>
-                                    <span className="text-sm font-medium text-white/80">{m.label}</span>
+                                    <span className="text-sm font-medium text-muted-foreground">{m.label}</span>
                                 </div>
                             ))}
                         </div>
@@ -603,7 +603,7 @@ export default function Welcome({ home }: Props) {
                         {/* Company trust strip */}
                         {home.top_companies.some((c) => c.logo) && (
                             <div className="flex flex-col items-center gap-3 pt-1">
-                                <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">
+                                <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">
                                     Dipercaya perusahaan terkemuka
                                 </span>
                                 <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
@@ -633,21 +633,21 @@ export default function Welcome({ home }: Props) {
                     {/* Live job marquee */}
                     {home.featured_jobs.length > 0 && (
                         <div className="relative pb-6">
-                            <div className="mb-3 flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-white/75">
+                            <div className="mb-3 flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                                 <span className="relative flex size-1.5">
-                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-70" />
-                                    <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+                                    <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
                                 </span>
                                 Lowongan terbaru hari ini
                             </div>
                             <div className="relative">
                                 <div
                                     aria-hidden
-                                    className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[#154fb6] to-transparent sm:w-20"
+                                    className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-white to-transparent sm:w-20"
                                 />
                                 <div
                                     aria-hidden
-                                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[#154fb6] to-transparent sm:w-20"
+                                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-white to-transparent sm:w-20"
                                 />
                                 <Marquee pauseOnHover className="[--duration:80s] [--gap:0.75rem]">
                                     {home.featured_jobs.map((job) => (
@@ -685,22 +685,22 @@ export default function Welcome({ home }: Props) {
                     )}
 
                     {/* Trust strip */}
-                    <div className="relative border-t border-white/15 bg-white/[0.06] backdrop-blur">
+                    <div className="relative border-t border-border/60 bg-muted/30">
                         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-4 text-center sm:flex-row sm:justify-center sm:gap-8 sm:px-6 lg:px-8">
-                            <span className="inline-flex items-center gap-1.5 text-xs text-white/80">
-                                <ShieldCheck className="size-3.5 text-[#9fd4ff]" /> Data terenkripsi
+                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <ShieldCheck className="size-3.5 text-brand-blue" /> Data terenkripsi
                             </span>
-                            <span aria-hidden className="hidden text-white/30 sm:inline">·</span>
-                            <span className="inline-flex items-center gap-1.5 text-xs text-white/80">
-                                <CheckCircle2 className="size-3.5 text-emerald-300" /> Perusahaan terverifikasi
+                            <span aria-hidden className="hidden text-border sm:inline">·</span>
+                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <CheckCircle2 className="size-3.5 text-emerald-500" /> Perusahaan terverifikasi
                             </span>
-                            <span aria-hidden className="hidden text-white/30 sm:inline">·</span>
-                            <span className="inline-flex items-center gap-1.5 text-xs text-white/80">
-                                <Star className="size-3.5 fill-amber-300 text-amber-300" /> 4.8 rating pengguna
+                            <span aria-hidden className="hidden text-border sm:inline">·</span>
+                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Star className="size-3.5 fill-amber-400 text-amber-400" /> 4.8 rating pengguna
                             </span>
-                            <span aria-hidden className="hidden text-white/30 sm:inline">·</span>
-                            <span className="inline-flex items-center gap-1.5 text-xs text-white/80">
-                                <Award className="size-3.5 text-[#9fd4ff]" /> Gratis untuk kandidat
+                            <span aria-hidden className="hidden text-border sm:inline">·</span>
+                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Award className="size-3.5 text-brand-blue" /> Gratis untuk kandidat
                             </span>
                         </div>
                     </div>
