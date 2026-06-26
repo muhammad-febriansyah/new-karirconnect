@@ -91,7 +91,7 @@ class HomeService
             ->whereNotNull('published_at')
             ->orderByDesc('is_featured')
             ->latest('published_at')
-            ->limit(6)
+            ->limit(9)
             ->get()
             ->map(fn (Job $j) => [
                 'slug' => $j->slug,
@@ -128,6 +128,7 @@ class HomeService
         if ($reviewAggregates->isEmpty()) {
             return Company::query()
                 ->where('status', CompanyStatus::Approved)
+                ->with(['industry:id,name'])
                 ->withCount(['jobs as open_jobs_count' => fn ($q) => $q->where('status', JobStatus::Published)])
                 ->orderByDesc('open_jobs_count')
                 ->limit(6)
@@ -139,6 +140,7 @@ class HomeService
         return Company::query()
             ->whereIn('id', $reviewAggregates->keys())
             ->where('status', CompanyStatus::Approved)
+            ->with(['industry:id,name'])
             ->withCount(['jobs as open_jobs_count' => fn ($q) => $q->where('status', JobStatus::Published)])
             ->get()
             ->map(fn (Company $c) => $this->companyRow(
@@ -160,6 +162,7 @@ class HomeService
             'slug' => $company->slug,
             'name' => $company->name,
             'logo' => $company->logo_path ? asset('storage/'.$company->logo_path) : null,
+            'industry' => $company->industry?->name,
             'open_jobs' => (int) ($company->open_jobs_count ?? 0),
             'review_count' => $reviewCount,
             'avg_rating' => $avgRating,

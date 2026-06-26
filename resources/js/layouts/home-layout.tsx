@@ -10,7 +10,6 @@ import {
     Facebook,
     Instagram,
     Linkedin,
-    MapPin,
     Menu,
     Music2,
     Phone,
@@ -22,7 +21,8 @@ import {
     X,
     Youtube,
 } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState  } from 'react';
+import type {ReactNode} from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -34,9 +34,9 @@ import {
     faq as faqRoute,
     salaryInsight as salaryInsightRoute,
 } from '@/routes/public';
-import { index as jobsIndex } from '@/routes/public/jobs';
-import { index as companiesIndex } from '@/routes/public/companies';
 import { index as careerResourcesIndex } from '@/routes/public/career-resources';
+import { index as companiesIndex } from '@/routes/public/companies';
+import { index as jobsIndex } from '@/routes/public/jobs';
 import { show as legalShow } from '@/routes/public/legal';
 import type { Auth, FeatureFlags } from '@/types';
 import type { AppMeta, Branding, SocialLinks } from '@/types/shared';
@@ -72,7 +72,10 @@ const HELP_ITEMS: HelpItem[] = [
 ];
 
 function isActive(currentPath: string, href: string): boolean {
-    if (href === '/') return currentPath === '/';
+    if (href === '/') {
+return currentPath === '/';
+}
+
     return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
@@ -104,17 +107,21 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
     const [mobileHelpOpen, setMobileHelpOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const helpActive = HELP_ITEMS.some((item) => isActive(url, item.href));
+    // Banner "Siap melangkah lebih jauh?" disembunyikan sementara — set true untuk tampilkan lagi.
+    const showFooterCta = false;
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 4);
         onScroll();
         window.addEventListener('scroll', onScroll, { passive: true });
+
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
     useEffect(() => {
         if (mobileOpen) {
             document.body.style.overflow = 'hidden';
+
             return () => {
                 document.body.style.overflow = '';
             };
@@ -161,6 +168,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                     <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex">
                         {NAV_ITEMS.map((item) => {
                             const active = isActive(url, item.href);
+
                             return (
                                 <Link
                                     key={item.href}
@@ -207,6 +215,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                             <DropdownMenuContent align="center" sideOffset={10} className="w-72 p-2">
                                 {HELP_ITEMS.map((item) => {
                                     const active = isActive(url, item.href);
+
                                     return (
                                         <DropdownMenuItem key={item.href} asChild className="cursor-pointer">
                                             <Link
@@ -314,6 +323,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                     <div className="space-y-1 px-4 py-4 sm:px-6">
                         {NAV_ITEMS.map((item) => {
                             const active = isActive(url, item.href);
+
                             return (
                                 <Link
                                     key={item.href}
@@ -356,6 +366,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                             <div className="ml-3 space-y-1 border-l border-border/50 pl-3">
                                 {HELP_ITEMS.map((item) => {
                                     const active = isActive(url, item.href);
+
                                     return (
                                         <Link
                                             key={item.href}
@@ -418,7 +429,8 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                     className="pointer-events-none absolute -right-40 bottom-0 h-80 w-80 rounded-full bg-brand-cyan/5 blur-3xl"
                 />
 
-                {/* ── Top CTA banner (full-width) ── */}
+                {/* ── Top CTA banner (full-width) — hidden for now ── */}
+                {showFooterCta && (
                 <div className="relative mx-auto w-full max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
                     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan p-6 text-white shadow-xl shadow-brand-blue/20 sm:p-8">
                         <div
@@ -493,6 +505,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* ── Main grid ── */}
                 <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-12 lg:gap-8 lg:px-8">
@@ -513,24 +526,16 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                             ribuan posisi.
                         </p>
 
-                        <div className="flex items-start gap-2.5 sm:max-w-sm">
-                            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
-                                <MapPin className="size-4" />
-                            </span>
-                            <address className="text-sm not-italic leading-relaxed text-muted-foreground">
-                                Menara Cakrawala 12th Floor Unit 5A,
-                                <br />
-                                Jl. M.H. Thamrin Kav. 9, Kb. Sirih, Kec. Menteng,
-                                <br />
-                                Jakarta Pusat 10340, Indonesia
-                            </address>
-                        </div>
+                        <address className="text-sm not-italic leading-relaxed text-muted-foreground sm:max-w-sm">
+                            Menara Cakrawala 12th Floor Unit 5A,
+                            <br />
+                            Jl. M.H. Thamrin Kav. 9, Kb. Sirih, Kec. Menteng,
+                            <br />
+                            Jakarta Pusat 10340, Indonesia
+                        </address>
 
                         {socialLinks.length > 0 && (
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                    Ikuti Kami
-                                </span>
                                 <div className="flex items-center gap-1.5">
                                     {socialLinks.map(({ href, icon: Icon, label }) => (
                                         <a
@@ -595,10 +600,6 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                 <Heart className="size-3.5 fill-rose-500 text-rose-500" />
                                 <span>untuk Indonesia.</span>
                             </span>
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/20 bg-brand-blue/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-blue">
-                                <Sparkles className="size-3" />
-                                Made in ID
-                            </span>
                         </div>
                         <nav className="flex items-center gap-3" aria-label="Tautan legal">
                             <Link
@@ -654,8 +655,8 @@ function FooterLinkColumn({
                             href={link.href}
                             className="group inline-flex items-center gap-1 transition-colors hover:text-brand-blue"
                         >
-                            {link.label}
                             <ArrowRight className="size-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                            {link.label}
                         </Link>
                     </li>
                 ))}

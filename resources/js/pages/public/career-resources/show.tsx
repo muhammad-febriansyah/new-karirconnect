@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     ArrowRight,
@@ -16,10 +16,12 @@ import {
     Rocket,
     Share2,
     Sparkles,
-    Tag,
-    type LucideIcon,
+    Tag
+    
 } from 'lucide-react';
+import type {LucideIcon} from 'lucide-react';
 import { useMemo, useState } from 'react';
+import AppLogoIcon from '@/components/app-logo-icon';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -29,9 +31,9 @@ import {
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/format-date';
 import { sanitizeHtml } from '@/lib/sanitize-html';
+import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as resourceIndex, show as resourceShow } from '@/routes/public/career-resources';
 
@@ -90,9 +92,12 @@ const CATEGORY_META: Record<string, { icon: LucideIcon; tone: string; label: str
 };
 
 function metaFor(category: string | null): { icon: LucideIcon; tone: string; label: string } {
-    if (!category)
-        return { icon: BookOpen, tone: 'bg-muted text-muted-foreground', label: 'General' };
+    if (!category) {
+return { icon: BookOpen, tone: 'bg-muted text-muted-foreground', label: 'General' };
+}
+
     const lower = category.toLowerCase();
+
     return CATEGORY_META[lower] ?? {
         icon: Compass,
         tone: 'bg-brand-blue/10 text-brand-blue',
@@ -102,13 +107,20 @@ function metaFor(category: string | null): { icon: LucideIcon; tone: string; lab
 
 export default function CareerResourceShow({ item, related }: Props) {
     const [copied, setCopied] = useState(false);
+    const [thumbBroken, setThumbBroken] = useState(false);
     const meta = metaFor(item.category);
     const Icon = meta.icon;
+    const logoPath = (usePage().props as unknown as { branding?: { logo_path?: string | null } }).branding?.logo_path ?? null;
+    const hasThumb = !!item.thumbnail && !thumbBroken;
 
     // Extract h2 headings from body for table of contents
     const headings = useMemo(() => {
-        if (typeof window === 'undefined') return [];
+        if (typeof window === 'undefined') {
+return [];
+}
+
         const doc = new DOMParser().parseFromString(item.body, 'text/html');
+
         return Array.from(doc.querySelectorAll('h2, h3')).map((el, i) => ({
             id: el.id || `heading-${i}`,
             text: el.textContent ?? '',
@@ -118,26 +130,36 @@ export default function CareerResourceShow({ item, related }: Props) {
 
     // Inject ids for headings in the rendered HTML
     const bodyWithIds = useMemo(() => {
-        if (typeof window === 'undefined') return sanitizeHtml(item.body);
+        if (typeof window === 'undefined') {
+return sanitizeHtml(item.body);
+}
+
         const doc = new DOMParser().parseFromString(item.body, 'text/html');
         let i = 0;
         doc.querySelectorAll('h2, h3').forEach((el) => {
-            if (!el.id) el.id = `heading-${i}`;
+            if (!el.id) {
+el.id = `heading-${i}`;
+}
+
             i += 1;
         });
+
         return sanitizeHtml(doc.body.innerHTML);
     }, [item.body]);
 
     const handleShare = async () => {
         const url = typeof window !== 'undefined' ? window.location.href : '';
+
         if (typeof navigator !== 'undefined' && 'share' in navigator) {
             try {
                 await navigator.share({ title: item.title, url });
+
                 return;
             } catch {
                 // user dismissed
             }
         }
+
         if (typeof navigator !== 'undefined' && navigator.clipboard) {
             await navigator.clipboard.writeText(url);
             setCopied(true);
@@ -246,31 +268,29 @@ export default function CareerResourceShow({ item, related }: Props) {
                     </div>
 
                     {/* Cover */}
-                    {item.thumbnail ? (
+                    {hasThumb ? (
                         <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
                             <img
-                                src={item.thumbnail}
+                                src={item.thumbnail!}
                                 alt={item.title}
+                                onError={() => setThumbBroken(true)}
+                                onLoad={(e) => {
+                                    if (e.currentTarget.naturalWidth < 64 || e.currentTarget.naturalHeight < 64) {
+                                        setThumbBroken(true);
+                                    }
+                                }}
                                 className="aspect-[16/8] w-full object-cover"
                             />
                         </div>
                     ) : (
-                        <div className="relative aspect-[16/8] w-full overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan shadow-sm">
-                            <div
-                                aria-hidden
-                                className="absolute inset-0 opacity-30"
-                                style={{
-                                    backgroundImage:
-                                        'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)',
-                                    backgroundSize: '28px 28px',
-                                }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Icon
-                                    className="size-24 text-white/30 sm:size-32"
-                                    strokeWidth={1.2}
-                                />
-                            </div>
+                        <div className="relative flex aspect-[16/8] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-muted/40 shadow-sm">
+                            {logoPath ? (
+                                <img src={logoPath} alt="KarirConnect" className="h-16 w-auto opacity-90 sm:h-20" />
+                            ) : (
+                                <div className="flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-md">
+                                    <AppLogoIcon className="size-10 fill-current text-white" />
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>
@@ -435,6 +455,7 @@ export default function CareerResourceShow({ item, related }: Props) {
                                     {related.map((r) => {
                                         const rMeta = metaFor(r.category);
                                         const RIcon = rMeta.icon;
+
                                         return (
                                             <li key={r.id}>
                                                 <Link
