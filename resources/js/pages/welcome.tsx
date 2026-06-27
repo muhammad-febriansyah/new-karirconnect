@@ -600,12 +600,8 @@ export default function Welcome({ home }: Props) {
                         <br className="hidden sm:block" />{' '}
                         <span className="bg-gradient-to-b from-brand-cyan to-white bg-clip-text text-transparent">#BarengKarirConnect</span>
                     </h1>
-                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/75 sm:text-base">
-                        AI Coach, latihan interview, insight gaji riil &amp; ribuan lowongan terverifikasi di seluruh Indonesia.
-                    </p>
-
                     {/* Trust badges */}
-                    <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-white/80 sm:text-sm">
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-white/80 sm:text-sm">
                         <span className="inline-flex items-center gap-1.5">
                             <ShieldCheck className="size-4 text-brand-cyan" /> Data terenkripsi
                         </span>

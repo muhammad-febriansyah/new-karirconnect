@@ -1,21 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
-    ChevronDown,
     Cookie,
-    FileQuestion,
     Heart,
-    HelpCircle,
-    Info,
     Facebook,
     Instagram,
     Linkedin,
     Menu,
     Music2,
-    Phone,
     ScrollText,
     Shield,
-    ShieldCheck,
     Sparkles,
     Twitter,
     X,
@@ -25,7 +19,6 @@ import { useEffect, useState  } from 'react';
 import type {ReactNode} from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { dashboard, login, register } from '@/routes';
 import {
@@ -50,25 +43,12 @@ type NavItem = {
     label: string;
 };
 
-type HelpItem = {
-    href: string;
-    label: string;
-    description?: string;
-    icon: React.ComponentType<{ className?: string }>;
-};
-
 const NAV_ITEMS: NavItem[] = [
     { href: '/jobs', label: 'Lowongan' },
     { href: '/companies', label: 'Perusahaan' },
-    { href: '/salary-insight', label: 'Insight Gaji' },
+    { href: '/employee/career-coach', label: 'AI Career Coach' },
+    { href: '/employee/cv/index', label: 'AI CV Analyzer' },
     { href: '/career-resources', label: 'Tips Karier' },
-];
-
-const HELP_ITEMS: HelpItem[] = [
-    { href: '/tentang-kami', label: 'Tentang Kami', description: 'Misi & tim di balik KarirConnect', icon: Info },
-    { href: '/faq', label: 'FAQ', description: 'Pertanyaan yang sering diajukan', icon: FileQuestion },
-    { href: '/contact', label: 'Kontak', description: 'Hubungi tim dukungan', icon: Phone },
-    { href: '/legal/privacy', label: 'Privasi & Legal', description: 'Syarat layanan & kebijakan', icon: ShieldCheck },
 ];
 
 function isActive(currentPath: string, href: string): boolean {
@@ -104,9 +84,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
     ].filter((s) => s.href.trim().length > 0);
 
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [mobileHelpOpen, setMobileHelpOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const helpActive = HELP_ITEMS.some((item) => isActive(url, item.href));
     // Landing hero: transparant + teks putih saat di paling atas, jadi solid setelah scroll.
     const isLanding = url === '/';
     const onHero = isLanding && !scrolled;
@@ -133,7 +111,6 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
 
     useEffect(() => {
         setMobileOpen(false);
-        setMobileHelpOpen(false);
     }, [url]);
 
     return (
@@ -198,74 +175,6 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                 </Link>
                             );
                         })}
-
-                        {/* Bantuan dropdown */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button
-                                    type="button"
-                                    className={cn(
-                                        'group/nav relative inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                                        helpActive
-                                            ? onHero
-                                                ? 'text-white'
-                                                : 'text-brand-blue'
-                                            : onHero
-                                              ? 'text-white/80 hover:text-white'
-                                              : 'text-muted-foreground hover:text-brand-navy',
-                                    )}
-                                >
-                                    Bantuan
-                                    <ChevronDown className="size-3.5 transition-transform group-data-[state=open]/nav:rotate-180" />
-                                    <span
-                                        className={cn(
-                                            'pointer-events-none absolute -bottom-px left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan transition-all duration-200',
-                                            helpActive ? 'opacity-100' : 'opacity-0',
-                                        )}
-                                    />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="center" sideOffset={10} className="w-72 p-2">
-                                {HELP_ITEMS.map((item) => {
-                                    const active = isActive(url, item.href);
-
-                                    return (
-                                        <DropdownMenuItem key={item.href} asChild className="cursor-pointer">
-                                            <Link
-                                                href={item.href}
-                                                prefetch
-                                                className={cn(
-                                                    'flex items-start gap-3 rounded-lg px-2.5 py-2',
-                                                    active && 'bg-brand-blue/8 text-brand-blue',
-                                                )}
-                                            >
-                                                <div
-                                                    className={cn(
-                                                        'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg',
-                                                        active
-                                                            ? 'bg-gradient-to-br from-brand-blue to-brand-cyan text-white'
-                                                            : 'bg-muted text-brand-navy',
-                                                    )}
-                                                >
-                                                    <item.icon
-                                                        className={cn(
-                                                            'size-4',
-                                                            active ? 'text-white' : 'text-brand-navy',
-                                                        )}
-                                                    />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="text-sm font-semibold text-brand-navy">{item.label}</div>
-                                                    {item.description && (
-                                                        <div className="text-[11px] text-muted-foreground">{item.description}</div>
-                                                    )}
-                                                </div>
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    );
-                                })}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
                     </nav>
 
                     {/* Auth buttons */}
@@ -375,44 +284,6 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                 </Link>
                             );
                         })}
-
-                        {/* Bantuan accordion (mobile) */}
-                        <button
-                            type="button"
-                            onClick={() => setMobileHelpOpen((v) => !v)}
-                            className={cn(
-                                'flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                                helpActive ? 'bg-brand-blue/8 text-brand-blue ring-1 ring-brand-blue/15' : 'text-brand-navy hover:bg-muted',
-                            )}
-                            aria-expanded={mobileHelpOpen}
-                        >
-                            <span className="inline-flex items-center gap-2">
-                                <HelpCircle className="size-4" /> Bantuan
-                            </span>
-                            <ChevronDown className={cn('size-4 transition-transform', mobileHelpOpen && 'rotate-180')} />
-                        </button>
-                        {mobileHelpOpen && (
-                            <div className="ml-3 space-y-1 border-l border-border/50 pl-3">
-                                {HELP_ITEMS.map((item) => {
-                                    const active = isActive(url, item.href);
-
-                                    return (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            prefetch
-                                            className={cn(
-                                                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
-                                                active ? 'text-brand-blue' : 'text-muted-foreground hover:text-brand-navy',
-                                            )}
-                                        >
-                                            <item.icon className="size-4" />
-                                            {item.label}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        )}
 
                         {!auth?.user && (
                             <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">

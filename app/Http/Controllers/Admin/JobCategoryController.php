@@ -47,6 +47,12 @@ class JobCategoryController extends Controller
 
     public function destroy(JobCategory $jobCategory): RedirectResponse
     {
+        if ($jobCategory->jobs()->exists()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Kategori tidak dapat dihapus karena masih digunakan oleh lowongan. Pindahkan atau hapus lowongan terkait terlebih dahulu.']);
+
+            return to_route('admin.job-categories.index');
+        }
+
         $jobCategory->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Kategori lowongan berhasil dihapus.']);
