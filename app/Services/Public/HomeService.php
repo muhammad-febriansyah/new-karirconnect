@@ -103,12 +103,47 @@ class HomeService
                 'city' => $j->city?->name,
                 'employment_type' => $j->employment_type?->value,
                 'work_arrangement' => $j->work_arrangement?->value,
+                'experience_level' => $j->experience_level?->value,
                 'salary_min' => $j->salary_min,
                 'salary_max' => $j->salary_max,
+                'applications_count' => (int) $j->applications_count,
                 'is_featured' => (bool) $j->is_featured,
+                'highlight' => $this->jobHighlight($j),
                 'published_at' => optional($j->published_at)->toIso8601String(),
             ])
             ->all();
+    }
+
+    /**
+     * Tentukan badge highlight kartu lowongan (prioritas atas → bawah).
+     */
+    private function jobHighlight(Job $j): ?string
+    {
+        if ($j->application_deadline !== null && $j->application_deadline->isBetween(now(), now()->addDays(7))) {
+            return 'urgent';
+        }
+
+        if ($j->experience_level === ExperienceLevel::Entry) {
+            return 'fresh_grad';
+        }
+
+        if ($j->work_arrangement === WorkArrangement::Remote) {
+            return 'remote';
+        }
+
+        if ($j->salary_max !== null && $j->salary_max >= 20_000_000) {
+            return 'high_salary';
+        }
+
+        if ($j->applications_count < 20) {
+            return 'few_applicants';
+        }
+
+        if ($j->is_featured) {
+            return 'featured';
+        }
+
+        return null;
     }
 
     /**

@@ -107,6 +107,9 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
     const [mobileHelpOpen, setMobileHelpOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const helpActive = HELP_ITEMS.some((item) => isActive(url, item.href));
+    // Landing hero: transparant + teks putih saat di paling atas, jadi solid setelah scroll.
+    const isLanding = url === '/';
+    const onHero = isLanding && !scrolled;
     // Banner "Siap melangkah lebih jauh?" disembunyikan sementara — set true untuk tampilkan lagi.
     const showFooterCta = false;
 
@@ -135,16 +138,16 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
 
     return (
         <div className="flex min-h-svh flex-col bg-background text-foreground">
-            {/* ===== Top accent line ===== */}
-            <div className="h-0.5 w-full bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue" />
-
             {/* ===== Header ===== */}
             <header
                 className={cn(
                     'sticky top-0 z-40 w-full border-b transition-all duration-200',
+                    isLanding && '-mb-[65px] lg:-mb-[73px]',
                     scrolled
                         ? 'border-border/60 bg-background/85 shadow-[0_1px_0_0_rgba(0,0,0,0.02)] backdrop-blur-md'
-                        : 'border-transparent bg-background/70 backdrop-blur',
+                        : onHero
+                          ? 'border-transparent bg-transparent'
+                          : 'border-transparent bg-background/70 backdrop-blur',
                 )}
             >
                 <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-6 px-4 sm:px-6 lg:h-[72px] lg:px-8">
@@ -177,8 +180,12 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                     className={cn(
                                         'group/nav relative rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                                         active
-                                            ? 'text-brand-blue'
-                                            : 'text-muted-foreground hover:text-brand-navy',
+                                            ? onHero
+                                                ? 'text-white'
+                                                : 'text-brand-blue'
+                                            : onHero
+                                              ? 'text-white/80 hover:text-white'
+                                              : 'text-muted-foreground hover:text-brand-navy',
                                     )}
                                 >
                                     {item.label}
@@ -199,7 +206,13 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                     type="button"
                                     className={cn(
                                         'group/nav relative inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                                        helpActive ? 'text-brand-blue' : 'text-muted-foreground hover:text-brand-navy',
+                                        helpActive
+                                            ? onHero
+                                                ? 'text-white'
+                                                : 'text-brand-blue'
+                                            : onHero
+                                              ? 'text-white/80 hover:text-white'
+                                              : 'text-muted-foreground hover:text-brand-navy',
                                     )}
                                 >
                                     Bantuan
@@ -261,7 +274,12 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                             <Link
                                 href={dashboard()}
                                 prefetch
-                                className="group/dash hidden h-10 items-center gap-1.5 rounded-full bg-brand-navy px-5 text-sm font-semibold text-white transition-all hover:bg-brand-blue hover:shadow-lg hover:shadow-brand-blue/30 sm:inline-flex"
+                                className={cn(
+                                    'group/dash hidden h-10 items-center gap-1.5 rounded-full px-5 text-sm font-semibold transition-all hover:shadow-lg sm:inline-flex',
+                                    onHero
+                                        ? 'bg-white text-brand-blue hover:shadow-black/10'
+                                        : 'bg-brand-navy text-white hover:bg-brand-blue hover:shadow-brand-blue/30',
+                                )}
                             >
                                 Dashboard
                                 <ArrowRight className="size-3.5 transition-transform group-hover/dash:translate-x-0.5" />
@@ -271,7 +289,10 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                 <Link
                                     href={login()}
                                     prefetch
-                                    className="hidden h-10 items-center rounded-full px-4 text-sm font-semibold text-brand-navy transition-colors hover:text-brand-blue sm:inline-flex"
+                                    className={cn(
+                                        'hidden h-10 items-center rounded-full px-4 text-sm font-semibold transition-colors sm:inline-flex',
+                                        onHero ? 'text-white hover:text-white/80' : 'text-brand-navy hover:text-brand-blue',
+                                    )}
                                 >
                                     Masuk
                                 </Link>
@@ -279,13 +300,20 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                     <Link
                                         href={register()}
                                         prefetch
-                                        className="group/cta relative hidden h-10 items-center gap-1.5 overflow-hidden rounded-full bg-brand-navy px-5 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-lg hover:shadow-brand-blue/30 sm:inline-flex"
+                                        className={cn(
+                                            'group/cta relative hidden h-10 items-center gap-1.5 overflow-hidden rounded-full px-5 text-sm font-semibold shadow-sm transition-all hover:shadow-lg sm:inline-flex',
+                                            onHero
+                                                ? 'bg-white text-brand-blue hover:shadow-black/10'
+                                                : 'bg-brand-navy text-white hover:shadow-brand-blue/30',
+                                        )}
                                     >
-                                        {/* Animated gradient sheen on hover */}
-                                        <span
-                                            aria-hidden
-                                            className="absolute inset-0 -z-0 bg-gradient-to-r from-brand-blue to-brand-cyan opacity-0 transition-opacity duration-300 group-hover/cta:opacity-100"
-                                        />
+                                        {/* Animated gradient sheen on hover — non-aktif saat di hero (tombol putih) */}
+                                        {!onHero && (
+                                            <span
+                                                aria-hidden
+                                                className="absolute inset-0 -z-0 bg-gradient-to-r from-brand-blue to-brand-cyan opacity-0 transition-opacity duration-300 group-hover/cta:opacity-100"
+                                            />
+                                        )}
                                         <span className="relative z-10">Daftar Gratis</span>
                                         <ArrowRight className="relative z-10 size-3.5 transition-transform group-hover/cta:translate-x-0.5" />
                                     </Link>
@@ -300,9 +328,10 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                             aria-label={mobileOpen ? 'Tutup menu' : 'Buka menu'}
                             aria-expanded={mobileOpen}
                             className={cn(
-                                'inline-flex size-10 items-center justify-center rounded-xl border border-border/60 bg-muted/30 text-brand-navy transition-colors',
-                                'hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue',
-                                'lg:hidden',
+                                'inline-flex size-10 items-center justify-center rounded-xl border transition-colors lg:hidden',
+                                onHero
+                                    ? 'border-white/30 bg-white/10 text-white hover:bg-white/20'
+                                    : 'border-border/60 bg-muted/30 text-brand-navy hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue',
                             )}
                         >
                             {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}

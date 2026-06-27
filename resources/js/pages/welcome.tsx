@@ -20,6 +20,7 @@ import {
     Star,
     TrendingUp,
     Users,
+    Zap,
 } from 'lucide-react';
 import {  useMemo, useState } from 'react';
 import type {FormEvent} from 'react';
@@ -43,11 +44,16 @@ type FeaturedJob = {
     city: string | null;
     employment_type: string | null;
     work_arrangement: string | null;
+    experience_level: string | null;
     salary_min: number | null;
     salary_max: number | null;
+    applications_count: number;
     is_featured: boolean;
+    highlight: JobHighlight | null;
     published_at: string | null;
 };
+
+type JobHighlight = 'urgent' | 'few_applicants' | 'fresh_grad' | 'remote' | 'high_salary' | 'featured';
 
 type TopCompany = {
     slug: string;
@@ -292,15 +298,31 @@ function FilterSelect({
     );
 }
 
+const HIGHLIGHTS: Record<JobHighlight, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
+    urgent: { label: 'Butuh Cepat', icon: Flame, className: 'bg-orange-500 text-white' },
+    few_applicants: { label: 'Pelamar Sedikit', icon: Zap, className: 'bg-amber-400 text-amber-950' },
+    fresh_grad: { label: 'Fresh Graduate', icon: GraduationCap, className: 'bg-emerald-500 text-white' },
+    remote: { label: 'Kerja Remote', icon: Globe, className: 'bg-brand-blue text-white' },
+    high_salary: { label: 'Gaji Tinggi', icon: Banknote, className: 'bg-violet-500 text-white' },
+    featured: { label: 'Pilihan', icon: Sparkles, className: 'bg-sky-500 text-white' },
+};
+
 function JobCard({ job }: { job: FeaturedJob }) {
     const salary = salaryRange(job.salary_min, job.salary_max);
     const posted = timeAgo(job.published_at);
+    const highlight = job.highlight ? HIGHLIGHTS[job.highlight] : null;
 
     return (
         <div className="group/card relative flex flex-col rounded-2xl border border-border/60 bg-background p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10">
-            {job.is_featured && (
-                <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-brand-blue/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-blue ring-1 ring-brand-blue/20">
-                    <Sparkles className="size-3" /> Pilihan
+            {/* Highlight badge */}
+            {highlight && (
+                <span
+                    className={cn(
+                        'mb-3 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm',
+                        highlight.className,
+                    )}
+                >
+                    <highlight.icon className="size-3" /> {highlight.label}
                 </span>
             )}
 
@@ -315,7 +337,7 @@ function JobCard({ job }: { job: FeaturedJob }) {
                         </span>
                     )}
                 </div>
-                <div className="min-w-0 flex-1 pr-14">
+                <div className="min-w-0 flex-1">
                     <Link
                         href={`/jobs/${job.slug}`}
                         className="line-clamp-2 text-sm font-bold leading-snug text-brand-navy transition-colors hover:text-brand-blue"
@@ -343,16 +365,27 @@ function JobCard({ job }: { job: FeaturedJob }) {
                         {formatStatus(job.work_arrangement)}
                     </span>
                 )}
+                {job.experience_level && (
+                    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-brand-navy">
+                        {formatStatus(job.experience_level)}
+                    </span>
+                )}
             </div>
 
             {salary && <div className="mt-4 text-sm font-bold text-brand-navy">{salary}</div>}
 
             {/* Footer */}
             <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-4">
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                        <Users className="size-3" /> {compact(job.applications_count)} pelamar
+                    </span>
                     {posted && (
                         <>
-                            <Clock className="size-3" /> {posted}
+                            <span aria-hidden>·</span>
+                            <span className="inline-flex items-center gap-1">
+                                <Clock className="size-3" /> {posted}
+                            </span>
                         </>
                     )}
                 </span>
@@ -543,14 +576,36 @@ export default function Welcome({ home }: Props) {
             />
 
             {/* ===== Hero ===== */}
-            <section className="relative overflow-hidden border-b bg-gradient-to-b from-brand-blue/[0.05] via-white to-white">
-                <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pt-16 pb-10 text-center sm:px-6 sm:pt-24">
-                    <h1 className="text-2xl font-bold leading-tight tracking-tight text-brand-navy sm:text-3xl lg:text-4xl">
+            <section className="relative overflow-hidden border-b border-brand-navy/20 bg-gradient-to-b from-[#1b5fd6] via-[#1550c4] to-[#103e9e] text-white">
+                {/* Flowing contour lines */}
+                <svg
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 h-full w-full"
+                    preserveAspectRatio="xMidYMid slice"
+                    viewBox="0 0 1440 760"
+                    fill="none"
+                >
+                    <g stroke="#fff" strokeWidth="1" fill="none">
+                        <path d="M-50 120 C 360 40, 720 200, 1100 90 S 1600 180, 1700 110" strokeOpacity="0.10" />
+                        <path d="M-50 200 C 380 110, 760 280, 1140 170 S 1620 250, 1720 190" strokeOpacity="0.08" />
+                        <path d="M-50 300 C 320 220, 700 380, 1120 270 S 1640 340, 1740 300" strokeOpacity="0.06" />
+                        <path d="M1490 60 C 1300 200, 1380 420, 1180 560 S 1240 760, 1040 880" strokeOpacity="0.12" />
+                        <path d="M1560 60 C 1370 210, 1450 440, 1250 580 S 1310 780, 1110 900" strokeOpacity="0.09" />
+                        <path d="M1630 60 C 1440 220, 1520 460, 1320 600 S 1380 800, 1180 920" strokeOpacity="0.06" />
+                        <path d="M-120 560 C 180 470, 360 700, 700 600 S 1100 700, 1300 600" strokeOpacity="0.08" />
+                        <path d="M-120 640 C 200 540, 380 780, 720 680 S 1120 780, 1320 690" strokeOpacity="0.06" />
+                    </g>
+                </svg>
+                {/* Glow blobs */}
+                <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-brand-cyan/20 blur-3xl" />
+                <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-80 rounded-full bg-white/8 blur-3xl" />
+                <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pt-24 pb-10 text-center sm:px-6 sm:pt-32">
+                    <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
                         Cari Lowongan Kerja Impianmu
                         <br className="hidden sm:block" />{' '}
-                        <span className="bg-gradient-to-b from-brand-blue to-[#1565E0] bg-clip-text text-transparent">#BarengKarirConnect</span>
+                        <span className="bg-gradient-to-b from-brand-cyan to-white bg-clip-text text-transparent">#BarengKarirConnect</span>
                     </h1>
-                    <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
                         Lebih dari {compact(home.metrics.open_jobs)} lowongan dari perusahaan terpercaya di Indonesia. Lamar sekarang, respons
                         dalam 14 hari.
                     </p>
@@ -579,16 +634,16 @@ export default function Welcome({ home }: Props) {
                         </Button>
                     </form>
 
-                    {/* Quick-filter pills */}
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+                    {/* Quick-filter pills — satu baris */}
+                    <div className="mt-6 flex w-full max-w-5xl flex-nowrap items-center justify-center gap-2 overflow-x-auto px-1 sm:gap-2.5">
                         {QUICK_FILTERS.map((f) => (
                             <button
                                 key={f.label}
                                 type="button"
                                 onClick={() => goToJobs(f.params)}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-brand-navy shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:text-brand-blue"
+                                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-navy shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:text-brand-blue"
                             >
-                                <f.icon className="size-4 text-brand-blue" /> {f.label}
+                                <f.icon className="size-3.5 text-brand-blue" /> {f.label}
                             </button>
                         ))}
                     </div>
@@ -597,8 +652,8 @@ export default function Welcome({ home }: Props) {
                     <div className="mt-12 grid w-full max-w-3xl grid-cols-2 gap-y-8 sm:grid-cols-4">
                         {stats.map((s) => (
                             <div key={s.label} className="flex flex-col items-center text-center">
-                                <span className="text-xl font-bold tracking-tight text-brand-blue">{compact(s.value)}+</span>
-                                <span className="mt-1 text-xs font-medium text-muted-foreground">{s.label}</span>
+                                <span className="text-xl font-bold tracking-tight text-white">{compact(s.value)}+</span>
+                                <span className="mt-1 text-xs font-medium text-white/65">{s.label}</span>
                             </div>
                         ))}
                     </div>
@@ -613,15 +668,15 @@ export default function Welcome({ home }: Props) {
                         <p className="text-sm text-muted-foreground">Posisi terbaru dari perusahaan tepercaya di seluruh Indonesia.</p>
                     </div>
 
-                    {/* Category tabs */}
-                    <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                    {/* Category tabs — satu baris, scroll horizontal kalau sempit */}
+                    <div className="-mx-4 mb-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
                         {categoryTabs.map((tab) => (
                             <button
                                 key={tab}
                                 type="button"
                                 onClick={() => setActiveCategory(tab)}
                                 className={cn(
-                                    'shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all',
+                                    'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-all',
                                     activeCategory === tab
                                         ? 'border-brand-blue bg-brand-blue text-white shadow-sm shadow-brand-blue/30'
                                         : 'border-border bg-background text-brand-navy hover:border-brand-blue/40 hover:bg-brand-blue/5',
