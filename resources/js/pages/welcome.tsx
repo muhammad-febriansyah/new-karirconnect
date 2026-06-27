@@ -598,7 +598,7 @@ export default function Welcome({ home }: Props) {
                     <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
                         Cari Lowongan Kerja Impianmu
                         <br className="hidden sm:block" />{' '}
-                        <span className="bg-gradient-to-b from-brand-cyan to-white bg-clip-text text-transparent">#BarengKarirConnect</span>
+                        <span className="bg-gradient-to-b from-yellow-300 to-amber-400 bg-clip-text text-transparent">#BarengKarirConnect</span>
                     </h1>
                     {/* Trust badges */}
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-white/80 sm:text-sm">
