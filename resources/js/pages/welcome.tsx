@@ -11,10 +11,12 @@ import {
     Clock,
     FileSearch,
     Flame,
+    Gift,
     Globe,
     GraduationCap,
     MapPin,
     Search,
+    ShieldCheck,
     Smartphone,
     Sparkles,
     Star,
@@ -553,13 +555,6 @@ export default function Welcome({ home }: Props) {
         [home.featured_jobs, activeCategory, typeFilter, arrangementFilter, cityFilter],
     );
 
-    const stats = [
-        { value: home.metrics.open_jobs, label: 'Lowongan Aktif' },
-        { value: home.metrics.active_companies, label: 'Perusahaan Bergabung' },
-        { value: home.metrics.candidates, label: 'Pencari Kerja' },
-        { value: home.metrics.salary_reports, label: 'Laporan Gaji' },
-    ];
-
     return (
         <>
             <SeoHead
@@ -605,10 +600,28 @@ export default function Welcome({ home }: Props) {
                         <br className="hidden sm:block" />{' '}
                         <span className="bg-gradient-to-b from-brand-cyan to-white bg-clip-text text-transparent">#BarengKarirConnect</span>
                     </h1>
-                    <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
-                        Lebih dari {compact(home.metrics.open_jobs)} lowongan dari perusahaan terpercaya di Indonesia. Lamar sekarang, respons
-                        dalam 14 hari.
+                    <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/75 sm:text-base">
+                        AI Coach, latihan interview, insight gaji riil &amp; ribuan lowongan terverifikasi di seluruh Indonesia.
                     </p>
+
+                    {/* Trust badges */}
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-white/80 sm:text-sm">
+                        <span className="inline-flex items-center gap-1.5">
+                            <ShieldCheck className="size-4 text-brand-cyan" /> Data terenkripsi
+                        </span>
+                        <span aria-hidden className="text-white/30">·</span>
+                        <span className="inline-flex items-center gap-1.5">
+                            <Building2 className="size-4 text-brand-cyan" /> Perusahaan terverifikasi
+                        </span>
+                        <span aria-hidden className="text-white/30">·</span>
+                        <span className="inline-flex items-center gap-1.5">
+                            <Star className="size-4 fill-brand-cyan text-brand-cyan" /> 4.8 rating pengguna
+                        </span>
+                        <span aria-hidden className="text-white/30">·</span>
+                        <span className="inline-flex items-center gap-1.5">
+                            <Gift className="size-4 text-brand-cyan" /> Gratis untuk kandidat
+                        </span>
+                    </div>
 
                     {/* Search bar — single flat pill */}
                     <form
@@ -648,15 +661,6 @@ export default function Welcome({ home }: Props) {
                         ))}
                     </div>
 
-                    {/* Stats */}
-                    <div className="mt-12 grid w-full max-w-3xl grid-cols-2 gap-y-8 sm:grid-cols-4">
-                        {stats.map((s) => (
-                            <div key={s.label} className="flex flex-col items-center text-center">
-                                <span className="text-xl font-bold tracking-tight text-white">{compact(s.value)}+</span>
-                                <span className="mt-1 text-xs font-medium text-white/65">{s.label}</span>
-                            </div>
-                        ))}
-                    </div>
                 </div>
             </section>
 
