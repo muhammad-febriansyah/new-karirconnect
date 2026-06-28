@@ -18,6 +18,10 @@ type DatePickerFieldProps = {
     /** ISO date string (yyyy-MM-dd). */
     value?: string | null;
     onChange?: (isoDate: string) => void;
+    /** Earliest selectable year (shown in the year dropdown). */
+    startYear?: number;
+    /** Latest selectable year (shown in the year dropdown). */
+    endYear?: number;
 };
 
 export function DatePickerField({
@@ -30,6 +34,8 @@ export function DatePickerField({
     placeholder = 'Pilih tanggal',
     value,
     onChange,
+    startYear = 1940,
+    endYear = new Date().getFullYear(),
 }: DatePickerFieldProps) {
     const [open, setOpen] = useState(false);
     const selected = value ? new Date(value) : undefined;
@@ -61,6 +67,10 @@ export function DatePickerField({
                 <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                         mode="single"
+                        captionLayout="dropdown"
+                        startMonth={new Date(startYear, 0)}
+                        endMonth={new Date(endYear, 11)}
+                        defaultMonth={selected}
                         selected={selected}
                         onSelect={(date) => {
                             if (date) {

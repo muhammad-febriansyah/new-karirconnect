@@ -1,21 +1,25 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
-    AlertCircle,
     ArrowLeft,
     ArrowRight,
+    Briefcase,
+    Camera,
     CheckCircle2,
     FileText,
     Plus,
+    Search,
+    Send,
+    ShieldCheck,
     Sparkles,
+    TrendingUp,
     Trash2,
-    Upload,
-    UserPen,
+    UserRound,
     X,
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import AppLogo from '@/components/app-logo';
 import { DatePickerField } from '@/components/form/date-picker-field';
-import { MoneyInput } from '@/components/form/money-input';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,13 +37,13 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { store as onboardingStore, parseCv as parseCvRoute } from '@/routes/employee/onboarding';
+import { store as onboardingStore } from '@/routes/employee/onboarding';
 
 type Option = { value: string; label: string };
 type CityOption = Option & { province_id: number };
 
 type Props = {
-    user: { name: string; email: string; phone: string | null };
+    user: { name: string; email: string; phone: string | null; avatar_url: string | null };
     profile: {
         headline: string | null;
         about: string | null;
@@ -49,13 +53,10 @@ type Props = {
         city_id: number | null;
         current_position: string | null;
         experience_level: string | null;
-        expected_salary_min: number | null;
-        expected_salary_max: number | null;
         linkedin_url: string | null;
         portfolio_url: string | null;
         github_url: string | null;
         skill_ids: number[];
-        primary_cv: { id: number; label: string; file_url: string | null } | null;
     };
     options: {
         genders: Option[];
@@ -85,6 +86,7 @@ type EducationForm = {
 };
 
 type FormData = {
+    avatar: File | null;
     phone: string;
     headline: string;
     about: string;
@@ -94,18 +96,15 @@ type FormData = {
     city_id: string;
     current_position: string;
     experience_level: string;
-    expected_salary_min: string;
-    expected_salary_max: string;
     linkedin_url: string;
     portfolio_url: string;
     github_url: string;
-    cv_id: number | null;
     skills: string[];
     work_experiences: WorkExperienceForm[];
     educations: EducationForm[];
 };
 
-type Step = 'method' | 'form' | 'review';
+type Step = 'welcome' | 'form';
 
 const emptyExperience = (): WorkExperienceForm => ({
     company_name: '',
@@ -126,11 +125,9 @@ const emptyEducation = (): EducationForm => ({
 });
 
 export default function EmployeeOnboarding({ user, profile, options }: Props) {
-    const [step, setStep] = useState<Step>('method');
-    const [parseLoading, setParseLoading] = useState(false);
-    const [parseError, setParseError] = useState<string | null>(null);
-    const [uploadedCv, setUploadedCv] = useState<{ id: number; label: string; file_url: string | null } | null>(profile.primary_cv);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [step, setStep] = useState<Step>('welcome');
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatar_url);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
     const skillOptions = useMemo(() => options.skills, [options.skills]);
     const skillLookup = useMemo(() => new Map(skillOptions.map((s) => [s.value, s.label])), [skillOptions]);
@@ -138,6 +135,7 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
     const initialSkills = profile.skill_ids.map((id) => String(id));
 
     const form = useForm<FormData>({
+        avatar: null,
         phone: user.phone ?? '',
         headline: profile.headline ?? '',
         about: profile.about ?? '',
@@ -147,12 +145,9 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
         city_id: profile.city_id ? String(profile.city_id) : '',
         current_position: profile.current_position ?? '',
         experience_level: profile.experience_level ?? '',
-        expected_salary_min: profile.expected_salary_min ? String(profile.expected_salary_min) : '',
-        expected_salary_max: profile.expected_salary_max ? String(profile.expected_salary_max) : '',
         linkedin_url: profile.linkedin_url ?? '',
         portfolio_url: profile.portfolio_url ?? '',
         github_url: profile.github_url ?? '',
-        cv_id: profile.primary_cv?.id ?? null,
         skills: initialSkills,
         work_experiences: [],
         educations: [],
@@ -163,126 +158,15 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
         return options.cities.filter((c) => String(c.province_id) === form.data.province_id);
     }, [options.cities, form.data.province_id]);
 
-    const handlePickFile = () => fileInputRef.current?.click();
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         e.target.value = '';
         if (!file) return;
-
-        setParseError(null);
-        setParseLoading(true);
-        const t = toast.loading('Menganalisis CV…', { description: 'AI sedang membaca isi file Anda.' });
-
-        try {
-            const fd = new FormData();
-            fd.append('cv_file', file);
-            fd.append('label', file.name);
-
-            const res = await fetch(parseCvRoute().url, {
-                method: 'POST',
-                body: fd,
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN':
-                        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ??
-                        decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
-                    'X-XSRF-TOKEN':
-                        decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
-                },
-            });
-
-            const json = await res.json();
-
-            if (!res.ok) {
-                const message = json?.error ?? 'Gagal memproses CV.';
-                setParseError(message);
-                toast.error('Tidak dapat membaca CV', { id: t, description: message });
-                return;
-            }
-
-            const parsed = json.parsed as {
-                headline: string;
-                about: string;
-                phone: string;
-                province_id: number | null;
-                city_id: number | null;
-                current_position: string;
-                skill_ids: number[];
-                work_experiences: Array<{
-                    company_name: string;
-                    position: string;
-                    start_date: string | null;
-                    end_date: string | null;
-                    is_current: boolean;
-                    description: string;
-                }>;
-                educations: Array<{
-                    institution: string;
-                    major: string;
-                    level: string;
-                    start_year: number | null;
-                    end_year: number | null;
-                    gpa: string;
-                }>;
-            };
-            const cv = json.cv as { id: number; label: string; file_url: string | null };
-
-            setUploadedCv(cv);
-
-            form.setData((prev) => ({
-                ...prev,
-                cv_id: cv.id,
-                phone: prev.phone || parsed.phone || '',
-                headline: prev.headline || parsed.headline || '',
-                about: prev.about || parsed.about || '',
-                province_id: prev.province_id || (parsed.province_id ? String(parsed.province_id) : ''),
-                city_id: prev.city_id || (parsed.city_id ? String(parsed.city_id) : ''),
-                current_position: prev.current_position || parsed.current_position || '',
-                skills: Array.from(new Set([...prev.skills, ...parsed.skill_ids.map((id) => String(id))])),
-                work_experiences: parsed.work_experiences.map((e) => ({
-                    company_name: e.company_name ?? '',
-                    position: e.position ?? '',
-                    start_date: e.start_date ?? '',
-                    end_date: e.end_date ?? '',
-                    is_current: !!e.is_current,
-                    description: e.description ?? '',
-                })),
-                educations: parsed.educations.map((e) => ({
-                    institution: e.institution ?? '',
-                    level: e.level ?? '',
-                    major: e.major ?? '',
-                    start_year: e.start_year ? String(e.start_year) : '',
-                    end_year: e.end_year ? String(e.end_year) : '',
-                    gpa: e.gpa ?? '',
-                })),
-            }));
-
-            toast.success('CV berhasil dianalisis', {
-                id: t,
-                description: 'Field di bawah sudah diisi otomatis. Silakan cek dan sempurnakan.',
-            });
-            setStep('form');
-        } catch (err) {
-            setParseError('Terjadi kesalahan jaringan saat mengunggah CV.');
-            toast.error('Gagal mengunggah', {
-                id: t,
-                description: 'Coba lagi atau pilih opsi isi manual.',
-            });
-        } finally {
-            setParseLoading(false);
-        }
+        form.setData('avatar', file);
+        setAvatarPreview(URL.createObjectURL(file));
     };
 
-    const startManual = () => {
-        if (form.data.work_experiences.length === 0) {
-            form.setData('work_experiences', [emptyExperience()]);
-        }
-        if (form.data.educations.length === 0) {
-            form.setData('educations', [emptyEducation()]);
-        }
+    const startForm = () => {
         setStep('form');
     };
 
@@ -295,8 +179,6 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
             gender: d.gender || null,
             experience_level: d.experience_level || null,
             date_of_birth: d.date_of_birth || null,
-            expected_salary_min: d.expected_salary_min || null,
-            expected_salary_max: d.expected_salary_max || null,
             linkedin_url: d.linkedin_url || null,
             portfolio_url: d.portfolio_url || null,
             github_url: d.github_url || null,
@@ -306,7 +188,7 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
         form.post(onboardingStore().url, {
             preserveScroll: true,
             onError: () => {
-                toast.error('Form belum lengkap', {
+                toast.error('Profil belum lengkap', {
                     description: 'Periksa field yang ditandai merah.',
                 });
             },
@@ -320,521 +202,508 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
         form.setData('skills', Array.from(current));
     };
 
+    const firstName = user.name.split(' ')[0];
+
     return (
         <>
-            <Head title="Lengkapi Profil" />
+            <Head title={step === 'welcome' ? 'Selamat Datang' : 'Lengkapi Profil'} />
 
             <div className="px-4 py-8 sm:py-10">
-                <div className="mx-auto max-w-3xl space-y-6">
-                    <header className="space-y-3 text-center">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-blue ring-1 ring-brand-blue/15">
-                            <Sparkles className="size-3" /> Hampir selesai
-                        </span>
-                        <h1 className="text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
-                            Halo {user.name.split(' ')[0]}, mari lengkapi profil Anda
-                        </h1>
-                        <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
-                            Profil yang lengkap meningkatkan peluang Anda direkrut. Anda bisa upload CV
-                            lalu kami isi otomatis, atau isi manual dari awal.
-                        </p>
-                    </header>
-
-                    {step === 'method' && (
-                        <MethodCards
-                            uploadedCv={uploadedCv}
-                            onPickFile={handlePickFile}
-                            onManual={startManual}
-                            parseLoading={parseLoading}
-                            parseError={parseError}
-                        />
-                    )}
+                <div className={cn('mx-auto space-y-6', step === 'welcome' ? 'max-w-6xl' : 'max-w-3xl')}>
+                    {step === 'welcome' && <WelcomeNote name={user.name} onStart={startForm} />}
 
                     {step === 'form' && (
-                        <form onSubmit={submit} className="space-y-6">
-                            {uploadedCv && (
-                                <Card className="border-emerald-200 bg-emerald-50/50">
-                                    <CardContent className="flex items-center justify-between gap-3 p-4">
-                                        <div className="flex items-center gap-3">
-                                            <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                                                <FileText className="size-5" />
-                                            </span>
-                                            <div>
-                                                <p className="text-sm font-semibold text-emerald-900">
-                                                    {uploadedCv.label}
-                                                </p>
-                                                <p className="text-xs text-emerald-700">
-                                                    CV tersimpan dan akan dijadikan CV utama Anda.
-                                                </p>
-                                            </div>
-                                        </div>
-                                        {uploadedCv.file_url && (
-                                            <a
-                                                href={uploadedCv.file_url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="text-xs font-semibold text-emerald-700 underline-offset-4 hover:underline"
+                        <>
+                            <header className="space-y-3 text-center">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-blue ring-1 ring-brand-blue/15">
+                                    <Sparkles className="size-3" /> Langkah terakhir
+                                </span>
+                                <h1 className="text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
+                                    Lengkapi profil Anda, {firstName}
+                                </h1>
+                                <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
+                                    Profil ini yang dilihat perusahaan saat menelusuri kandidat. Setelah disimpan,
+                                    semua menu KarirConnect akan terbuka untuk Anda.
+                                </p>
+                            </header>
+
+                            <form onSubmit={submit} className="space-y-6">
+                                <SectionCard title="Foto Profil" description="Foto opsional, tetapi profil berfoto lebih dipercaya recruiter.">
+                                    <div className="flex items-center gap-5">
+                                        <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-2 ring-border">
+                                            {avatarPreview ? (
+                                                <img src={avatarPreview} alt="Foto profil" className="size-full object-cover" />
+                                            ) : (
+                                                <Camera className="size-7 text-muted-foreground" />
+                                            )}
+                                        </span>
+                                        <div className="space-y-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => avatarInputRef.current?.click()}
+                                                className="rounded-xl"
                                             >
-                                                Lihat
-                                            </a>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            )}
+                                                <Camera className="size-4" /> {avatarPreview ? 'Ganti foto' : 'Unggah foto'}
+                                            </Button>
+                                            <p className="text-xs text-muted-foreground">JPG, PNG, atau WEBP. Maks 4 MB.</p>
+                                            <InputError message={form.errors.avatar} />
+                                        </div>
+                                    </div>
+                                </SectionCard>
 
-                            <SectionCard title="Informasi Dasar" description="Sapaan singkat tentang siapa Anda.">
-                                <FieldGroup>
-                                    <Field label="Nomor HP">
-                                        <Input
-                                            type="tel"
-                                            value={form.data.phone}
-                                            onChange={(e) => form.setData('phone', e.target.value)}
-                                            placeholder="08xxxxxxxxx"
-                                        />
-                                        <InputError message={form.errors.phone} />
-                                    </Field>
-                                    <Field label="Headline / Tagline">
-                                        <Input
-                                            value={form.data.headline}
-                                            onChange={(e) => form.setData('headline', e.target.value)}
-                                            placeholder="Backend Engineer dengan 3 tahun pengalaman"
-                                        />
-                                        <InputError message={form.errors.headline} />
-                                    </Field>
-                                    <Field label="Tentang Saya" full>
-                                        <Textarea
-                                            rows={4}
-                                            value={form.data.about}
-                                            onChange={(e) => form.setData('about', e.target.value)}
-                                            placeholder="Ceritakan secara singkat pengalaman dan tujuan karier Anda."
-                                        />
-                                        <InputError message={form.errors.about} />
-                                    </Field>
-                                    <Field label="Tanggal Lahir">
-                                        <DatePickerField
-                                            value={form.data.date_of_birth}
-                                            onChange={(value) => form.setData('date_of_birth', value)}
-                                            placeholder="Pilih tanggal lahir"
-                                        />
-                                        <InputError message={form.errors.date_of_birth} />
-                                    </Field>
-                                    <Field label="Jenis Kelamin">
-                                        <Select
-                                            value={form.data.gender}
-                                            onValueChange={(v) => form.setData('gender', v)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Pilih" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.genders.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError message={form.errors.gender} />
-                                    </Field>
-                                    <Field label="Provinsi">
-                                        <Select
-                                            value={form.data.province_id}
-                                            onValueChange={(v) => {
-                                                form.setData((prev) => ({
-                                                    ...prev,
-                                                    province_id: v,
-                                                    city_id: '',
-                                                }));
-                                            }}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Pilih provinsi" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.provinces.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError message={form.errors.province_id} />
-                                    </Field>
-                                    <Field label="Kota">
-                                        <Select
-                                            value={form.data.city_id}
-                                            onValueChange={(v) => form.setData('city_id', v)}
-                                            disabled={!form.data.province_id}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder={form.data.province_id ? 'Pilih kota' : 'Pilih provinsi dulu'} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {filteredCities.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError message={form.errors.city_id} />
-                                    </Field>
-                                </FieldGroup>
-                            </SectionCard>
+                                <SectionCard title="Informasi Dasar" description="Sapaan singkat tentang siapa Anda.">
+                                    <FieldGroup>
+                                        <Field label="Nomor HP">
+                                            <Input
+                                                type="tel"
+                                                value={form.data.phone}
+                                                onChange={(e) => form.setData('phone', e.target.value)}
+                                                placeholder="08xxxxxxxxx"
+                                            />
+                                            <InputError message={form.errors.phone} />
+                                        </Field>
+                                        <Field label="Headline / Tagline">
+                                            <Input
+                                                value={form.data.headline}
+                                                onChange={(e) => form.setData('headline', e.target.value)}
+                                                placeholder="Backend Engineer dengan 3 tahun pengalaman"
+                                            />
+                                            <InputError message={form.errors.headline} />
+                                        </Field>
+                                        <Field label="Tentang Saya" full>
+                                            <Textarea
+                                                rows={4}
+                                                value={form.data.about}
+                                                onChange={(e) => form.setData('about', e.target.value)}
+                                                placeholder="Ceritakan secara singkat pengalaman dan tujuan karier Anda."
+                                            />
+                                            <InputError message={form.errors.about} />
+                                        </Field>
+                                        <Field label="Tanggal Lahir">
+                                            <DatePickerField
+                                                value={form.data.date_of_birth}
+                                                onChange={(value) => form.setData('date_of_birth', value)}
+                                                placeholder="Pilih tanggal lahir"
+                                            />
+                                            <InputError message={form.errors.date_of_birth} />
+                                        </Field>
+                                        <Field label="Jenis Kelamin">
+                                            <Select
+                                                value={form.data.gender}
+                                                onValueChange={(v) => form.setData('gender', v)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Pilih" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {options.genders.map((o) => (
+                                                        <SelectItem key={o.value} value={o.value}>
+                                                            {o.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError message={form.errors.gender} />
+                                        </Field>
+                                        <Field label="Provinsi">
+                                            <Select
+                                                value={form.data.province_id}
+                                                onValueChange={(v) => {
+                                                    form.setData((prev) => ({
+                                                        ...prev,
+                                                        province_id: v,
+                                                        city_id: '',
+                                                    }));
+                                                }}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Pilih provinsi" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {options.provinces.map((o) => (
+                                                        <SelectItem key={o.value} value={o.value}>
+                                                            {o.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError message={form.errors.province_id} />
+                                        </Field>
+                                        <Field label="Kota">
+                                            <Select
+                                                value={form.data.city_id}
+                                                onValueChange={(v) => form.setData('city_id', v)}
+                                                disabled={!form.data.province_id}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={form.data.province_id ? 'Pilih kota' : 'Pilih provinsi dulu'} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {filteredCities.map((o) => (
+                                                        <SelectItem key={o.value} value={o.value}>
+                                                            {o.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError message={form.errors.city_id} />
+                                        </Field>
+                                    </FieldGroup>
+                                </SectionCard>
 
-                            <SectionCard title="Karier Saat Ini" description="Posisi dan ekspektasi gaji Anda saat ini.">
-                                <FieldGroup>
-                                    <Field label="Posisi Saat Ini">
-                                        <Input
-                                            value={form.data.current_position}
-                                            onChange={(e) => form.setData('current_position', e.target.value)}
-                                            placeholder="Backend Engineer"
-                                        />
-                                        <InputError message={form.errors.current_position} />
-                                    </Field>
-                                    <Field label="Level Pengalaman">
-                                        <Select
-                                            value={form.data.experience_level}
-                                            onValueChange={(v) => form.setData('experience_level', v)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Pilih level" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.experience_levels.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError message={form.errors.experience_level} />
-                                    </Field>
-                                    <Field label="Ekspektasi Gaji Min (IDR)">
-                                        <MoneyInput
-                                            value={form.data.expected_salary_min}
-                                            onChange={(value) => form.setData('expected_salary_min', value === null ? '' : String(value))}
-                                            placeholder="Rp 5.000.000"
-                                        />
-                                        <InputError message={form.errors.expected_salary_min} />
-                                    </Field>
-                                    <Field label="Ekspektasi Gaji Max (IDR)">
-                                        <MoneyInput
-                                            value={form.data.expected_salary_max}
-                                            onChange={(value) => form.setData('expected_salary_max', value === null ? '' : String(value))}
-                                            placeholder="Rp 8.000.000"
-                                        />
-                                        <InputError message={form.errors.expected_salary_max} />
-                                    </Field>
-                                </FieldGroup>
-                            </SectionCard>
+                                <SectionCard title="Karier Saat Ini" description="Posisi dan level pengalaman Anda saat ini.">
+                                    <FieldGroup>
+                                        <Field label="Posisi Saat Ini (jika sedang aktif bekerja)">
+                                            <Input
+                                                value={form.data.current_position}
+                                                onChange={(e) => form.setData('current_position', e.target.value)}
+                                                placeholder="Backend Engineer"
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Kosongkan jika Anda sedang tidak aktif bekerja.
+                                            </p>
+                                            <InputError message={form.errors.current_position} />
+                                        </Field>
+                                        <Field label="Level Pengalaman">
+                                            <Select
+                                                value={form.data.experience_level}
+                                                onValueChange={(v) => form.setData('experience_level', v)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Pilih level" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {options.experience_levels.map((o) => (
+                                                        <SelectItem key={o.value} value={o.value}>
+                                                            {o.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError message={form.errors.experience_level} />
+                                        </Field>
+                                    </FieldGroup>
+                                </SectionCard>
 
-                            <SectionCard title="Pengalaman Kerja" description="Tambahkan minimal satu pengalaman terakhir.">
-                                <div className="space-y-4">
-                                    {form.data.work_experiences.map((exp, idx) => (
-                                        <div key={idx} className="rounded-xl border border-border/60 bg-muted/30 p-4">
-                                            <div className="mb-3 flex items-center justify-between">
-                                                <p className="text-xs font-semibold uppercase tracking-wider text-brand-navy/70">
-                                                    Pengalaman #{idx + 1}
-                                                </p>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        form.setData(
-                                                            'work_experiences',
-                                                            form.data.work_experiences.filter((_, i) => i !== idx),
-                                                        );
-                                                    }}
-                                                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700"
-                                                >
-                                                    <Trash2 className="size-3.5" /> Hapus
-                                                </button>
-                                            </div>
-                                            <FieldGroup>
-                                                <Field label="Perusahaan">
-                                                    <Input
-                                                        value={exp.company_name}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.work_experiences];
-                                                            next[idx] = { ...exp, company_name: e.target.value };
-                                                            form.setData('work_experiences', next);
+                                <SectionCard
+                                    title="Pengalaman Kerja (jika Anda pernah bekerja)"
+                                    description="Lewati jika Anda fresh graduate atau belum ada pengalaman kerja."
+                                >
+                                    <div className="space-y-4">
+                                        {form.data.work_experiences.map((exp, idx) => (
+                                            <div key={idx} className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                                                <div className="mb-3 flex items-center justify-between">
+                                                    <p className="text-xs font-semibold uppercase tracking-wider text-brand-navy/70">
+                                                        Pengalaman #{idx + 1}
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            form.setData(
+                                                                'work_experiences',
+                                                                form.data.work_experiences.filter((_, i) => i !== idx),
+                                                            );
                                                         }}
-                                                    />
-                                                </Field>
-                                                <Field label="Posisi">
-                                                    <Input
-                                                        value={exp.position}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.work_experiences];
-                                                            next[idx] = { ...exp, position: e.target.value };
-                                                            form.setData('work_experiences', next);
-                                                        }}
-                                                    />
-                                                </Field>
-                                                <Field label="Tanggal Mulai">
-                                                    <DatePickerField
-                                                        value={exp.start_date}
-                                                        onChange={(value) => {
-                                                            const next = [...form.data.work_experiences];
-                                                            next[idx] = { ...exp, start_date: value };
-                                                            form.setData('work_experiences', next);
-                                                        }}
-                                                    />
-                                                </Field>
-                                                <Field label="Tanggal Berakhir">
-                                                    <DatePickerField
-                                                        value={exp.end_date}
-                                                        disabled={exp.is_current}
-                                                        onChange={(value) => {
-                                                            const next = [...form.data.work_experiences];
-                                                            next[idx] = { ...exp, end_date: value };
-                                                            form.setData('work_experiences', next);
-                                                        }}
-                                                    />
-                                                </Field>
-                                                <Field full>
-                                                    <label className="inline-flex items-center gap-2 text-sm">
-                                                        <Checkbox
-                                                            checked={exp.is_current}
-                                                            onCheckedChange={(c) => {
+                                                        className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700"
+                                                    >
+                                                        <Trash2 className="size-3.5" /> Hapus
+                                                    </button>
+                                                </div>
+                                                <FieldGroup>
+                                                    <Field label="Perusahaan">
+                                                        <Input
+                                                            value={exp.company_name}
+                                                            onChange={(e) => {
                                                                 const next = [...form.data.work_experiences];
-                                                                next[idx] = {
-                                                                    ...exp,
-                                                                    is_current: !!c,
-                                                                    end_date: c ? '' : exp.end_date,
-                                                                };
+                                                                next[idx] = { ...exp, company_name: e.target.value };
+                                                                form.setData('work_experiences', next);
+                                                            }}
+                                                            placeholder="Masukan nama perusahaan"
+                                                        />
+                                                    </Field>
+                                                    <Field label="Posisi">
+                                                        <Input
+                                                            value={exp.position}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.work_experiences];
+                                                                next[idx] = { ...exp, position: e.target.value };
+                                                                form.setData('work_experiences', next);
+                                                            }}
+                                                            placeholder="Masukan posisi"
+                                                        />
+                                                    </Field>
+                                                    <Field label="Tanggal Mulai">
+                                                        <DatePickerField
+                                                            value={exp.start_date}
+                                                            onChange={(value) => {
+                                                                const next = [...form.data.work_experiences];
+                                                                next[idx] = { ...exp, start_date: value };
                                                                 form.setData('work_experiences', next);
                                                             }}
                                                         />
-                                                        Saya masih bekerja di sini
-                                                    </label>
-                                                </Field>
-                                                <Field label="Deskripsi" full>
-                                                    <Textarea
-                                                        rows={3}
-                                                        value={exp.description}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.work_experiences];
-                                                            next[idx] = { ...exp, description: e.target.value };
-                                                            form.setData('work_experiences', next);
-                                                        }}
-                                                    />
-                                                </Field>
-                                            </FieldGroup>
-                                        </div>
-                                    ))}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                            form.setData('work_experiences', [
-                                                ...form.data.work_experiences,
-                                                emptyExperience(),
-                                            ])
-                                        }
-                                        className="w-full"
-                                    >
-                                        <Plus className="size-4" /> Tambah pengalaman
-                                    </Button>
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard title="Pendidikan" description="Riwayat pendidikan terakhir Anda.">
-                                <div className="space-y-4">
-                                    {form.data.educations.map((edu, idx) => (
-                                        <div key={idx} className="rounded-xl border border-border/60 bg-muted/30 p-4">
-                                            <div className="mb-3 flex items-center justify-between">
-                                                <p className="text-xs font-semibold uppercase tracking-wider text-brand-navy/70">
-                                                    Pendidikan #{idx + 1}
-                                                </p>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        form.setData(
-                                                            'educations',
-                                                            form.data.educations.filter((_, i) => i !== idx),
-                                                        );
-                                                    }}
-                                                    className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700"
-                                                >
-                                                    <Trash2 className="size-3.5" /> Hapus
-                                                </button>
+                                                    </Field>
+                                                    <Field label="Tanggal Berakhir">
+                                                        <DatePickerField
+                                                            value={exp.end_date}
+                                                            disabled={exp.is_current}
+                                                            onChange={(value) => {
+                                                                const next = [...form.data.work_experiences];
+                                                                next[idx] = { ...exp, end_date: value };
+                                                                form.setData('work_experiences', next);
+                                                            }}
+                                                        />
+                                                    </Field>
+                                                    <Field full>
+                                                        <label className="inline-flex items-center gap-2 text-sm">
+                                                            <Checkbox
+                                                                checked={exp.is_current}
+                                                                onCheckedChange={(c) => {
+                                                                    const next = [...form.data.work_experiences];
+                                                                    next[idx] = {
+                                                                        ...exp,
+                                                                        is_current: !!c,
+                                                                        end_date: c ? '' : exp.end_date,
+                                                                    };
+                                                                    form.setData('work_experiences', next);
+                                                                }}
+                                                            />
+                                                            Saya masih bekerja di sini
+                                                        </label>
+                                                    </Field>
+                                                    <Field label="Deskripsi" full>
+                                                        <Textarea
+                                                            rows={3}
+                                                            value={exp.description}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.work_experiences];
+                                                                next[idx] = { ...exp, description: e.target.value };
+                                                                form.setData('work_experiences', next);
+                                                            }}
+                                                        />
+                                                    </Field>
+                                                </FieldGroup>
                                             </div>
-                                            <FieldGroup>
-                                                <Field label="Institusi" full>
-                                                    <Input
-                                                        value={edu.institution}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.educations];
-                                                            next[idx] = { ...edu, institution: e.target.value };
-                                                            form.setData('educations', next);
+                                        ))}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                form.setData('work_experiences', [
+                                                    ...form.data.work_experiences,
+                                                    emptyExperience(),
+                                                ])
+                                            }
+                                            className="w-full"
+                                        >
+                                            <Plus className="size-4" /> Tambah pengalaman
+                                        </Button>
+                                    </div>
+                                </SectionCard>
+
+                                <SectionCard title="Pendidikan" description="Riwayat pendidikan terakhir Anda (opsional).">
+                                    <div className="space-y-4">
+                                        {form.data.educations.map((edu, idx) => (
+                                            <div key={idx} className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                                                <div className="mb-3 flex items-center justify-between">
+                                                    <p className="text-xs font-semibold uppercase tracking-wider text-brand-navy/70">
+                                                        Pendidikan #{idx + 1}
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            form.setData(
+                                                                'educations',
+                                                                form.data.educations.filter((_, i) => i !== idx),
+                                                            );
                                                         }}
-                                                    />
-                                                </Field>
-                                                <Field label="Jenjang">
-                                                    <Input
-                                                        value={edu.level}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.educations];
-                                                            next[idx] = { ...edu, level: e.target.value };
-                                                            form.setData('educations', next);
-                                                        }}
-                                                        placeholder="S1 / D3 / SMA"
-                                                    />
-                                                </Field>
-                                                <Field label="Jurusan">
-                                                    <Input
-                                                        value={edu.major}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.educations];
-                                                            next[idx] = { ...edu, major: e.target.value };
-                                                            form.setData('educations', next);
-                                                        }}
-                                                    />
-                                                </Field>
-                                                <Field label="Tahun Mulai">
-                                                    <Input
-                                                        type="number"
-                                                        value={edu.start_year}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.educations];
-                                                            next[idx] = { ...edu, start_year: e.target.value };
-                                                            form.setData('educations', next);
-                                                        }}
-                                                    />
-                                                </Field>
-                                                <Field label="Tahun Selesai">
-                                                    <Input
-                                                        type="number"
-                                                        value={edu.end_year}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.educations];
-                                                            next[idx] = { ...edu, end_year: e.target.value };
-                                                            form.setData('educations', next);
-                                                        }}
-                                                    />
-                                                </Field>
-                                                <Field label="IPK (opsional)">
-                                                    <Input
-                                                        value={edu.gpa}
-                                                        onChange={(e) => {
-                                                            const next = [...form.data.educations];
-                                                            next[idx] = { ...edu, gpa: e.target.value };
-                                                            form.setData('educations', next);
-                                                        }}
-                                                        placeholder="3.50"
-                                                    />
-                                                </Field>
-                                            </FieldGroup>
-                                        </div>
-                                    ))}
+                                                        className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700"
+                                                    >
+                                                        <Trash2 className="size-3.5" /> Hapus
+                                                    </button>
+                                                </div>
+                                                <FieldGroup>
+                                                    <Field label="Institusi" full>
+                                                        <Input
+                                                            value={edu.institution}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.educations];
+                                                                next[idx] = { ...edu, institution: e.target.value };
+                                                                form.setData('educations', next);
+                                                            }}
+                                                            placeholder="Masukan nama institusi"
+                                                        />
+                                                    </Field>
+                                                    <Field label="Jenjang">
+                                                        <Input
+                                                            value={edu.level}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.educations];
+                                                                next[idx] = { ...edu, level: e.target.value };
+                                                                form.setData('educations', next);
+                                                            }}
+                                                            placeholder="Masukan jenjang pendidikan"
+                                                        />
+                                                    </Field>
+                                                    <Field label="Jurusan">
+                                                        <Input
+                                                            value={edu.major}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.educations];
+                                                                next[idx] = { ...edu, major: e.target.value };
+                                                                form.setData('educations', next);
+                                                            }}
+                                                            placeholder="Masukan jurusan"
+                                                        />
+                                                    </Field>
+                                                    <Field label="Tahun Mulai">
+                                                        <Input
+                                                            type="number"
+                                                            value={edu.start_year}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.educations];
+                                                                next[idx] = { ...edu, start_year: e.target.value };
+                                                                form.setData('educations', next);
+                                                            }}
+                                                            placeholder="Masukan tahun mulai"
+                                                        />
+                                                    </Field>
+                                                    <Field label="Tahun Selesai">
+                                                        <Input
+                                                            type="number"
+                                                            value={edu.end_year}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.educations];
+                                                                next[idx] = { ...edu, end_year: e.target.value };
+                                                                form.setData('educations', next);
+                                                            }}
+                                                            placeholder="Masukan tahun selesai"
+                                                        />
+                                                    </Field>
+                                                    <Field label="IPK (opsional)">
+                                                        <Input
+                                                            value={edu.gpa}
+                                                            onChange={(e) => {
+                                                                const next = [...form.data.educations];
+                                                                next[idx] = { ...edu, gpa: e.target.value };
+                                                                form.setData('educations', next);
+                                                            }}
+                                                            placeholder="3.50"
+                                                        />
+                                                    </Field>
+                                                </FieldGroup>
+                                            </div>
+                                        ))}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                form.setData('educations', [...form.data.educations, emptyEducation()])
+                                            }
+                                            className="w-full"
+                                        >
+                                            <Plus className="size-4" /> Tambah pendidikan
+                                        </Button>
+                                    </div>
+                                </SectionCard>
+
+                                <SectionCard title="Skills" description="Pilih minimal satu skill utama (rekomendasi minimal 3).">
+                                    <div className="space-y-3">
+                                        {form.data.skills.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {form.data.skills.map((id) => {
+                                                    const label = skillLookup.get(id) ?? id;
+                                                    return (
+                                                        <Badge key={id} variant="secondary" className="gap-1">
+                                                            {label}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleSkill(id)}
+                                                                className="rounded-full hover:bg-muted-foreground/10"
+                                                            >
+                                                                <X className="size-3" />
+                                                            </button>
+                                                        </Badge>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        <SkillPicker
+                                            options={skillOptions}
+                                            selected={form.data.skills}
+                                            onToggle={toggleSkill}
+                                        />
+                                        <InputError message={form.errors.skills} />
+                                    </div>
+                                </SectionCard>
+
+                                <SectionCard title="Tautan Online (Opsional)" description="LinkedIn, portfolio, dan GitHub Anda.">
+                                    <FieldGroup>
+                                        <Field label="LinkedIn URL" full>
+                                            <Input
+                                                type="url"
+                                                value={form.data.linkedin_url}
+                                                onChange={(e) => form.setData('linkedin_url', e.target.value)}
+                                                placeholder="https://linkedin.com/in/anda"
+                                            />
+                                            <InputError message={form.errors.linkedin_url} />
+                                        </Field>
+                                        <Field label="Portfolio URL" full>
+                                            <Input
+                                                type="url"
+                                                value={form.data.portfolio_url}
+                                                onChange={(e) => form.setData('portfolio_url', e.target.value)}
+                                                placeholder="https://portfolio-anda.com"
+                                            />
+                                            <InputError message={form.errors.portfolio_url} />
+                                        </Field>
+                                        <Field label="GitHub URL" full>
+                                            <Input
+                                                type="url"
+                                                value={form.data.github_url}
+                                                onChange={(e) => form.setData('github_url', e.target.value)}
+                                                placeholder="https://github.com/anda"
+                                            />
+                                            <InputError message={form.errors.github_url} />
+                                        </Field>
+                                    </FieldGroup>
+                                </SectionCard>
+
+                                <div className="sticky bottom-4 z-10 flex flex-col-reverse gap-2 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
                                     <Button
                                         type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                            form.setData('educations', [...form.data.educations, emptyEducation()])
-                                        }
-                                        className="w-full"
+                                        variant="ghost"
+                                        onClick={() => setStep('welcome')}
+                                        className="rounded-xl"
                                     >
-                                        <Plus className="size-4" /> Tambah pendidikan
+                                        <ArrowLeft className="size-4" /> Kembali
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={form.processing}
+                                        className="h-11 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan px-6 text-sm font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105"
+                                    >
+                                        {form.processing ? (
+                                            <>
+                                                <Spinner /> Menyimpan…
+                                            </>
+                                        ) : (
+                                            <>
+                                                Simpan & Buka Semua Menu <ArrowRight className="size-4" />
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
-                            </SectionCard>
-
-                            <SectionCard title="Skills" description="Pilih skill utama (rekomendasi minimal 3).">
-                                <div className="space-y-3">
-                                    {form.data.skills.length > 0 && (
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {form.data.skills.map((id) => {
-                                                const label = skillLookup.get(id) ?? id;
-                                                return (
-                                                    <Badge key={id} variant="secondary" className="gap-1">
-                                                        {label}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => toggleSkill(id)}
-                                                            className="rounded-full hover:bg-muted-foreground/10"
-                                                        >
-                                                            <X className="size-3" />
-                                                        </button>
-                                                    </Badge>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                    <SkillPicker
-                                        options={skillOptions}
-                                        selected={form.data.skills}
-                                        onToggle={toggleSkill}
-                                    />
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard title="Tautan Online (Opsional)" description="LinkedIn, portfolio, dan GitHub Anda.">
-                                <FieldGroup>
-                                    <Field label="LinkedIn URL" full>
-                                        <Input
-                                            type="url"
-                                            value={form.data.linkedin_url}
-                                            onChange={(e) => form.setData('linkedin_url', e.target.value)}
-                                            placeholder="https://linkedin.com/in/anda"
-                                        />
-                                        <InputError message={form.errors.linkedin_url} />
-                                    </Field>
-                                    <Field label="Portfolio URL" full>
-                                        <Input
-                                            type="url"
-                                            value={form.data.portfolio_url}
-                                            onChange={(e) => form.setData('portfolio_url', e.target.value)}
-                                            placeholder="https://portfolio-anda.com"
-                                        />
-                                        <InputError message={form.errors.portfolio_url} />
-                                    </Field>
-                                    <Field label="GitHub URL" full>
-                                        <Input
-                                            type="url"
-                                            value={form.data.github_url}
-                                            onChange={(e) => form.setData('github_url', e.target.value)}
-                                            placeholder="https://github.com/anda"
-                                        />
-                                        <InputError message={form.errors.github_url} />
-                                    </Field>
-                                </FieldGroup>
-                            </SectionCard>
-
-                            <div className="sticky bottom-4 z-10 flex flex-col-reverse gap-2 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => setStep('method')}
-                                    className="rounded-xl"
-                                >
-                                    <ArrowLeft className="size-4" /> Kembali
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={form.processing}
-                                    className="h-11 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan px-6 text-sm font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105"
-                                >
-                                    {form.processing ? (
-                                        <>
-                                            <Spinner /> Menyimpan…
-                                        </>
-                                    ) : (
-                                        <>
-                                            Selesaikan Onboarding <ArrowRight className="size-4" />
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </form>
+                            </form>
+                        </>
                     )}
 
                     <input
-                        ref={fileInputRef}
+                        ref={avatarInputRef}
                         type="file"
-                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        accept="image/png,image/jpeg,image/webp"
                         className="hidden"
-                        onChange={handleFileChange}
+                        onChange={handleAvatarChange}
                     />
 
                     <p className="text-center text-xs text-muted-foreground">
@@ -853,83 +722,191 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
     );
 }
 
-function MethodCards({
-    uploadedCv,
-    onPickFile,
-    onManual,
-    parseLoading,
-    parseError,
-}: {
-    uploadedCv: { id: number; label: string; file_url: string | null } | null;
-    onPickFile: () => void;
-    onManual: () => void;
-    parseLoading: boolean;
-    parseError: string | null;
-}) {
-    return (
-        <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-                <button
-                    type="button"
-                    onClick={onPickFile}
-                    disabled={parseLoading}
-                    className={cn(
-                        'group rounded-2xl border-2 border-brand-blue/30 bg-gradient-to-br from-brand-blue/5 to-brand-cyan/5 p-6 text-left shadow-sm transition-all hover:border-brand-blue/60 hover:shadow-md',
-                        parseLoading && 'opacity-60',
-                    )}
-                >
-                    <div className="flex items-start gap-4">
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand-blue text-white shadow-md shadow-brand-blue/20 transition-transform group-hover:scale-105">
-                            {parseLoading ? <Spinner /> : <Upload className="size-6" />}
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-base font-bold text-brand-navy">Upload CV (Rekomendasi)</p>
-                            <p className="text-sm leading-relaxed text-muted-foreground">
-                                AI kami akan otomatis mengisi profil dari CV Anda. Format PDF / DOC / DOCX, max 10 MB.
-                            </p>
-                            <div className="pt-2 text-xs font-semibold text-brand-blue">
-                                {parseLoading ? 'Memproses…' : 'Pilih file →'}
-                            </div>
-                        </div>
-                    </div>
-                </button>
+const WELCOME_FEATURES = [
+    {
+        icon: Briefcase,
+        title: 'Temukan ribuan loker terverifikasi',
+        description: 'Lowongan kerja terbaru dari berbagai perusahaan terpercaya di seluruh Indonesia.',
+        tone: 'bg-brand-blue/10 text-brand-blue',
+    },
+    {
+        icon: UserRound,
+        title: 'Bangun profil profesional',
+        description: 'Buat profil dan CV terbaikmu untuk menarik perhatian perusahaan rekruter.',
+        tone: 'bg-emerald-100 text-emerald-600',
+    },
+    {
+        icon: FileText,
+        title: 'Pantau lamaran dan peluangmu',
+        description: 'Kelola semua lamaranmu dan pantau peluang karier dalam satu tempat.',
+        tone: 'bg-violet-100 text-violet-600',
+    },
+] as const;
 
-                <button
-                    type="button"
-                    onClick={onManual}
-                    disabled={parseLoading}
-                    className="group rounded-2xl border border-border/70 bg-card p-6 text-left shadow-sm transition-all hover:border-brand-blue/40 hover:shadow-md"
-                >
-                    <div className="flex items-start gap-4">
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-foreground transition-colors group-hover:bg-brand-blue/10 group-hover:text-brand-blue">
-                            <UserPen className="size-6" />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-base font-bold text-brand-navy">Isi Manual</p>
-                            <p className="text-sm leading-relaxed text-muted-foreground">
-                                Lengkapi formulir secara manual. Cocok jika Anda belum punya CV.
-                            </p>
-                            <div className="pt-2 text-xs font-semibold text-foreground/80">Mulai isi →</div>
-                        </div>
-                    </div>
-                </button>
+const WELCOME_STEPS = [
+    { icon: UserRound, label: 'Data Diri' },
+    { icon: FileText, label: 'Upload CV' },
+    { icon: Search, label: 'Cari Lowongan' },
+    { icon: Send, label: 'Lamar Pekerjaan' },
+] as const;
+
+function WelcomeNote({ name, onStart }: { name: string; onStart: () => void }) {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-2">
+                <AppLogo />
             </div>
 
-            {parseError && (
-                <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-                    <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                    <p>{parseError}</p>
-                </div>
-            )}
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Left: greeting + feature cards */}
+                <div className="space-y-5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200">
+                        <Sparkles className="size-3" /> Selamat Datang!
+                    </span>
+                    <h1 className="text-3xl font-bold leading-tight tracking-tight text-brand-navy sm:text-4xl">
+                        Selamat Datang di KarirConnect, <span className="text-brand-blue">{name}!</span>
+                    </h1>
+                    <p className="max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+                        Platform pencarian kerja karya anak bangsa yang akan membantumu menemukan peluang terbaik dan
+                        mengembangkan kariermu.
+                    </p>
 
-            {uploadedCv && (
-                <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                    <CheckCircle2 className="size-4" />
-                    <span>
-                        CV <span className="font-semibold">{uploadedCv.label}</span> sudah tersimpan.
+                    <div className="space-y-3">
+                        {WELCOME_FEATURES.map((feature) => (
+                            <div
+                                key={feature.title}
+                                className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+                            >
+                                <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl', feature.tone)}>
+                                    <feature.icon className="size-5" />
+                                </span>
+                                <div className="space-y-0.5">
+                                    <p className="text-sm font-bold text-brand-navy">{feature.title}</p>
+                                    <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right: illustration + steps */}
+                <div className="space-y-5">
+                    <WelcomeIllustration />
+
+                    <Card className="border-border/70 shadow-sm">
+                        <CardContent className="space-y-5 p-5 sm:p-6">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-bold tracking-tight text-brand-navy">4 Langkah Mudah</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Lengkapi profilmu untuk membuka semua fitur dan meningkatkan peluangmu dilirik
+                                    perusahaan.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                {WELCOME_STEPS.map((stepItem, idx) => (
+                                    <div key={stepItem.label} className="flex flex-1 items-center">
+                                        <div className="flex flex-col items-center gap-1.5 text-center">
+                                            <span className="relative flex size-11 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
+                                                <stepItem.icon className="size-5" />
+                                                <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-brand-blue text-[10px] font-bold text-white">
+                                                    {idx + 1}
+                                                </span>
+                                            </span>
+                                            <span className="text-[11px] font-semibold leading-tight text-brand-navy/80">
+                                                {stepItem.label}
+                                            </span>
+                                        </div>
+                                        {idx < WELCOME_STEPS.length - 1 && (
+                                            <span className="mx-1 hidden h-px flex-1 bg-border sm:block" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <Button
+                                type="button"
+                                onClick={onStart}
+                                className="h-12 w-full rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-sm font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105"
+                            >
+                                Lengkapi Profil Sekarang <ArrowRight className="size-4" />
+                            </Button>
+
+                            <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+                                <ShieldCheck className="size-3.5 text-emerald-600" />
+                                Aman &amp; terpercaya. Data kamu hanya dapat dilihat oleh perusahaan.
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Bottom banner */}
+            <div className="flex flex-col gap-3 rounded-2xl border border-brand-blue/20 bg-gradient-to-r from-brand-blue/5 to-brand-cyan/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-white">
+                        <TrendingUp className="size-5" />
+                    </span>
+                    <div>
+                        <p className="text-sm font-bold text-brand-navy">Tingkatkan peluangmu hingga 2x lebih besar!</p>
+                        <p className="text-sm text-muted-foreground">
+                            Kandidat dengan profil lengkap memiliki peluang dipanggil interview lebih tinggi.
+                        </p>
+                    </div>
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onStart}
+                    className="shrink-0 rounded-xl border-brand-blue/30 text-brand-blue hover:bg-brand-blue/5"
+                >
+                    Pelajari Selengkapnya
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function WelcomeIllustration() {
+    return (
+        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-blue/10 via-brand-cyan/5 to-transparent p-6">
+            <div className="absolute -right-6 -top-6 size-24 rounded-full bg-brand-cyan/15 blur-2xl" />
+            <div className="absolute bottom-4 left-6 text-brand-blue/40">
+                <Sparkles className="size-5" />
+            </div>
+
+            <div className="relative mx-auto max-w-xs space-y-3">
+                {/* mock profile card */}
+                <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-md">
+                    <div className="flex items-center gap-3">
+                        <span className="flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white">
+                            <UserRound className="size-6" />
+                        </span>
+                        <div className="space-y-1.5">
+                            <span className="block h-2.5 w-28 rounded-full bg-brand-navy/80" />
+                            <span className="block h-2 w-20 rounded-full bg-muted-foreground/30" />
+                        </div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                        {[0, 1, 2].map((row) => (
+                            <div key={row} className="flex items-center gap-2">
+                                <CheckCircle2 className="size-4 text-emerald-500" />
+                                <span className="block h-2 flex-1 rounded-full bg-muted" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* floating badges */}
+                <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-sm">
+                        <Briefcase className="size-4 text-brand-blue" /> Loker baru
+                    </span>
+                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-sm">
+                        <Search className="size-4 text-brand-cyan" /> Cari kerja
                     </span>
                 </div>
-            )}
+            </div>
         </div>
     );
 }

@@ -6,7 +6,6 @@ use App\Enums\ExperienceLevel;
 use App\Enums\Gender;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\OnboardingStoreRequest;
-use App\Models\CandidateCv;
 use App\Models\City;
 use App\Models\Province;
 use App\Models\Skill;
@@ -33,13 +32,14 @@ class OnboardingController extends Controller
     {
         $user = $request->user();
         $profile = $this->profiles->ensureProfile($user)
-            ->load(['skills:id,name', 'primaryResume', 'province:id,name', 'city:id,name,province_id']);
+            ->load(['skills:id,name', 'province:id,name', 'city:id,name,province_id']);
 
         return Inertia::render('employee/onboarding', [
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'avatar_url' => $user->avatar_path ? asset('storage/'.$user->avatar_path) : null,
             ],
             'profile' => [
                 'headline' => $profile->headline,
@@ -50,19 +50,10 @@ class OnboardingController extends Controller
                 'city_id' => $profile->city_id,
                 'current_position' => $profile->current_position,
                 'experience_level' => $profile->experience_level?->value,
-                'expected_salary_min' => $profile->expected_salary_min,
-                'expected_salary_max' => $profile->expected_salary_max,
                 'linkedin_url' => $profile->linkedin_url,
                 'portfolio_url' => $profile->portfolio_url,
                 'github_url' => $profile->github_url,
                 'skill_ids' => $profile->skills->pluck('id')->all(),
-                'primary_cv' => $profile->primaryResume ? [
-                    'id' => $profile->primaryResume->id,
-                    'label' => $profile->primaryResume->label,
-                    'file_url' => $profile->primaryResume->file_path
-                        ? asset('storage/'.$profile->primaryResume->file_path)
-                        : null,
-                ] : null,
             ],
             'options' => [
                 'genders' => collect(Gender::cases())->map(fn (Gender $g): array => [
@@ -104,9 +95,15 @@ class OnboardingController extends Controller
         $profile = $this->profiles->ensureProfile($user);
         $data = $request->validated();
 
-        DB::transaction(function () use ($user, $profile, $data): void {
+        DB::transaction(function () use ($request, $user, $profile, $data): void {
+            if ($request->hasFile('avatar')) {
+                $newPath = $this->files->storeImage($request->file('avatar'), 'avatars', 640);
+                $this->files->delete($user->avatar_path);
+                $user->avatar_path = $newPath;
+            }
+
             if (! empty($data['phone'])) {
-                $user->forceFill(['phone' => $data['phone']])->save();
+                $user->phone = $data['phone'];
             }
 
             $profile->fill([
@@ -118,8 +115,6 @@ class OnboardingController extends Controller
                 'city_id' => $data['city_id'] ?? null,
                 'current_position' => $data['current_position'] ?? null,
                 'experience_level' => $data['experience_level'] ?? null,
-                'expected_salary_min' => $data['expected_salary_min'] ?? null,
-                'expected_salary_max' => $data['expected_salary_max'] ?? null,
                 'linkedin_url' => $data['linkedin_url'] ?? null,
                 'portfolio_url' => $data['portfolio_url'] ?? null,
                 'github_url' => $data['github_url'] ?? null,
@@ -166,20 +161,8 @@ class OnboardingController extends Controller
                 ]);
             }
 
-            if (! empty($data['cv_id'])) {
-                $cv = CandidateCv::query()
-                    ->where('employee_profile_id', $profile->id)
-                    ->whereKey($data['cv_id'])
-                    ->first();
-
-                if ($cv) {
-                    $profile->cvs()->whereKeyNot($cv->id)->update(['is_active' => false]);
-                    $cv->forceFill(['is_active' => true])->save();
-                    $profile->forceFill(['primary_resume_id' => $cv->id])->save();
-                }
-            }
-
-            $user->forceFill(['onboarding_completed_at' => now()])->save();
+            $user->onboarding_completed_at = now();
+            $user->save();
         });
 
         $this->profiles->recomputeCompletion($profile->fresh());

@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import type { ApexOptions } from 'apexcharts';
 import { ArrowRight, Bookmark, Bot, BriefcaseBusiness, CalendarClock, CheckCircle2, Inbox, Send, Sparkles, TrendingUp } from 'lucide-react';
 import { ApexChart } from '@/components/charts/apex-chart';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDateTime } from '@/lib/format-date';
 import { formatStatus } from '@/lib/format-status';
+import type { SharedPageProps } from '@/types';
 
 type TrendPoint = { date: string; label: string; count: number };
 
@@ -86,6 +87,8 @@ function StatCard({ icon: Icon, label, value, sub, accent }: StatCardProps) {
 }
 
 export default function EmployeeDashboard({ data }: Props) {
+    const { props } = usePage<SharedPageProps>();
+    const candidateName = props.auth?.user?.name ?? '';
     const statusEntries = Object.entries(data.applications.by_status).filter(([, v]) => v > 0);
 
     const completion = Math.max(0, Math.min(100, data.profile.completion ?? 0));
@@ -148,7 +151,7 @@ export default function EmployeeDashboard({ data }: Props) {
             <div className="space-y-6 p-4 sm:p-6">
                 <PageHeader
                     title="Selamat datang!"
-                    description={data.profile.headline ?? 'Lengkapi profil Anda untuk peluang kerja terbaik.'}
+                    description={candidateName || data.profile.headline || 'Lengkapi profil Anda untuk peluang kerja terbaik.'}
                 />
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

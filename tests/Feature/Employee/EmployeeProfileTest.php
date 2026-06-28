@@ -5,6 +5,7 @@ use App\Models\Province;
 use App\Models\User;
 use App\Services\Employee\EmployeeProfileService;
 use Database\Seeders\SettingSeeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
@@ -26,6 +27,23 @@ test('employee can render profile edit page', function () {
         ->get(route('employee.profile.edit'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('employee/profile/edit'));
+});
+
+test('employee can render read-only profile page', function () {
+    $employee = User::factory()->employee()->create();
+
+    $this->actingAs($employee)
+        ->get(route('employee.profile.show'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('employee/profile/show'));
+});
+
+test('non employees cannot access read-only profile page', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route('employee.profile.show'))
+        ->assertForbidden();
 });
 
 test('employee profile completion auto recomputes on save', function () {
@@ -110,8 +128,6 @@ test('employee can update profile fields with city dropdown', function () {
             'headline' => 'Senior Engineer',
             'province_id' => $province->id,
             'city_id' => $city->id,
-            'expected_salary_min' => 'Rp 8.000.000',
-            'expected_salary_max' => 'Rp 12.000.000',
             'experience_level' => 'senior',
             'is_open_to_work' => true,
             'visibility' => 'public',
@@ -121,6 +137,23 @@ test('employee can update profile fields with city dropdown', function () {
     $profile = $employee->employeeProfile()->first();
     expect($profile->city_id)->toBe($city->id);
     expect($profile->headline)->toBe('Senior Engineer');
-    expect($profile->expected_salary_min)->toBe(8000000);
-    expect($profile->expected_salary_max)->toBe(12000000);
+    expect($profile->experience_level->value)->toBe('senior');
+});
+
+test('employee can upload a profile photo from the profile form', function () {
+    Storage::fake('public');
+    $employee = User::factory()->employee()->create();
+
+    $this->actingAs($employee)
+        ->patch(route('employee.profile.update'), [
+            'headline' => 'Designer',
+            'is_open_to_work' => true,
+            'visibility' => 'public',
+            'avatar' => UploadedFile::fake()->image('avatar.png', 300, 300),
+        ])
+        ->assertRedirect();
+
+    $employee->refresh();
+    expect($employee->avatar_path)->not->toBeNull();
+    Storage::disk('public')->assertExists($employee->avatar_path);
 });

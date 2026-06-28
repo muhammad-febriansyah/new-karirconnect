@@ -21,23 +21,21 @@ class OnboardingStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'phone' => ['nullable', 'string', 'max:32'],
-            'headline' => ['nullable', 'string', 'max:160'],
-            'about' => ['nullable', 'string', 'max:5000'],
-            'date_of_birth' => ['nullable', 'date', 'before:today'],
-            'gender' => ['nullable', Rule::enum(Gender::class)],
-            'province_id' => ['nullable', 'integer', 'exists:provinces,id'],
-            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'headline' => ['required', 'string', 'max:160'],
+            'about' => ['required', 'string', 'max:5000'],
+            'date_of_birth' => ['required', 'date', 'before:today'],
+            'gender' => ['required', Rule::enum(Gender::class)],
+            'province_id' => ['required', 'integer', 'exists:provinces,id'],
+            'city_id' => ['required', 'integer', 'exists:cities,id'],
             'current_position' => ['nullable', 'string', 'max:160'],
-            'experience_level' => ['nullable', Rule::enum(ExperienceLevel::class)],
-            'expected_salary_min' => ['nullable', 'integer', 'min:0'],
-            'expected_salary_max' => ['nullable', 'integer', 'min:0', 'gte:expected_salary_min'],
+            'experience_level' => ['required', Rule::enum(ExperienceLevel::class)],
             'linkedin_url' => ['nullable', 'url', 'max:255'],
             'portfolio_url' => ['nullable', 'url', 'max:255'],
             'github_url' => ['nullable', 'url', 'max:255'],
-            'cv_id' => ['nullable', 'integer'],
 
-            'skills' => ['nullable', 'array', 'max:30'],
+            'skills' => ['required', 'array', 'min:1', 'max:30'],
             'skills.*' => ['nullable', 'string', 'max:80'],
 
             'work_experiences' => ['nullable', 'array', 'max:10'],
@@ -64,19 +62,6 @@ class OnboardingStoreRequest extends FormRequest
         $this->merge([
             'province_id' => $this->filled('province_id') ? (int) $this->input('province_id') : null,
             'city_id' => $this->filled('city_id') ? (int) $this->input('city_id') : null,
-            'expected_salary_min' => $this->normalizeRupiah($this->input('expected_salary_min')),
-            'expected_salary_max' => $this->normalizeRupiah($this->input('expected_salary_max')),
         ]);
-    }
-
-    private function normalizeRupiah(mixed $value): ?int
-    {
-        if (! filled($value)) {
-            return null;
-        }
-
-        $digits = preg_replace('/[^\d]/', '', (string) $value);
-
-        return $digits === '' ? null : (int) $digits;
     }
 }

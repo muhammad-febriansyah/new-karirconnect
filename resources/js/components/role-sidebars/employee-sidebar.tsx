@@ -22,13 +22,13 @@ export const employeeMainNavSections: NavSection[] = [
         label: 'Ringkasan',
         items: [
             {
-                title: 'Beranda Karier',
+                title: 'Beranda Karir',
                 href: dashboard(),
                 icon: LayoutGrid,
             },
             {
                 title: 'Profil Saya',
-                href: ProfileController.edit().url,
+                href: ProfileController.show().url,
                 icon: IdCard,
             },
             {

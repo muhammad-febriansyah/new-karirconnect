@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified', 'role:employee', 'onboarding'])
             ->middleware('throttle:10,1')
             ->name('onboarding.parse-cv');
 
+        Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
         Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('profile/edit', [ProfileController::class, 'update'])->name('profile.update');
 

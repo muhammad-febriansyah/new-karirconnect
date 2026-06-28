@@ -50,9 +50,6 @@ class EmployeeProfileService
         if (blank($profile->experience_level)) {
             $items[] = ['key' => 'experience_level', 'label' => 'Tentukan level pengalaman', 'href' => $profileEdit];
         }
-        if (blank($profile->expected_salary_min) && blank($profile->expected_salary_max)) {
-            $items[] = ['key' => 'expected_salary', 'label' => 'Set ekspektasi gaji', 'href' => $profileEdit];
-        }
         if ($profile->workExperiences->isEmpty()) {
             $items[] = ['key' => 'work_experience', 'label' => 'Tambahkan pengalaman kerja', 'href' => '/employee/profile/work-experiences'];
         }
@@ -83,7 +80,7 @@ class EmployeeProfileService
 
         $score = 0;
 
-        // Identitas dasar (40)
+        // Identitas dasar (50)
         if (filled($profile->headline)) {
             $score += 10;
         }
@@ -97,10 +94,10 @@ class EmployeeProfileService
             $score += 5;
         }
         if (filled($profile->current_position)) {
-            $score += 5;
+            $score += 10;
         }
         if (filled($profile->experience_level)) {
-            $score += 5;
+            $score += 10;
         }
 
         // Records (40)
@@ -114,11 +111,6 @@ class EmployeeProfileService
             $score += 10;
         } elseif ($profile->skills->isNotEmpty()) {
             $score += 5;
-        }
-
-        // Salary expectation (10)
-        if (filled($profile->expected_salary_min) || filled($profile->expected_salary_max)) {
-            $score += 10;
         }
 
         // CV (10)

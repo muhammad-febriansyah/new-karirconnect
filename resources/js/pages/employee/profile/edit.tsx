@@ -1,13 +1,15 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Camera } from 'lucide-react';
+import { useRef, useState } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Employee/ProfileController';
 import { ProfileTabs } from '@/components/employee/profile-tabs';
 import { InputField } from '@/components/form/input-field';
-import { MoneyInput } from '@/components/form/money-input';
 import { SelectField } from '@/components/form/select-field';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Button } from '@/components/ui/button';
+import InputError from '@/components/input-error';
 
 type Option = {
     value: string;
@@ -22,8 +24,6 @@ type Profile = {
     province_id: number | null;
     city_id: number | null;
     current_position: string | null;
-    expected_salary_min: number | null;
-    expected_salary_max: number | null;
     experience_level: string | null;
     portfolio_url: string | null;
     linkedin_url: string | null;
@@ -40,6 +40,7 @@ type City = {
 
 type Props = {
     profile: Profile;
+    avatarUrl: string | null;
     provinces: Array<{ id: number; name: string }>;
     cities: City[];
     genderOptions: Option[];
@@ -49,13 +50,32 @@ type Props = {
 
 export default function EmployeeProfileEdit({
     profile,
+    avatarUrl,
     provinces,
     cities,
     genderOptions,
     experienceLevelOptions,
     visibilityOptions,
 }: Props) {
-    const form = useForm({
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(avatarUrl);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+    const form = useForm<{
+        avatar: File | null;
+        headline: string;
+        about: string;
+        date_of_birth: string;
+        gender: string;
+        province_id: string;
+        city_id: string;
+        current_position: string;
+        experience_level: string;
+        portfolio_url: string;
+        linkedin_url: string;
+        github_url: string;
+        is_open_to_work: boolean;
+        visibility: string;
+    }>({
+        avatar: null,
         headline: profile.headline ?? '',
         about: profile.about ?? '',
         date_of_birth: profile.date_of_birth ?? '',
@@ -63,8 +83,6 @@ export default function EmployeeProfileEdit({
         province_id: profile.province_id ? String(profile.province_id) : '',
         city_id: profile.city_id ? String(profile.city_id) : '',
         current_position: profile.current_position ?? '',
-        expected_salary_min: profile.expected_salary_min ? String(profile.expected_salary_min) : '',
-        expected_salary_max: profile.expected_salary_max ? String(profile.expected_salary_max) : '',
         experience_level: profile.experience_level ?? '',
         portfolio_url: profile.portfolio_url ?? '',
         linkedin_url: profile.linkedin_url ?? '',
@@ -79,6 +97,14 @@ export default function EmployeeProfileEdit({
             value: String(city.id),
             label: city.name,
         }));
+
+    const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        form.setData('avatar', file);
+        setAvatarPreview(URL.createObjectURL(file));
+    };
 
     return (
         <>
@@ -99,6 +125,31 @@ export default function EmployeeProfileEdit({
                         }}
                         className="grid gap-4 md:grid-cols-2"
                     >
+                        <div className="md:col-span-2 flex items-center gap-5 rounded-md border p-4">
+                            <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-2 ring-border">
+                                {avatarPreview ? (
+                                    <img src={avatarPreview} alt="Foto profil" className="size-full object-cover" />
+                                ) : (
+                                    <Camera className="size-7 text-muted-foreground" />
+                                )}
+                            </span>
+                            <div className="space-y-2">
+                                <span className="block text-sm font-medium">Foto Profil</span>
+                                <Button type="button" variant="outline" onClick={() => avatarInputRef.current?.click()}>
+                                    <Camera className="size-4" /> {avatarPreview ? 'Ganti foto' : 'Unggah foto'}
+                                </Button>
+                                <p className="text-xs text-muted-foreground">JPG, PNG, atau WEBP. Maks 4 MB.</p>
+                                <InputError message={form.errors.avatar} />
+                            </div>
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                className="hidden"
+                                onChange={handleAvatarChange}
+                            />
+                        </div>
+
                         <InputField
                             label="Headline"
                             value={form.data.headline}
@@ -107,7 +158,8 @@ export default function EmployeeProfileEdit({
                             placeholder="Backend Engineer | Laravel | React"
                         />
                         <InputField
-                            label="Posisi Saat Ini"
+                            label="Posisi Saat Ini (jika sedang aktif bekerja)"
+                            description="Kosongkan jika Anda sedang tidak aktif bekerja."
                             value={form.data.current_position}
                             onChange={(event) => form.setData('current_position', event.target.value)}
                             error={form.errors.current_position}
@@ -159,21 +211,6 @@ export default function EmployeeProfileEdit({
                             onValueChange={(value) => form.setData('city_id', value)}
                             options={cityOptions}
                             error={form.errors.city_id}
-                        />
-
-                        <MoneyInput
-                            label="Ekspektasi Gaji Minimum"
-                            value={form.data.expected_salary_min}
-                            onChange={(value) => form.setData('expected_salary_min', value === null ? '' : String(value))}
-                            error={form.errors.expected_salary_min}
-                            placeholder="Rp 6.000.000"
-                        />
-                        <MoneyInput
-                            label="Ekspektasi Gaji Maksimum"
-                            value={form.data.expected_salary_max}
-                            onChange={(value) => form.setData('expected_salary_max', value === null ? '' : String(value))}
-                            error={form.errors.expected_salary_max}
-                            placeholder="Rp 10.000.000"
                         />
 
                         <SelectField

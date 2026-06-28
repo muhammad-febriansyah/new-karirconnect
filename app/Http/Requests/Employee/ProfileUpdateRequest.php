@@ -20,6 +20,7 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'headline' => ['nullable', 'string', 'max:160'],
             'about' => ['nullable', 'string'],
             'date_of_birth' => ['nullable', 'date'],
@@ -27,8 +28,6 @@ class ProfileUpdateRequest extends FormRequest
             'province_id' => ['nullable', 'integer', 'exists:provinces,id'],
             'city_id' => ['nullable', 'integer', 'exists:cities,id'],
             'current_position' => ['nullable', 'string', 'max:160'],
-            'expected_salary_min' => ['nullable', 'integer', 'min:0'],
-            'expected_salary_max' => ['nullable', 'integer', 'min:0', 'gte:expected_salary_min'],
             'experience_level' => ['nullable', Rule::enum(ExperienceLevel::class)],
             'portfolio_url' => ['nullable', 'url', 'max:255'],
             'linkedin_url' => ['nullable', 'url', 'max:255'],
@@ -43,20 +42,7 @@ class ProfileUpdateRequest extends FormRequest
         $this->merge([
             'province_id' => $this->filled('province_id') ? (int) $this->input('province_id') : null,
             'city_id' => $this->filled('city_id') ? (int) $this->input('city_id') : null,
-            'expected_salary_min' => $this->normalizeRupiah($this->input('expected_salary_min')),
-            'expected_salary_max' => $this->normalizeRupiah($this->input('expected_salary_max')),
             'is_open_to_work' => $this->boolean('is_open_to_work'),
         ]);
-    }
-
-    private function normalizeRupiah(mixed $value): ?int
-    {
-        if (! filled($value)) {
-            return null;
-        }
-
-        $digits = preg_replace('/[^\d]/', '', (string) $value);
-
-        return $digits === '' ? null : (int) $digits;
     }
 }
