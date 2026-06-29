@@ -113,6 +113,21 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
 
     const lockedFeaturesFor = (plan: Plan) => allFeatures.filter((f) => !(plan.features ?? []).includes(f));
 
+    // The Trial plan is auto-granted when onboarding finishes and is never sent
+    // to the payment gateway. Only Basic/Pro link to Midtrans checkout.
+    const isTrialPlan = (plan: Plan) => plan.tier === 'trial' || plan.price_idr === 0;
+    const isTopTier = (plan: Plan) => plan.slug === 'pro';
+
+    const upsellNoteFor = (plan: Plan): string | null => {
+        if (isTrialPlan(plan)) {
+            return 'Upgrade ke Basic atau Pro untuk tetap menikmati fitur Career Connect setelah masa trial berakhir.';
+        }
+        if (!isTopTier(plan)) {
+            return 'Upgrade ke Pro untuk menikmati lebih banyak fitur (Talent Search, outreach kandidat, dll).';
+        }
+        return null;
+    };
+
     const orderStats = useMemo(() => {
         const paid = orders.filter((o) => o.status === 'paid');
         const totalSpent = paid.reduce((sum, o) => sum + o.amount_idr, 0);
@@ -243,12 +258,18 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
                                                 ]}
                                                 features={plan.features}
                                                 lockedFeatures={lockedFeaturesFor(plan)}
+                                                upsellNote={upsellNoteFor(plan)}
                                                 ctaLabel={isCurrent ? 'Paket Aktif' : 'Pilih Paket'}
                                                 cta={
                                                     isCurrent ? (
                                                         <Button className="w-full" variant="outline" disabled>
                                                             <CheckCircle2 className="size-4 text-emerald-600" />
                                                             Paket Aktif
+                                                        </Button>
+                                                    ) : isTrialPlan(plan) ? (
+                                                        <Button className="w-full" variant="outline" disabled>
+                                                            <Sparkles className="size-4" />
+                                                            Aktif otomatis saat onboarding
                                                         </Button>
                                                     ) : (
                                                         <Button
@@ -371,6 +392,10 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
                                                         {isCurrent ? (
                                                             <Button size="sm" variant="outline" disabled>
                                                                 <CheckCircle2 className="size-4 text-emerald-600" /> Aktif
+                                                            </Button>
+                                                        ) : isTrialPlan(plan) ? (
+                                                            <Button size="sm" variant="outline" disabled>
+                                                                <Sparkles className="size-4" /> Otomatis
                                                             </Button>
                                                         ) : (
                                                             <Button

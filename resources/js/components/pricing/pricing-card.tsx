@@ -23,6 +23,10 @@ type PricingCardProps = {
     features: string[];
     /** Features unavailable on this plan, shown locked with an upgrade hint. */
     lockedFeatures?: string[];
+    /** Explicit upsell line shown at the bottom of the card. Overrides the
+     * default "Upgrade ke Pro untuk membuka fitur terkunci" hint. Pass null to
+     * suppress the hint entirely (e.g. for the top-tier plan). */
+    upsellNote?: string | null;
     /** Disabled state (e.g. plan unavailable for the user's role). */
     disabled?: boolean;
     /** CTA label. Default 'Pilih Paket'. */
@@ -43,6 +47,7 @@ export function PricingCard({
     quotas,
     features,
     lockedFeatures = [],
+    upsellNote,
     disabled = false,
     ctaLabel = 'Pilih Paket',
     cta,
@@ -134,12 +139,25 @@ export function PricingCard({
                     </ul>
                 )}
 
-                {lockedFeatures.length > 0 && (
-                    <p className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                        <Sparkles className="size-3.5 shrink-0" aria-hidden />
-                        Upgrade ke Pro untuk membuka fitur terkunci
-                    </p>
-                )}
+                {(() => {
+                    const note =
+                        upsellNote === undefined
+                            ? lockedFeatures.length > 0
+                                ? 'Upgrade ke Pro untuk membuka fitur terkunci'
+                                : null
+                            : upsellNote;
+
+                    if (!note) {
+                        return null;
+                    }
+
+                    return (
+                        <p className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                            <Sparkles className="size-3.5 shrink-0" aria-hidden />
+                            {note}
+                        </p>
+                    );
+                })()}
             </CardContent>
 
             <CardFooter

@@ -7,6 +7,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\Billing\BillingService;
 use Database\Seeders\SubscriptionPlanSeeder;
+use Inertia\Testing\AssertableInertia;
 
 beforeEach(function (): void {
     $this->seed(SubscriptionPlanSeeder::class);
@@ -90,4 +91,21 @@ test('finishing onboarding auto-activates the trial', function () {
     expect($subscription)->not->toBeNull();
     expect($subscription->plan->slug)->toBe('trial');
     expect($company->fresh()->trial_redeemed_at)->not->toBeNull();
+});
+
+test('billing page lists the trial plan and reflects an active trial', function () {
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->approved()->create(['owner_id' => $owner->id]);
+    app(BillingService::class)->grantTrial($company);
+
+    $this->actingAs($owner)
+        ->get(route('employer.billing.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('employer/billing/index')
+            ->where('currentSubscription.plan_tier', 'trial')
+            ->where('plans', fn ($plans) => collect($plans)->pluck('slug')->contains('trial')
+                && collect($plans)->pluck('slug')->contains('basic')
+                && collect($plans)->pluck('slug')->contains('pro'))
+        );
 });
