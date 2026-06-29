@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Employer;
 
 use App\Enums\OrderStatus;
 use App\Enums\SubscriptionStatus;
+use App\Enums\SubscriptionTier;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\CompanySubscription;
@@ -82,6 +83,12 @@ class BillingController extends Controller
         $company = $this->resolveCompany($request);
         abort_unless($company !== null, 404);
         abort_unless($plan->is_active, 404);
+
+        // The Trial plan is granted once via onboarding, never purchased — block
+        // direct checkout so the one-time guard cannot be bypassed.
+        if ($plan->tier === SubscriptionTier::Trial) {
+            return back()->with('error', 'Paket Trial aktif otomatis setelah onboarding dan tidak bisa dibeli ulang.');
+        }
 
         $order = $this->billing->checkoutPlan($company, $request->user(), $plan);
 

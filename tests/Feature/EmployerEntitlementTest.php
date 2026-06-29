@@ -8,6 +8,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
+use Database\Seeders\SubscriptionPlanSeeder;
 
 beforeEach(function (): void {
     $this->seed([
@@ -92,6 +93,17 @@ test('employer cannot post once the plan quota is exhausted', function () {
         ->assertSessionHas('error');
 
     expect(Job::query()->where('company_id', $company->id)->count())->toBe(0);
+});
+
+test('the trial plan cannot be purchased through the checkout route', function () {
+    [$employer, $company] = employerWithCompany();
+    $this->seed(SubscriptionPlanSeeder::class);
+
+    $this->actingAs($employer)
+        ->post(route('employer.billing.checkout', ['plan' => 'trial']))
+        ->assertSessionHas('error');
+
+    expect($company->fresh()->subscriptions()->count())->toBe(0);
 });
 
 test('employer without an active subscription cannot start outreach to a candidate', function () {
