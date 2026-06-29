@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { CheckCircle2, ChevronDown, ChevronsUpDown, Eye, ShieldOff } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronsUpDown, Eye, Plus, ShieldOff } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { StatusBadge } from '@/components/feedback/status-badge';
@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatStatus } from '@/lib/format-status';
-import { approve as companyApprove, index as adminCompaniesIndex, show as companyShow, suspend as companySuspend } from '@/routes/admin/companies';
+import { approve as companyApprove, create as companyCreate, index as adminCompaniesIndex, show as companyShow, suspend as companySuspend } from '@/routes/admin/companies';
 
 type Owner = { id: number; name: string; email: string };
 type Company = {
@@ -136,7 +136,17 @@ export default function AdminCompaniesIndex({ companies }: Props) {
         <>
             <Head title="Manajemen Perusahaan" />
             <div className="space-y-6 p-4 sm:p-6">
-                <PageHeader title="Perusahaan" description="Setujui, lihat detail, dan nonaktifkan akun perusahaan di platform." />
+                <PageHeader
+                    title="Perusahaan"
+                    description="Setujui, lihat detail, dan nonaktifkan akun perusahaan di platform."
+                    actions={
+                        <Button asChild>
+                            <Link href={companyCreate().url}>
+                                <Plus className="size-4" /> Tambah Perusahaan
+                            </Link>
+                        </Button>
+                    }
+                />
                 <Section>
                     <div className="space-y-4">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

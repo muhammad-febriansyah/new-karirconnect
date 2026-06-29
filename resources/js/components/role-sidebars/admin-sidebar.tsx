@@ -11,6 +11,7 @@ import {
     LayoutGrid,
     Megaphone,
     Newspaper,
+    Plus,
     Receipt,
     ScrollText,
     Settings as SettingsIcon,
@@ -78,6 +79,11 @@ export const adminMainNavSections: NavSection[] = [
                 title: 'Daftar Perusahaan',
                 href: CompanyController.index().url,
                 icon: Building2,
+            },
+            {
+                title: 'Tambah Perusahaan',
+                href: CompanyController.create().url,
+                icon: Plus,
             },
             {
                 title: 'Verifikasi Perusahaan',

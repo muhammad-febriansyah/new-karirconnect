@@ -3,6 +3,8 @@
 namespace App\Services\Company;
 
 use App\Enums\CompanyStatus;
+use App\Enums\CompanyVerificationStatus;
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\CompanyBadge;
 use App\Models\User;
@@ -36,6 +38,55 @@ class CompanyService
             ]);
 
             return $company;
+        });
+    }
+
+    /**
+     * Provision a complete recruiter account on behalf of an admin: the
+     * employer owner user plus their company, pre-approved (and optionally
+     * marked verified) so they can post jobs immediately. Used for the
+     * "jemput bola" onboarding where admin sets up companies manually.
+     *
+     * @param  array{name: string, email: string, password: string, phone?: string|null}  $ownerData
+     * @param  array<string, mixed>  $companyData
+     */
+    public function createByAdmin(array $ownerData, array $companyData, User $admin, bool $verified = true): Company
+    {
+        return DB::transaction(function () use ($ownerData, $companyData, $admin, $verified) {
+            $owner = User::query()->create([
+                'name' => $ownerData['name'],
+                'email' => $ownerData['email'],
+                'password' => $ownerData['password'],
+                'phone' => $ownerData['phone'] ?? null,
+                'role' => UserRole::Employer,
+            ]);
+
+            // Admin-created accounts skip the email verification step.
+            $owner->forceFill(['email_verified_at' => now()])->save();
+
+            $company = $this->register($owner, $companyData);
+
+            $this->approve($company, $admin);
+
+            if ($verified) {
+                $company->forceFill([
+                    'verification_status' => CompanyVerificationStatus::Verified,
+                    'verified_at' => now(),
+                ])->save();
+
+                CompanyBadge::query()->firstOrCreate(
+                    ['company_id' => $company->id, 'code' => 'verified-employer'],
+                    [
+                        'name' => 'Verified Employer',
+                        'description' => 'Dokumen perusahaan sudah diverifikasi admin.',
+                        'tone' => 'success',
+                        'awarded_at' => now(),
+                        'is_active' => true,
+                    ],
+                );
+            }
+
+            return $company->refresh();
         });
     }
 

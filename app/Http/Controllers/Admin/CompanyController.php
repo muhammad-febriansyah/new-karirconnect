@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\CompanyStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreCompanyAccountRequest;
 use App\Models\Company;
+use App\Models\CompanySize;
+use App\Models\Industry;
 use App\Services\Company\CompanyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +40,47 @@ class CompanyController extends Controller
             ],
             'statusOptions' => CompanyStatus::selectItems(),
         ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('admin/companies/create', [
+            'industries' => Industry::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'companySizes' => CompanySize::query()
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'name', 'employee_range']),
+        ]);
+    }
+
+    public function store(StoreCompanyAccountRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $company = $this->companies->createByAdmin(
+            ownerData: [
+                'name' => $data['owner_name'],
+                'email' => $data['owner_email'],
+                'password' => $data['password'],
+                'phone' => $data['owner_phone'] ?? null,
+            ],
+            companyData: array_filter([
+                'name' => $data['name'],
+                'website' => $data['website'] ?? null,
+                'email' => $data['email'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'industry_id' => $data['industry_id'] ?? null,
+                'company_size_id' => $data['company_size_id'] ?? null,
+            ], fn ($value) => $value !== null),
+            admin: $request->user(),
+            verified: $data['mark_verified'] ?? true,
+        );
+
+        return to_route('admin.companies.show', $company)
+            ->with('success', "Akun perusahaan {$company->name} berhasil dibuat.");
     }
 
     public function show(Company $company): Response

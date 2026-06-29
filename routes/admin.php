@@ -95,6 +95,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->name('companies.')
             ->group(function (): void {
                 Route::get('/', [CompanyController::class, 'index'])->name('index');
+                Route::get('create', [CompanyController::class, 'create'])->name('create');
+                Route::post('/', [CompanyController::class, 'store'])->name('store');
                 Route::get('{company}', [CompanyController::class, 'show'])->name('show');
                 Route::post('{company}/approve', [CompanyController::class, 'approve'])->name('approve');
                 Route::post('{company}/suspend', [CompanyController::class, 'suspend'])->name('suspend');
