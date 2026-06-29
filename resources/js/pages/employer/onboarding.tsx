@@ -17,7 +17,6 @@ import {
     Sparkles,
     Trash2,
     Upload,
-    Users,
     XCircle,
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
@@ -512,39 +511,13 @@ function WelcomeNote({
 
 function WelcomeIllustration() {
     return (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-blue/10 via-brand-cyan/5 to-transparent p-6">
-            <div className="absolute -right-6 -top-6 size-28 rounded-full bg-brand-cyan/15 blur-2xl" />
-            <div className="absolute right-8 top-6 text-brand-blue/50">
-                <Search className="size-6" />
-            </div>
-
-            <div className="relative mx-auto max-w-sm space-y-3">
-                {/* mock candidate cards */}
-                {[0, 1, 2].map((card) => (
-                    <div
-                        key={card}
-                        className={cn(
-                            'rounded-2xl border border-border/60 bg-card p-3.5 shadow-md',
-                            card === 1 && 'sm:ml-8',
-                        )}
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white">
-                                <Users className="size-5" />
-                            </span>
-                            <div className="flex-1 space-y-1.5">
-                                <span className="block h-2.5 w-24 rounded-full bg-brand-navy/80" />
-                                <span className="flex items-center gap-0.5">
-                                    {[0, 1, 2, 3, 4].map((star) => (
-                                        <span key={star} className="size-2 rounded-full bg-amber-400" />
-                                    ))}
-                                </span>
-                            </div>
-                            <CheckCircle2 className="size-5 text-emerald-500" />
-                        </div>
-                    </div>
-                ))}
-            </div>
+        <div className="flex items-center justify-center">
+            <img
+                src="/images/employer-welcome.jpg"
+                alt="Rekruter menemukan kandidat terbaik di KarirConnect"
+                className="w-full max-w-md rounded-2xl"
+                loading="lazy"
+            />
         </div>
     );
 }
