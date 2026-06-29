@@ -30,7 +30,7 @@ class EnsureCompanyApproved
 
         $company = Company::query()->where('owner_id', $user->id)->first();
 
-        if ($company !== null && $company->status === CompanyStatus::Approved) {
+        if ($company !== null && $company->hasRecruiterAccess()) {
             return $next($request);
         }
 

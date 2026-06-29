@@ -169,7 +169,7 @@ export default function EmployerDashboard({ data }: Props) {
                     description={`Verifikasi: ${data.company!.verification_status ?? '—'}`}
                 />
 
-                <CompanyStatusBanner status={data.company!.status} />
+                <CompanyStatusBanner status={data.company!.status} verificationStatus={data.company!.verification_status} />
 
                 {data.company!.missing_items.length > 0 && (
                     <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
@@ -388,9 +388,7 @@ export default function EmployerDashboard({ data }: Props) {
     );
 }
 
-function CompanyStatusBanner({ status }: { status: string | null }) {
-    if (status === 'approved') return null;
-
+function CompanyStatusBanner({ status, verificationStatus }: { status: string | null; verificationStatus: string | null }) {
     if (status === 'suspended') {
         return (
             <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
@@ -405,6 +403,12 @@ function CompanyStatusBanner({ status }: { status: string | null }) {
                 </div>
             </div>
         );
+    }
+
+    // A verified company is approved by the same admin review, so it has full
+    // recruiter access even if its status column still reads "pending".
+    if (status === 'approved' || verificationStatus === 'verified') {
+        return null;
     }
 
     return (

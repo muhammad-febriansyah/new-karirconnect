@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Public;
 
-use App\Enums\CompanyStatus;
 use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
@@ -44,7 +43,7 @@ class SitemapController extends Controller
             });
 
         Company::query()
-            ->where('status', CompanyStatus::Approved)
+            ->recruiterActive()
             ->latest('updated_at')
             ->limit(self::MAX_PER_SECTION)
             ->get(['slug', 'updated_at'])

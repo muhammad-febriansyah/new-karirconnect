@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\CompanyStatus;
 use App\Models\Company;
 use App\Models\User;
 
@@ -15,7 +14,7 @@ class CompanyPolicy
 
     public function view(?User $user, Company $company): bool
     {
-        if ($company->status === CompanyStatus::Approved) {
+        if ($company->hasRecruiterAccess()) {
             return true;
         }
 

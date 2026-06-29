@@ -6,6 +6,7 @@ use App\Enums\CompanyStatus;
 use App\Enums\CompanyVerificationStatus;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -151,5 +152,39 @@ class Company extends Model
         return $this->hasMany(Job::class)
             ->latest('published_at')
             ->latest('id');
+    }
+
+    /**
+     * Whether the company may use recruiter features and appear publicly.
+     *
+     * A verified company is treated as approved because admin verification
+     * already reviews and approves the company. A suspended company is always
+     * blocked regardless of its verification badge.
+     */
+    public function hasRecruiterAccess(): bool
+    {
+        if ($this->status === CompanyStatus::Suspended) {
+            return false;
+        }
+
+        return $this->status === CompanyStatus::Approved
+            || $this->verification_status === CompanyVerificationStatus::Verified;
+    }
+
+    /**
+     * Limit the query to companies that are live on the platform: approved or
+     * verified, but never suspended.
+     *
+     * @param  Builder<Company>  $query
+     */
+    public function scopeRecruiterActive(Builder $query): void
+    {
+        $query
+            ->where('status', '!=', CompanyStatus::Suspended)
+            ->where(function (Builder $inner): void {
+                $inner
+                    ->where('status', CompanyStatus::Approved)
+                    ->orWhere('verification_status', CompanyVerificationStatus::Verified);
+            });
     }
 }

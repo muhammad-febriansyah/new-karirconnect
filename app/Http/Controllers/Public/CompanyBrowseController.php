@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Public;
 
-use App\Enums\CompanyStatus;
 use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
@@ -26,7 +25,7 @@ class CompanyBrowseController extends Controller
         $companies = Company::query()
             ->with(['industry:id,name', 'city:id,name', 'size:id,name,employee_range'])
             ->withCount(['jobs as open_jobs_count' => fn (Builder $q) => $q->where('status', JobStatus::Published)])
-            ->where('status', CompanyStatus::Approved)
+            ->recruiterActive()
             ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
             ->when($industryId, fn ($q) => $q->where('industry_id', $industryId))
             ->when($provinceId, fn ($q) => $q->where('province_id', $provinceId))
@@ -67,7 +66,7 @@ class CompanyBrowseController extends Controller
 
     public function show(Company $company): Response
     {
-        abort_unless($company->status === CompanyStatus::Approved, 404);
+        abort_unless($company->hasRecruiterAccess(), 404);
 
         $company->load([
             'industry:id,name',
