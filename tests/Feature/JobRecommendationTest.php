@@ -99,9 +99,10 @@ test('skill overlap drives the score above the no-skill baseline', function () {
 
 test('city match boosts the score', function () {
     ['profile' => $profile] = makeProfileWithSkills();
-    $cities = City::query()->limit(2)->pluck('id', 'province_id');
-    [$provinceA, $cityA] = [array_keys($cities->all())[0], $cities->values()[0]];
-    [$provinceB, $cityB] = [array_keys($cities->all())[1], $cities->values()[1]];
+    $cityRowA = City::query()->firstOrFail();
+    $cityRowB = City::query()->where('province_id', '!=', $cityRowA->province_id)->firstOrFail();
+    [$provinceA, $cityA] = [$cityRowA->province_id, $cityRowA->id];
+    [$provinceB, $cityB] = [$cityRowB->province_id, $cityRowB->id];
 
     $profile->update(['city_id' => $cityA, 'province_id' => $provinceA]);
 
