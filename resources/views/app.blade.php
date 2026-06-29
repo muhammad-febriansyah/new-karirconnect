@@ -21,9 +21,14 @@
 
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {{-- App is light-only; opt out of Android Chrome "Auto Dark Theme" which
+             otherwise lightens text inside portaled popovers (e.g. select dropdowns)
+             while leaving the white background, making options invisible. --}}
+        <meta name="color-scheme" content="light">
 
         <style>
             html {
+                color-scheme: only light;
                 background-color: oklch(1 0 0);
             }
         </style>

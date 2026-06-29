@@ -10,7 +10,8 @@ test('admin can delete a job category that has no jobs', function () {
 
     $this->actingAs($admin)
         ->delete("/admin/job-categories/{$category->id}")
-        ->assertRedirect(route('admin.job-categories.index'));
+        ->assertRedirect(route('admin.job-categories.index'))
+        ->assertSessionHas('inertia.flash_data.toast.type', 'success');
 
     expect(JobCategory::query()->whereKey($category->id)->exists())->toBeFalse();
 });
@@ -22,7 +23,8 @@ test('cannot delete a job category that is still used by jobs', function () {
 
     $this->actingAs($admin)
         ->delete("/admin/job-categories/{$category->id}")
-        ->assertRedirect(route('admin.job-categories.index'));
+        ->assertRedirect(route('admin.job-categories.index'))
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
     expect(JobCategory::query()->whereKey($category->id)->exists())->toBeTrue();
 });

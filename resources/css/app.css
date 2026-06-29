@@ -69,7 +69,7 @@
 }
 
 :root {
-    color-scheme: light;
+    color-scheme: only light;
     /* KarirConnect brand palette (sampled from logo)
        - brand blue   #1080e0  → oklch(0.62 0.18 248)
        - brand cyan   #10c0e0  → oklch(0.78 0.13 215)
@@ -116,7 +116,7 @@
 @layer base {
     html,
     body {
-        color-scheme: light;
+        color-scheme: only light;
     }
 
     html {

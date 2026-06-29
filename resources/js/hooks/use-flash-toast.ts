@@ -152,9 +152,17 @@ export function useFlashToast(): void {
             handlePageProps(pageProps);
         });
 
+        // Inertia v3 delivers Inertia::flash() data through a dedicated `flash`
+        // event carrying page.flash (NOT page.props.flash). Controllers using
+        // Inertia::flash('toast', [...]) only surface here, so subscribe to it.
+        const offFlash = router.on('flash', (event) => {
+            fire(event.detail.flash as (FlashBag & { toast?: ToastShape }) | undefined);
+        });
+
         return () => {
             offNavigate();
             offSuccess();
+            offFlash();
         };
     }, []);
 }
