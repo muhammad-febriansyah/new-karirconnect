@@ -2,18 +2,26 @@ import { Head, router, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     ArrowRight,
+    BarChart3,
+    Briefcase,
     Building2,
     CheckCircle2,
     Clock,
     FileText,
+    LayoutDashboard,
+    MessageSquare,
+    Search,
     ShieldCheck,
     Sparkles,
     Trash2,
+    TrendingUp,
     Upload,
+    Users,
     XCircle,
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import AppLogo from '@/components/app-logo';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -75,10 +83,10 @@ type Props = {
     };
 };
 
-type Step = 1 | 2 | 3;
+type Step = 'welcome' | 1 | 2 | 3;
 
 export default function EmployerOnboarding({ user, company, options }: Props) {
-    const [step, setStep] = useState<Step>(company.onboarding_completed_at ? 3 : 1);
+    const [step, setStep] = useState<Step>(company.onboarding_completed_at ? 3 : 'welcome');
 
     const form = useForm({
         name: company.name,
@@ -136,24 +144,36 @@ export default function EmployerOnboarding({ user, company, options }: Props) {
 
     return (
         <>
-            <Head title="Onboarding Perusahaan" />
+            <Head title={step === 'welcome' ? 'Selamat Datang' : 'Onboarding Perusahaan'} />
 
             <div className="px-4 py-8 sm:py-10">
-                <div className="mx-auto max-w-3xl space-y-6">
-                    <header className="space-y-3 text-center">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-blue ring-1 ring-brand-blue/15">
-                            <Sparkles className="size-3" /> Setup Perusahaan
-                        </span>
-                        <h1 className="text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
-                            Halo {user.name.split(' ')[0]}, mari siapkan profil perusahaan
-                        </h1>
-                        <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
-                            Lengkapi profil perusahaan & unggah dokumen verifikasi. Tim kami akan
-                            review dalam 1×24 jam sebelum Anda bisa posting lowongan.
-                        </p>
-                    </header>
+                <div className={cn('mx-auto space-y-6', step === 'welcome' ? 'max-w-6xl' : 'max-w-3xl')}>
+                    {step === 'welcome' && (
+                        <WelcomeNote
+                            name={user.name}
+                            companyName={company.name}
+                            onStart={() => setStep(1)}
+                        />
+                    )}
 
-                    <Stepper step={step} />
+                    {step !== 'welcome' && (
+                        <>
+                            <header className="space-y-3 text-center">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-blue ring-1 ring-brand-blue/15">
+                                    <Sparkles className="size-3" /> Setup Perusahaan
+                                </span>
+                                <h1 className="text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
+                                    Halo {user.name.split(' ')[0]}, mari siapkan profil perusahaan
+                                </h1>
+                                <p className="mx-auto max-w-xl text-sm text-muted-foreground sm:text-base">
+                                    Lengkapi profil perusahaan & unggah dokumen verifikasi. Tim kami akan
+                                    review dalam 1×24 jam sebelum Anda bisa posting lowongan.
+                                </p>
+                            </header>
+
+                            <Stepper step={step} />
+                        </>
+                    )}
 
                     {step === 1 && (
                         <form onSubmit={submitProfile} className="space-y-5">
@@ -371,7 +391,218 @@ export default function EmployerOnboarding({ user, company, options }: Props) {
     );
 }
 
-function Stepper({ step }: { step: Step }) {
+const WELCOME_FEATURES = [
+    {
+        icon: Briefcase,
+        title: 'Pasang lowongan dengan cepat',
+        description: 'Buat dan publikasikan lowongan dengan mudah agar langsung dilirik kandidat terbaik.',
+        tone: 'bg-brand-blue/10 text-brand-blue',
+    },
+    {
+        icon: Search,
+        title: 'Smart candidate matching',
+        description: 'Dapatkan rekomendasi kandidat yang paling sesuai dengan kebutuhan posisi Anda.',
+        tone: 'bg-emerald-100 text-emerald-600',
+    },
+    {
+        icon: LayoutDashboard,
+        title: 'Kelola lamaran dalam satu dashboard',
+        description: 'Review CV, shortlist, dan kelola proses seleksi secara terstruktur di satu tempat.',
+        tone: 'bg-violet-100 text-violet-600',
+    },
+    {
+        icon: MessageSquare,
+        title: 'Komunikasi lebih cepat',
+        description: 'Hubungi kandidat langsung dari platform tanpa berpindah aplikasi.',
+        tone: 'bg-amber-100 text-amber-600',
+    },
+    {
+        icon: BarChart3,
+        title: 'Pantau aktivitas rekrutmen',
+        description: 'Lihat performa lowongan dan perkembangan rekrutmen secara real-time.',
+        tone: 'bg-sky-100 text-sky-600',
+    },
+    {
+        icon: ShieldCheck,
+        title: 'Aman & terpercaya',
+        description: 'Data perusahaan dan kandidat terlindungi dengan sistem terverifikasi.',
+        tone: 'bg-rose-100 text-rose-600',
+    },
+] as const;
+
+const WELCOME_STEPS = [
+    { icon: Building2, label: 'Lengkapi Profil' },
+    { icon: ShieldCheck, label: 'Verifikasi' },
+    { icon: Briefcase, label: 'Posting Loker' },
+    { icon: Users, label: 'Kelola Pelamar' },
+] as const;
+
+function WelcomeNote({
+    name,
+    companyName,
+    onStart,
+}: {
+    name: string;
+    companyName: string;
+    onStart: () => void;
+}) {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center gap-2">
+                <AppLogo />
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Left: greeting + feature cards */}
+                <div className="space-y-5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200">
+                        <Sparkles className="size-3" /> Selamat Datang!
+                    </span>
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-bold leading-tight tracking-tight text-brand-navy sm:text-4xl">
+                            Selamat datang, <span className="text-brand-blue">{name.split(' ')[0]}!</span> 👋
+                        </h1>
+                        <p className="text-base font-semibold text-brand-navy/80">{companyName}</p>
+                    </div>
+                    <p className="max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+                        Terima kasih telah bergabung di KarirConnect. Platform kami siap membantu Anda menemukan
+                        kandidat terbaik dengan lebih cepat, mudah, dan tepat.
+                    </p>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {WELCOME_FEATURES.map((feature) => (
+                            <div
+                                key={feature.title}
+                                className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+                            >
+                                <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl', feature.tone)}>
+                                    <feature.icon className="size-5" />
+                                </span>
+                                <div className="space-y-0.5">
+                                    <p className="text-sm font-bold text-brand-navy">{feature.title}</p>
+                                    <p className="text-xs leading-relaxed text-muted-foreground">{feature.description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right: illustration + steps */}
+                <div className="space-y-5">
+                    <WelcomeIllustration />
+
+                    <Card className="border-border/70 shadow-sm">
+                        <CardContent className="space-y-5 p-5 sm:p-6">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-bold tracking-tight text-brand-navy">4 Langkah Mudah</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Lengkapi profil perusahaan untuk membuka semua fitur perekrut dan mulai memasang lowongan.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                {WELCOME_STEPS.map((stepItem, idx) => (
+                                    <div key={stepItem.label} className="flex flex-1 items-center">
+                                        <div className="flex flex-col items-center gap-1.5 text-center">
+                                            <span className="relative flex size-11 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
+                                                <stepItem.icon className="size-5" />
+                                                <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-brand-blue text-[10px] font-bold text-white">
+                                                    {idx + 1}
+                                                </span>
+                                            </span>
+                                            <span className="text-[11px] font-semibold leading-tight text-brand-navy/80">
+                                                {stepItem.label}
+                                            </span>
+                                        </div>
+                                        {idx < WELCOME_STEPS.length - 1 && (
+                                            <span className="mx-1 hidden h-px flex-1 bg-border sm:block" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <Button
+                                type="button"
+                                onClick={onStart}
+                                className="h-12 w-full rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-sm font-semibold shadow-md shadow-brand-blue/20 hover:brightness-105"
+                            >
+                                Lengkapi Profil Sekarang <ArrowRight className="size-4" />
+                            </Button>
+
+                            <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+                                <ShieldCheck className="size-3.5 text-emerald-600" />
+                                Hanya butuh beberapa menit untuk mulai merekrut.
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Bottom banner */}
+            <div className="flex flex-col gap-3 rounded-2xl border border-brand-blue/20 bg-gradient-to-r from-brand-blue/5 to-brand-cyan/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-white">
+                        <TrendingUp className="size-5" />
+                    </span>
+                    <div>
+                        <p className="text-sm font-bold text-brand-navy">Mulai temukan talenta terbaik untuk perusahaan Anda.</p>
+                        <p className="text-sm text-muted-foreground">
+                            Perusahaan dengan profil lengkap & terverifikasi lebih dipercaya kandidat.
+                        </p>
+                    </div>
+                </div>
+                <Button
+                    type="button"
+                    onClick={onStart}
+                    className="shrink-0 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold"
+                >
+                    Mulai Sekarang <ArrowRight className="size-4" />
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function WelcomeIllustration() {
+    return (
+        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-blue/10 via-brand-cyan/5 to-transparent p-6">
+            <div className="absolute -right-6 -top-6 size-24 rounded-full bg-brand-cyan/15 blur-2xl" />
+            <div className="absolute bottom-4 left-6 text-brand-blue/40">
+                <Search className="size-5" />
+            </div>
+
+            <div className="relative mx-auto max-w-xs space-y-3">
+                {/* mock candidate cards */}
+                {[0, 1].map((card) => (
+                    <div key={card} className="rounded-2xl border border-border/60 bg-card p-4 shadow-md">
+                        <div className="flex items-center gap-3">
+                            <span className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white">
+                                <Users className="size-5" />
+                            </span>
+                            <div className="flex-1 space-y-1.5">
+                                <span className="block h-2.5 w-28 rounded-full bg-brand-navy/80" />
+                                <span className="block h-2 w-20 rounded-full bg-muted-foreground/30" />
+                            </div>
+                            <CheckCircle2 className="size-5 text-emerald-500" />
+                        </div>
+                    </div>
+                ))}
+
+                {/* floating badges */}
+                <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-sm">
+                        <Briefcase className="size-4 text-brand-blue" /> Posting loker
+                    </span>
+                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-sm">
+                        <Search className="size-4 text-brand-cyan" /> Cari talenta
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function Stepper({ step }: { step: 1 | 2 | 3 }) {
     const items = [
         { id: 1, label: 'Profil Perusahaan', icon: Building2 },
         { id: 2, label: 'Verifikasi Dokumen', icon: ShieldCheck },

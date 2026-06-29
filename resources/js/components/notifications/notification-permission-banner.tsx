@@ -8,7 +8,7 @@ import { isFirebaseConfigured } from '@/lib/firebase';
 const DISMISS_KEY = 'karirconnect.notification-banner.dismissed';
 
 export function NotificationPermissionBanner() {
-    const { auth } = usePage<{ auth: { user?: { id?: number } | null } }>().props;
+    const { auth } = usePage<{ auth: { user?: { id?: number; role?: string } | null } }>().props;
     const { permission, requesting, request } = useFcm();
     const [mounted, setMounted] = useState(false);
     const [dismissed, setDismissed] = useState(() => {
@@ -49,6 +49,11 @@ export function NotificationPermissionBanner() {
         setDismissed(true);
     };
 
+    const isRecruiter = auth.user?.role === 'employer' || auth.user?.role === 'admin';
+    const description = isRecruiter
+        ? 'Dapatkan notifikasi real-time untuk pelamar baru, balasan kandidat, dan jadwal interview — bahkan saat tab ditutup.'
+        : 'Dapatkan pemberitahuan real-time untuk lamaran, pesan recruiter, dan jadwal interview — bahkan saat tab ditutup.';
+
     return (
         <div className="mx-4 mt-4 flex items-start gap-3 rounded-xl border border-brand-blue/20 bg-gradient-to-r from-brand-blue/8 via-brand-cyan/8 to-transparent p-4 text-sm text-brand-navy sm:mx-6">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm">
@@ -57,7 +62,7 @@ export function NotificationPermissionBanner() {
             <div className="flex-1">
                 <p className="font-semibold">Aktifkan notifikasi push</p>
                 <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                    Dapatkan pemberitahuan real-time untuk lamaran, pesan recruiter, dan jadwal interview — bahkan saat tab ditutup.
+                    {description}
                 </p>
                 <div className="mt-3 flex gap-2">
                     <Button
