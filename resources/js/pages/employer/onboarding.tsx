@@ -444,16 +444,16 @@ function WelcomeNote({
     return (
         <div className="space-y-6">
             {/* Hero */}
-            <Card className="overflow-hidden border-brand-blue/15 bg-gradient-to-br from-brand-blue/5 via-brand-cyan/5 to-transparent shadow-sm">
+            <Card className="overflow-hidden border-brand-blue/15 bg-[#f6f9fe] shadow-sm">
                 <CardContent className="grid items-center gap-6 p-6 sm:p-8 lg:grid-cols-2">
-                    <div className="space-y-4">
-                        <h1 className="text-3xl font-bold leading-tight tracking-tight text-brand-navy sm:text-4xl">
+                    <div className="space-y-3">
+                        <h1 className="text-2xl font-bold leading-tight tracking-tight text-brand-navy sm:text-3xl">
                             Selamat datang,
                             <br />
                             <span className="text-brand-blue">{name}!</span> 👋
                         </h1>
-                        <p className="text-lg font-bold text-brand-navy">{companyName}</p>
-                        <p className="max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+                        <p className="text-base font-bold text-brand-navy">{companyName}</p>
+                        <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
                             Terima kasih telah bergabung di KarirConnect. Platform kami siap membantu Anda menemukan
                             kandidat terbaik dengan lebih cepat, mudah, dan tepat.
                         </p>
@@ -515,7 +515,7 @@ function WelcomeIllustration() {
             <img
                 src="/images/employer-welcome.jpg"
                 alt="Rekruter menemukan kandidat terbaik di KarirConnect"
-                className="w-full max-w-md rounded-2xl"
+                className="w-full max-w-md"
                 loading="lazy"
             />
         </div>
