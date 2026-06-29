@@ -11,6 +11,7 @@ use App\Models\CompanySize;
 use App\Models\CompanyVerification;
 use App\Models\Industry;
 use App\Models\Province;
+use App\Services\Billing\BillingService;
 use App\Services\Company\CompanyService;
 use App\Services\Company\CompanyVerificationService;
 use App\Services\Files\FileUploadService;
@@ -25,6 +26,7 @@ class OnboardingController extends Controller
         private readonly CompanyService $companies,
         private readonly CompanyVerificationService $verifications,
         private readonly FileUploadService $files,
+        private readonly BillingService $billing,
     ) {}
 
     public function edit(Request $request): Response
@@ -151,9 +153,13 @@ class OnboardingController extends Controller
             $company->forceFill(['onboarding_completed_at' => now()])->save();
         }
 
+        // Auto-activate the free trial once onboarding is complete. No-ops if
+        // the company already used a trial or has an active subscription.
+        $this->billing->grantTrial($company);
+
         return to_route('dashboard')->with('toast', [
             'type' => 'success',
-            'message' => 'Onboarding selesai. Tim kami akan review profil & dokumen perusahaan Anda.',
+            'message' => 'Onboarding selesai. Paket Trial 14 hari aktif — silakan jelajahi semua fitur.',
         ]);
     }
 

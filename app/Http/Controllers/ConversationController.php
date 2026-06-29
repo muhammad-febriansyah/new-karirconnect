@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -149,6 +150,17 @@ class ConversationController extends Controller
 
         if ((int) $data['user_id'] === $user->id) {
             return back()->with('error', 'Tidak bisa memulai percakapan dengan diri sendiri.');
+        }
+
+        // Recruiter outreach to candidates is a paid/trial feature. Employers
+        // need an active subscription to initiate; replies inside existing
+        // threads stay open for everyone.
+        if ($user->isEmployer()) {
+            $company = Company::query()->where('owner_id', $user->id)->first();
+
+            if ($company !== null && $company->activeSubscription() === null) {
+                return back()->with('error', 'Fitur kirim pesan ke kandidat butuh langganan aktif. Aktifkan paket Trial atau upgrade paket Anda.');
+            }
         }
 
         $other = User::query()->findOrFail($data['user_id']);

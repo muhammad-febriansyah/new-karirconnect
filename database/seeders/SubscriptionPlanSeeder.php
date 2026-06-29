@@ -12,6 +12,25 @@ class SubscriptionPlanSeeder extends Seeder
     {
         $plans = [
             [
+                'name' => 'Trial',
+                'slug' => 'trial',
+                'tier' => 'trial',
+                'price_idr' => 0,
+                'billing_period_days' => 14,
+                'job_post_quota' => 2,
+                'featured_credits' => 0,
+                'ai_interview_credits' => 5,
+                'features' => [
+                    'Akses 14 hari gratis',
+                    'Posting hingga 2 lowongan',
+                    'Kirim pesan ke kandidat',
+                    '5 kredit AI interview',
+                ],
+                'is_active' => true,
+                'is_featured' => false,
+                'sort_order' => 0,
+            ],
+            [
                 'name' => 'Basic',
                 'slug' => 'basic',
                 'tier' => 'starter',
@@ -29,7 +48,7 @@ class SubscriptionPlanSeeder extends Seeder
                 ],
                 'is_active' => true,
                 'is_featured' => false,
-                'sort_order' => 0,
+                'sort_order' => 1,
             ],
             [
                 'name' => 'Pro',
@@ -51,7 +70,7 @@ class SubscriptionPlanSeeder extends Seeder
                 ],
                 'is_active' => true,
                 'is_featured' => true,
-                'sort_order' => 1,
+                'sort_order' => 2,
             ],
         ];
 

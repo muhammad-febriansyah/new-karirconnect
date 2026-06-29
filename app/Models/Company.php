@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CompanyStatus;
 use App\Enums\CompanyVerificationStatus;
+use App\Enums\SubscriptionStatus;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,6 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'approved_at',
     'verified_at',
     'onboarding_completed_at',
+    'trial_redeemed_at',
 ])]
 class Company extends Model
 {
@@ -55,6 +57,7 @@ class Company extends Model
             'approved_at' => 'datetime',
             'verified_at' => 'datetime',
             'onboarding_completed_at' => 'datetime',
+            'trial_redeemed_at' => 'datetime',
         ];
     }
 
@@ -152,6 +155,38 @@ class Company extends Model
         return $this->hasMany(Job::class)
             ->latest('published_at')
             ->latest('id');
+    }
+
+    /**
+     * @return HasMany<CompanySubscription, $this>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(CompanySubscription::class);
+    }
+
+    /**
+     * The currently active subscription (paid or trial), if any. Returns null
+     * when none is active or the active one has already lapsed past its end.
+     */
+    public function activeSubscription(): ?CompanySubscription
+    {
+        return $this->subscriptions()
+            ->with('plan')
+            ->where('status', SubscriptionStatus::Active)
+            ->where(function ($query): void {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+            })
+            ->latest('starts_at')
+            ->first();
+    }
+
+    /**
+     * Whether the company has ever redeemed the one-time free trial.
+     */
+    public function hasUsedTrial(): bool
+    {
+        return $this->trial_redeemed_at !== null;
     }
 
     /**

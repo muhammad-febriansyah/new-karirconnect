@@ -65,6 +65,19 @@ class JobController extends Controller
     public function store(StoreJobRequest $request): RedirectResponse
     {
         $company = $this->resolveOwnedCompany($request);
+
+        $subscription = $company->activeSubscription();
+
+        if ($subscription === null) {
+            return back()->with('error', 'Langganan tidak aktif. Aktifkan paket Trial atau berlangganan untuk memposting lowongan.');
+        }
+
+        $quota = $subscription->plan?->job_post_quota ?? 0;
+
+        if ($quota > 0 && $subscription->jobs_posted_count >= $quota) {
+            return back()->with('error', "Kuota posting lowongan paket {$subscription->plan->name} sudah habis ({$quota} lowongan). Upgrade paket untuk menambah kuota.");
+        }
+
         $data = $this->sanitizeJobData($request->validated());
         $skillIds = $data['skill_ids'] ?? [];
         unset($data['skill_ids']);
@@ -78,6 +91,8 @@ class JobController extends Controller
             'proficiency' => 'mid',
             'is_required' => false,
         ]])->all());
+
+        $subscription->increment('jobs_posted_count');
 
         return to_route('employer.jobs.show', $job)->with('success', 'Lowongan berhasil dibuat.');
     }

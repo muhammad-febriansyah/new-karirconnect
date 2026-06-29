@@ -3,10 +3,12 @@
 use App\Enums\JobStatus;
 use App\Models\Company;
 use App\Models\CompanyMember;
+use App\Models\CompanySubscription;
 use App\Models\Job;
 use App\Models\JobCategory;
 use App\Models\JobScreeningQuestion;
 use App\Models\Skill;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
@@ -30,6 +32,11 @@ test('employer can manage jobs and screening questions', function () {
     CompanyMember::factory()->owner()->create([
         'company_id' => $company->id,
         'user_id' => $employer->id,
+    ]);
+
+    CompanySubscription::factory()->create([
+        'company_id' => $company->id,
+        'plan_id' => SubscriptionPlan::factory()->create(['job_post_quota' => 5])->id,
     ]);
 
     $category = JobCategory::query()->firstOrFail();

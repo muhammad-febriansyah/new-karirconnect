@@ -25,3 +25,9 @@ Schedule::command('notifications:notify-expiring-subscriptions')
     ->withoutOverlapping()
     ->onOneServer()
     ->name('notifications:notify-expiring-subscriptions');
+
+Schedule::command('subscriptions:expire')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('subscriptions:expire');

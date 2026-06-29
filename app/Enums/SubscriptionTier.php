@@ -5,6 +5,7 @@ namespace App\Enums;
 enum SubscriptionTier: string
 {
     case Free = 'free';
+    case Trial = 'trial';
     case Starter = 'starter';
     case Pro = 'pro';
     case Enterprise = 'enterprise';
@@ -13,6 +14,7 @@ enum SubscriptionTier: string
     {
         return match ($this) {
             self::Free => 'Free',
+            self::Trial => 'Trial',
             self::Starter => 'Starter',
             self::Pro => 'Pro',
             self::Enterprise => 'Enterprise',

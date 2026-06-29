@@ -189,6 +189,46 @@ class BillingService
         $order->user?->notify(new PaymentSucceededNotification($order));
     }
 
+    /**
+     * Grant the one-time free trial to a company. Idempotent and safe to call
+     * on every onboarding completion: it no-ops when the company already has an
+     * active subscription or has redeemed a trial before. Returns the new
+     * subscription, or null when the company was not eligible.
+     */
+    public function grantTrial(Company $company): ?CompanySubscription
+    {
+        $plan = SubscriptionPlan::query()
+            ->where('slug', 'trial')
+            ->where('is_active', true)
+            ->first();
+
+        if ($plan === null) {
+            return null;
+        }
+
+        if ($company->hasUsedTrial() || $company->activeSubscription() !== null) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($company, $plan): CompanySubscription {
+            $subscription = CompanySubscription::query()->create([
+                'company_id' => $company->id,
+                'plan_id' => $plan->id,
+                'status' => SubscriptionStatus::Active,
+                'starts_at' => now(),
+                'ends_at' => now()->addDays($plan->billing_period_days),
+                'jobs_posted_count' => 0,
+                'featured_credits_remaining' => $plan->featured_credits,
+                'ai_credits_remaining' => $plan->ai_interview_credits,
+                'auto_renew' => false,
+            ]);
+
+            $company->forceFill(['trial_redeemed_at' => now()])->save();
+
+            return $subscription;
+        });
+    }
+
     private function initiateGateway(Order $order): void
     {
         $client = $this->factory->make();
