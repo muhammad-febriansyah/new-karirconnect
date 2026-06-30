@@ -31,3 +31,5 @@ yarn-error.log
 
 # Playwright MCP artifacts
 .playwright-mcp/
+# Root-level screenshots (Playwright browser_take_screenshot writes to cwd)
+/*.png
