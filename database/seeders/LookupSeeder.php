@@ -85,22 +85,30 @@ class LookupSeeder extends Seeder
     private function seedSkills(): void
     {
         $now = now();
+        $skills = collect($this->skills());
 
         Skill::query()->upsert(
-            collect($this->skills())->map(
+            $skills->map(
                 fn (array $skill): array => [
                     'name' => $skill['name'],
                     'slug' => Str::slug($skill['name']),
+                    'type' => $skill['type'],
                     'category' => $skill['category'],
-                    'description' => $skill['description'],
                     'is_active' => true,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ],
             )->all(),
             uniqueBy: ['slug'],
-            update: ['name', 'category', 'description', 'is_active', 'updated_at'],
+            update: ['name', 'type', 'category', 'is_active', 'updated_at'],
         );
+
+        // Replace-total: prune skills no longer in the taxonomy. FK on
+        // job_skill / employee_skill / assessment_questions / skill_assessments
+        // is cascadeOnDelete, so their links go with the removed skills.
+        $keepSlugs = $skills->map(fn (array $skill): string => Str::slug($skill['name']))->all();
+
+        Skill::query()->whereNotIn('slug', $keepSlugs)->delete();
     }
 
     /**
@@ -156,29 +164,91 @@ class LookupSeeder extends Seeder
     /**
      * @return array<int, array{name: string, category: string, description: string}>
      */
+    /**
+     * Recruiter skill taxonomy used by the job-posting picker. Grouped by
+     * type (soft/hard) → category → individual skills. Edit here to change the
+     * master list; the seeder upserts these and prunes anything not listed.
+     *
+     * @return array<int, array{name: string, type: string, category: string}>
+     */
     private function skills(): array
     {
-        return [
-            ['name' => 'PHP', 'category' => 'Backend', 'description' => 'Pengembangan aplikasi web berbasis PHP.'],
-            ['name' => 'Laravel', 'category' => 'Backend', 'description' => 'Framework Laravel untuk aplikasi web modern.'],
-            ['name' => 'MySQL', 'category' => 'Database', 'description' => 'Perancangan dan optimasi basis data MySQL.'],
-            ['name' => 'PostgreSQL', 'category' => 'Database', 'description' => 'Pengelolaan basis data PostgreSQL.'],
-            ['name' => 'JavaScript', 'category' => 'Frontend', 'description' => 'Bahasa utama untuk interaksi web.'],
-            ['name' => 'TypeScript', 'category' => 'Frontend', 'description' => 'JavaScript bertipe untuk aplikasi skala besar.'],
-            ['name' => 'React', 'category' => 'Frontend', 'description' => 'Pembangunan antarmuka dengan React.'],
-            ['name' => 'Next.js', 'category' => 'Frontend', 'description' => 'Framework React untuk aplikasi modern.'],
-            ['name' => 'Tailwind CSS', 'category' => 'Frontend', 'description' => 'Utility-first CSS untuk UI cepat dan konsisten.'],
-            ['name' => 'Node.js', 'category' => 'Backend', 'description' => 'Runtime JavaScript untuk layanan backend.'],
-            ['name' => 'Python', 'category' => 'Programming', 'description' => 'Bahasa umum untuk backend, data, dan automasi.'],
-            ['name' => 'Docker', 'category' => 'DevOps', 'description' => 'Containerization untuk pengembangan dan deployment.'],
-            ['name' => 'Kubernetes', 'category' => 'DevOps', 'description' => 'Orkestrasi container skala produksi.'],
-            ['name' => 'AWS', 'category' => 'Cloud', 'description' => 'Layanan cloud untuk komputasi, storage, dan jaringan.'],
-            ['name' => 'Google Cloud', 'category' => 'Cloud', 'description' => 'Ekosistem cloud Google untuk aplikasi modern.'],
-            ['name' => 'Figma', 'category' => 'Design', 'description' => 'Perancangan UI, prototyping, dan kolaborasi desain.'],
-            ['name' => 'UI/UX Research', 'category' => 'Design', 'description' => 'Riset pengguna dan validasi desain produk.'],
-            ['name' => 'SEO', 'category' => 'Marketing', 'description' => 'Optimasi konten dan teknis untuk mesin pencari.'],
-            ['name' => 'Content Marketing', 'category' => 'Marketing', 'description' => 'Strategi konten untuk awareness dan conversion.'],
-            ['name' => 'Project Management', 'category' => 'General', 'description' => 'Perencanaan, koordinasi, dan delivery proyek.'],
+        $taxonomy = [
+            'soft' => [
+                'Komunikasi & Kolaborasi' => [
+                    'Komunikasi Lisan', 'Komunikasi Tulisan', 'Presentasi', 'Negosiasi',
+                    'Kerja Sama Tim (Teamwork)', 'Public Speaking', 'Active Listening',
+                ],
+                'Kepemimpinan & Manajemen' => [
+                    'Leadership', 'Manajemen Tim', 'Pengambilan Keputusan', 'Delegasi',
+                    'Mentoring/Coaching', 'Manajemen Konflik',
+                ],
+                'Problem Solving & Berpikir' => [
+                    'Pemecahan Masalah (Problem Solving)', 'Berpikir Kritis (Critical Thinking)',
+                    'Berpikir Analitis', 'Kreativitas & Inovasi', 'Pengambilan Keputusan Berbasis Data',
+                ],
+                'Manajemen Diri' => [
+                    'Manajemen Waktu', 'Adaptabilitas', 'Manajemen Stres', 'Disiplin',
+                    'Inisiatif', 'Etos Kerja', 'Manajemen Prioritas',
+                ],
+                'Manajemen Proyek' => [
+                    'Project Management', 'Perencanaan Strategis', 'Multitasking',
+                    'Time Management', 'Organisasi',
+                ],
+                'Interpersonal' => [
+                    'Empati', 'Kecerdasan Emosional (Emotional Intelligence)', 'Networking',
+                    'Customer Orientation', 'Resolusi Konflik',
+                ],
+            ],
+            'hard' => [
+                'Teknologi & Programming' => [
+                    'Bahasa Pemrograman', 'Web Development', 'Database', 'Cloud Computing',
+                    'DevOps', 'Mobile Development', 'Cybersecurity', 'Machine Learning/AI',
+                ],
+                'Data & Analitik' => [
+                    'Data Analysis', 'Data Visualization', 'Excel Tingkat Lanjut', 'SQL',
+                    'Statistik', 'Data Science', 'Big Data',
+                ],
+                'Desain' => [
+                    'UI/UX Design', 'Graphic Design', 'Adobe Creative Suite', 'Figma',
+                    'Sketch', 'Motion Graphics', '3D Modeling',
+                ],
+                'Marketing & Digital' => [
+                    'SEO/SEM', 'Google Analytics', 'Social Media Marketing', 'Content Marketing',
+                    'Email Marketing', 'Google Ads', 'Marketing Automation Tools',
+                ],
+                'Keuangan & Akuntansi' => [
+                    'Akuntansi', 'Financial Modeling', 'Perpajakan', 'Audit',
+                    'Software Akuntansi', 'Budgeting & Forecasting',
+                ],
+                'Bahasa' => [
+                    'Bahasa Inggris', 'Bahasa Mandarin', 'Bahasa Jepang', 'Bahasa Asing Lainnya',
+                ],
+                'Office & Administrasi' => [
+                    'Microsoft Office', 'Google Workspace', 'Manajemen Dokumen', 'Entri Data',
+                ],
+                'Teknik' => [
+                    'AutoCAD', 'SolidWorks', 'Civil 3D', 'Mechanical Design', 'Electrical Systems',
+                ],
+                'Penjualan' => [
+                    'CRM Tools', 'Sales Forecasting', 'Lead Generation', 'Account Management',
+                ],
+                'Sertifikasi Umum' => [
+                    'PMP', 'Six Sigma', 'Google Certified', 'AWS Certified',
+                ],
+            ],
         ];
+
+        $rows = [];
+
+        foreach ($taxonomy as $type => $categories) {
+            foreach ($categories as $category => $names) {
+                foreach ($names as $name) {
+                    $rows[] = ['name' => $name, 'type' => $type, 'category' => $category];
+                }
+            }
+        }
+
+        return $rows;
     }
 }

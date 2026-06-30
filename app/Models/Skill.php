@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SkillType;
 use Database\Factories\SkillFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'name',
     'slug',
+    'type',
     'category',
     'description',
     'is_active',
@@ -27,6 +29,7 @@ class Skill extends Model
     protected function casts(): array
     {
         return [
+            'type' => SkillType::class,
             'is_active' => 'boolean',
         ];
     }

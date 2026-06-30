@@ -7,6 +7,8 @@ import { SelectField } from '@/components/form/select-field';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { slugify } from '@/lib/slugify';
 import type { RouteDefinition } from '@/wayfinder';
@@ -15,6 +17,17 @@ type SelectOption = {
     value: string;
     label: string;
     province_id?: number;
+};
+
+type SkillCategory = {
+    category: string;
+    skills: SelectOption[];
+};
+
+type SkillGroup = {
+    type: string;
+    label: string;
+    categories: SkillCategory[];
 };
 
 type JobRecord = {
@@ -46,7 +59,7 @@ type JobRecord = {
 
 type Options = {
     jobCategories: SelectOption[];
-    skills: SelectOption[];
+    skillGroups: SkillGroup[];
     provinces: SelectOption[];
     cities: SelectOption[];
     employmentTypes: SelectOption[];
@@ -304,30 +317,81 @@ export function EmployerJobForm({ headTitle, title, description, submitLabel, ac
                         </div>
                     </Section>
 
-                    <Section title="Skill">
-                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                            {options.skills.map((skill) => {
-                                const checked = form.data.skill_ids.includes(skill.value);
+                    <Section title="Pilihan Skill" description="Pilih skill yang relevan untuk mempercepat pencocokan kandidat terbaik.">
+                        <div className="space-y-5">
+                            {options.skillGroups.map((group) => {
+                                const selectedInGroup = group.categories.reduce(
+                                    (sum, cat) => sum + cat.skills.filter((skill) => form.data.skill_ids.includes(skill.value)).length,
+                                    0,
+                                );
 
                                 return (
-                                    <label key={skill.value} className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={checked}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    'skill_ids',
-                                                    event.target.checked
-                                                        ? [...form.data.skill_ids, skill.value]
-                                                        : form.data.skill_ids.filter((item) => item !== skill.value),
-                                                )
-                                            }
-                                            className="size-4 rounded border-input"
-                                        />
-                                        {skill.label}
-                                    </label>
+                                    <div key={group.type} className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-sm font-semibold text-foreground">{group.label}</h4>
+                                            {selectedInGroup > 0 && (
+                                                <Badge variant="secondary">{selectedInGroup} dipilih</Badge>
+                                            )}
+                                        </div>
+                                        <Accordion type="multiple" className="divide-y rounded-lg border">
+                                            {group.categories.map((cat) => {
+                                                const selectedInCat = cat.skills.filter((skill) =>
+                                                    form.data.skill_ids.includes(skill.value),
+                                                ).length;
+
+                                                return (
+                                                    <AccordionItem
+                                                        key={cat.category}
+                                                        value={`${group.type}-${cat.category}`}
+                                                        className="border-b-0 px-3"
+                                                    >
+                                                        <AccordionTrigger className="hover:no-underline">
+                                                            <span className="flex items-center gap-2 text-sm font-medium">
+                                                                {cat.category}
+                                                                {selectedInCat > 0 && (
+                                                                    <Badge variant="secondary">{selectedInCat}</Badge>
+                                                                )}
+                                                            </span>
+                                                        </AccordionTrigger>
+                                                        <AccordionContent>
+                                                            <div className="grid gap-2 pb-2 sm:grid-cols-2">
+                                                                {cat.skills.map((skill) => {
+                                                                    const checked = form.data.skill_ids.includes(skill.value);
+
+                                                                    return (
+                                                                        <label
+                                                                            key={skill.value}
+                                                                            className="flex items-center gap-2.5 rounded-md border px-3 py-2 text-sm"
+                                                                        >
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={checked}
+                                                                                onChange={(event) =>
+                                                                                    form.setData(
+                                                                                        'skill_ids',
+                                                                                        event.target.checked
+                                                                                            ? [...form.data.skill_ids, skill.value]
+                                                                                            : form.data.skill_ids.filter((item) => item !== skill.value),
+                                                                                    )
+                                                                                }
+                                                                                className="size-4 rounded border-input"
+                                                                            />
+                                                                            {skill.label}
+                                                                        </label>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </AccordionContent>
+                                                    </AccordionItem>
+                                                );
+                                            })}
+                                        </Accordion>
+                                    </div>
                                 );
                             })}
+                            <p className="text-xs text-muted-foreground">
+                                Kamu dapat memilih beberapa skill dari sub-kategori yang tersedia.
+                            </p>
                         </div>
                     </Section>
 

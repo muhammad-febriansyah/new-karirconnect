@@ -7,6 +7,7 @@ use App\Enums\EmploymentType;
 use App\Enums\ExperienceLevel;
 use App\Enums\JobStatus;
 use App\Enums\ScreeningQuestionType;
+use App\Enums\SkillType;
 use App\Enums\WorkArrangement;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employer\StoreJobRequest;
@@ -168,9 +169,7 @@ class JobController extends Controller
             'jobCategories' => JobCategory::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name'])
                 ->map(fn ($item) => ['value' => (string) $item->id, 'label' => $item->name])
                 ->all(),
-            'skills' => Skill::query()->where('is_active', true)->orderBy('name')->get(['id', 'name'])
-                ->map(fn ($item) => ['value' => (string) $item->id, 'label' => $item->name])
-                ->all(),
+            'skillGroups' => $this->skillGroups(),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name'])
                 ->map(fn ($item) => ['value' => (string) $item->id, 'label' => $item->name])
                 ->all(),
@@ -183,6 +182,41 @@ class JobController extends Controller
             'educationLevels' => EducationLevel::selectItems(),
             'statusOptions' => JobStatus::selectItems(),
         ];
+    }
+
+    /**
+     * Active skills grouped for the recruiter picker: type (soft/hard) →
+     * category → individual skills, preserving the seeded taxonomy order.
+     *
+     * @return array<int, array{type: string, label: string, categories: array<int, array{category: string, skills: array<int, array{value: string, label: string}>}>}>
+     */
+    private function skillGroups(): array
+    {
+        $skills = Skill::query()
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get(['id', 'name', 'type', 'category']);
+
+        return collect(SkillType::cases())
+            ->map(fn (SkillType $type): array => [
+                'type' => $type->value,
+                'label' => $type->label(),
+                'categories' => $skills
+                    ->filter(fn (Skill $skill): bool => $skill->type === $type)
+                    ->groupBy('category')
+                    ->map(fn ($items, string $category): array => [
+                        'category' => $category,
+                        'skills' => $items
+                            ->map(fn (Skill $skill): array => ['value' => (string) $skill->id, 'label' => $skill->name])
+                            ->values()
+                            ->all(),
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->filter(fn (array $group): bool => count($group['categories']) > 0)
+            ->values()
+            ->all();
     }
 
     /**
