@@ -44,6 +44,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
+    { href: '/', label: 'Home' },
     { href: '/jobs', label: 'Lowongan' },
     { href: '/companies', label: 'Perusahaan' },
     { href: '/employee/career-coach', label: 'AI Career Coach' },
