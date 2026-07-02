@@ -123,24 +123,8 @@ class HomeService
             return 'urgent';
         }
 
-        if ($j->experience_level === ExperienceLevel::Entry) {
-            return 'fresh_grad';
-        }
-
-        if ($j->work_arrangement === WorkArrangement::Remote) {
-            return 'remote';
-        }
-
-        if ($j->salary_max !== null && $j->salary_max >= 20_000_000) {
-            return 'high_salary';
-        }
-
-        if ($j->applications_count < 20) {
+        if ($j->applications_count < 15) {
             return 'few_applicants';
-        }
-
-        if ($j->is_featured) {
-            return 'featured';
         }
 
         return null;
@@ -166,7 +150,7 @@ class HomeService
                 ->with(['industry:id,name'])
                 ->withCount(['jobs as open_jobs_count' => fn ($q) => $q->where('status', JobStatus::Published)])
                 ->orderByDesc('open_jobs_count')
-                ->limit(6)
+                ->limit(8)
                 ->get()
                 ->map(fn (Company $c) => $this->companyRow($c, 0, null))
                 ->all();

@@ -302,7 +302,7 @@ function FilterSelect({
 
 const HIGHLIGHTS: Record<JobHighlight, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
     urgent: { label: 'Butuh Cepat', icon: Flame, className: 'bg-orange-500 text-white' },
-    few_applicants: { label: 'Pelamar Sedikit', icon: Zap, className: 'bg-amber-400 text-amber-950' },
+    few_applicants: { label: 'Pelamar Masih Sedikit', icon: Zap, className: 'bg-amber-400 text-amber-950' },
     fresh_grad: { label: 'Fresh Graduate', icon: GraduationCap, className: 'bg-emerald-500 text-white' },
     remote: { label: 'Kerja Remote', icon: Globe, className: 'bg-brand-blue text-white' },
     high_salary: { label: 'Gaji Tinggi', icon: Banknote, className: 'bg-violet-500 text-white' },
