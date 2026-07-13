@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\CompanyMember;
 use App\Models\Industry;
 use App\Models\User;
+use Database\Seeders\SubscriptionPlanSeeder;
 use Illuminate\Support\Facades\Hash;
 
 function adminUser(): User
@@ -88,6 +89,40 @@ test('duplicate owner email is rejected', function () {
         ->assertSessionHasErrors('owner_email');
 
     expect(Company::query()->where('name', 'Firma Dewi')->exists())->toBeFalse();
+});
+
+test('bare-domain website without a scheme is accepted and normalized', function () {
+    $this->actingAs(adminUser())
+        ->post('/admin/companies', [
+            'owner_name' => 'Shafira',
+            'owner_email' => 'shafira@kmd.co.id',
+            'password' => 'rahasia123',
+            'name' => 'PT KMD Indonesia',
+            'website' => 'Kindocare.id',
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $company = Company::query()->where('name', 'PT KMD Indonesia')->first();
+    expect($company)->not->toBeNull()
+        ->and($company->website)->toBe('https://Kindocare.id');
+});
+
+test('admin-created company gets a trial so it can post jobs immediately', function () {
+    $this->seed(SubscriptionPlanSeeder::class);
+
+    $this->actingAs(adminUser())
+        ->post('/admin/companies', [
+            'owner_name' => 'Rina',
+            'owner_email' => 'rina@firma.co.id',
+            'password' => 'rahasia123',
+            'name' => 'Firma Rina',
+        ])
+        ->assertRedirect();
+
+    $company = Company::query()->where('name', 'Firma Rina')->first();
+    expect($company->activeSubscription())->not->toBeNull()
+        ->and($company->activeSubscription()->plan->slug)->toBe('trial');
 });
 
 test('non-admin cannot access the create company endpoints', function () {

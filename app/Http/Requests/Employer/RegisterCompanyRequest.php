@@ -26,4 +26,15 @@ class RegisterCompanyRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:32'],
         ];
     }
+
+    /**
+     * Accept bare domains like "example.id" by prefixing a scheme so the
+     * `url` rule passes.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('website') && ! preg_match('#^https?://#i', (string) $this->input('website'))) {
+            $this->merge(['website' => 'https://'.ltrim((string) $this->input('website'), '/')]);
+        }
+    }
 }

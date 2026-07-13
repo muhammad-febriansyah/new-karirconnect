@@ -65,8 +65,15 @@ class UpdateCompanyRequest extends FormRequest
             ->values()
             ->all();
 
+        $website = $this->input('website');
+
+        if (filled($website) && ! preg_match('#^https?://#i', (string) $website)) {
+            $website = 'https://'.ltrim((string) $website, '/');
+        }
+
         $this->merge([
             'slug' => $this->filled('slug') ? str($this->input('slug'))->slug()->value() : null,
+            'website' => $website,
             'offices' => $offices,
         ]);
     }

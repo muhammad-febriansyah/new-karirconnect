@@ -33,6 +33,17 @@ class StoreCompanyAccountRequest extends FormRequest
     }
 
     /**
+     * Accept bare domains like "example.id" by prefixing a scheme so the
+     * `url` rule passes. Admins routinely type websites without http(s)://.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('website') && ! preg_match('#^https?://#i', (string) $this->input('website'))) {
+            $this->merge(['website' => 'https://'.ltrim((string) $this->input('website'), '/')]);
+        }
+    }
+
+    /**
      * @return array<string, string>
      */
     public function attributes(): array

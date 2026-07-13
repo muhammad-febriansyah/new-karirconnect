@@ -10,11 +10,14 @@ use App\Models\CompanyBadge;
 use App\Models\User;
 use App\Notifications\CompanyApproved;
 use App\Notifications\CompanyStatusChangedNotification;
+use App\Services\Billing\BillingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CompanyService
 {
+    public function __construct(private readonly BillingService $billing) {}
+
     /**
      * Create a brand-new company for an employer user. The owner is added as
      * a CompanyMember with role=owner so authorization checks work uniformly.
@@ -85,6 +88,11 @@ class CompanyService
                     ],
                 );
             }
+
+            // Admin-provisioned accounts must be able to post jobs immediately,
+            // so grant the free trial here instead of waiting for the employer
+            // onboarding flow that manually-created owners never go through.
+            $this->billing->grantTrial($company);
 
             return $company->refresh();
         });
