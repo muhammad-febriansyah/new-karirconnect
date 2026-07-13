@@ -38,6 +38,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/lib/format-date';
+import { stripHtml } from '@/lib/sanitize-html';
 import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
@@ -706,7 +707,7 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                             </div>
                             {job.company_about && (
                                 <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-muted-foreground">
-                                    {job.company_about}
+                                    {stripHtml(job.company_about)}
                                 </p>
                             )}
                             {!job.is_anonymous && job.company.slug && (
