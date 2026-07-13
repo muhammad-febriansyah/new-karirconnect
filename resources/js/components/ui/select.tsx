@@ -52,9 +52,7 @@ function SelectContent({
   className,
   children,
   position = "popper",
-  side = "bottom",
   sideOffset = 4,
-  align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
@@ -68,10 +66,7 @@ function SelectContent({
           className
         )}
         position={position}
-        side={side}
         sideOffset={sideOffset}
-        avoidCollisions={false}
-        align={align}
         {...props}
       >
         <SelectScrollUpButton />
