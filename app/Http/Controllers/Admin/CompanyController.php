@@ -98,8 +98,20 @@ class CompanyController extends Controller
             'badges:id,company_id,code,name,description,tone,is_active,awarded_at',
         ]);
 
+        $subscription = $company->activeSubscription()?->loadMissing('plan:id,name,slug,job_post_quota');
+
         return Inertia::render('admin/companies/show', [
             'company' => $company,
+            'logoUrl' => $company->logo_path ? asset('storage/'.$company->logo_path) : null,
+            'subscription' => $subscription === null ? null : [
+                'plan_name' => $subscription->plan?->name,
+                'plan_slug' => $subscription->plan?->slug,
+                'status' => $subscription->status->value,
+                'starts_at' => $subscription->starts_at,
+                'ends_at' => $subscription->ends_at,
+                'jobs_posted_count' => $subscription->jobs_posted_count,
+                'job_post_quota' => $subscription->plan?->job_post_quota,
+            ],
         ]);
     }
 
