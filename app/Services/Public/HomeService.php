@@ -86,12 +86,12 @@ class HomeService
     private function featuredJobs(): array
     {
         return Job::query()
-            ->with(['company:id,name,slug,logo_path', 'category:id,name', 'city:id,name'])
+            ->with(['company:id,name,slug,logo_path,verification_status', 'category:id,name', 'city:id,name', 'skills:id,name'])
             ->where('status', JobStatus::Published)
             ->whereNotNull('published_at')
             ->orderByDesc('is_featured')
             ->latest('published_at')
-            ->limit(9)
+            ->limit(6)
             ->get()
             ->map(fn (Job $j) => [
                 'slug' => $j->slug,
@@ -99,13 +99,16 @@ class HomeService
                 'company_name' => $j->company?->name,
                 'company_slug' => $j->company?->slug,
                 'company_logo' => $j->company?->logo_path ? asset('storage/'.$j->company->logo_path) : null,
+                'company_verified' => $j->company?->verification_status?->value === 'verified',
                 'category' => $j->category?->name,
                 'city' => $j->city?->name,
                 'employment_type' => $j->employment_type?->value,
                 'work_arrangement' => $j->work_arrangement?->value,
                 'experience_level' => $j->experience_level?->value,
-                'salary_min' => $j->salary_min,
-                'salary_max' => $j->salary_max,
+                'salary_min' => $j->is_salary_visible ? $j->salary_min : null,
+                'salary_max' => $j->is_salary_visible ? $j->salary_max : null,
+                'is_salary_visible' => (bool) $j->is_salary_visible,
+                'skills' => $j->skills->take(5)->map(fn ($s) => $s->name)->all(),
                 'applications_count' => (int) $j->applications_count,
                 'is_featured' => (bool) $j->is_featured,
                 'highlight' => $this->jobHighlight($j),

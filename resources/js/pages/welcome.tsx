@@ -1,7 +1,9 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
+    BadgeCheck,
     Banknote,
+    Bookmark,
     Briefcase,
     Building2,
     Check,
@@ -22,7 +24,7 @@ import {
     Star,
     TrendingUp,
     Users,
-    Zap,
+    Wallet,
 } from 'lucide-react';
 import {  useMemo, useState } from 'react';
 import type {FormEvent} from 'react';
@@ -49,6 +51,9 @@ type FeaturedJob = {
     experience_level: string | null;
     salary_min: number | null;
     salary_max: number | null;
+    is_salary_visible: boolean;
+    company_verified: boolean;
+    skills: string[];
     applications_count: number;
     is_featured: boolean;
     highlight: JobHighlight | null;
@@ -132,21 +137,7 @@ type Props = {
     home: Home;
 };
 
-const idr = (v: number | null) => (v == null ? null : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v));
-
 const compact = (v: number) => new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
-
-const salaryRange = (min: number | null, max: number | null) => {
-    if (!min && !max) {
-        return null;
-    }
-
-    if (min && max) {
-        return `${idr(min)} – ${idr(max)}`;
-    }
-
-    return idr(min ?? max);
-};
 
 const initials = (name: string) =>
     name
@@ -156,34 +147,54 @@ const initials = (name: string) =>
         .join('')
         .toUpperCase();
 
-/** Relative "x jam lalu" label from an ISO timestamp. */
-function timeAgo(iso: string | null): string | null {
+/** Compact rupiah label, e.g. "Rp 5 jt" / "Rp 800rb". Mirrors the /jobs card. */
+const formatRupiahShort = (value: number | null): string => {
+    if (!value) {
+        return '';
+    }
+
+    if (value >= 1_000_000) {
+        return `Rp ${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)} jt`;
+    }
+
+    if (value >= 1_000) {
+        return `Rp ${(value / 1_000).toFixed(0)}rb`;
+    }
+
+    return `Rp ${value}`;
+};
+
+/** Short relative label ("Baru saja", "3j lalu"). Mirrors the /jobs card. */
+const formatRelative = (iso: string | null): string => {
     if (!iso) {
-        return null;
+        return '';
     }
 
-    const then = new Date(iso).getTime();
-    const diff = Date.now() - then;
-    const mins = Math.round(diff / 60000);
+    const ms = Date.now() - new Date(iso).getTime();
+    const min = Math.floor(ms / 60000);
 
-    if (mins < 60) {
-        return `${Math.max(1, mins)} menit lalu`;
+    if (min < 1) {
+        return 'Baru saja';
     }
 
-    const hours = Math.round(mins / 60);
-
-    if (hours < 24) {
-        return `${hours} jam lalu`;
+    if (min < 60) {
+        return `${min} menit lalu`;
     }
 
-    const days = Math.round(hours / 24);
+    const hr = Math.floor(min / 60);
 
-    if (days < 30) {
-        return `${days} hari lalu`;
+    if (hr < 24) {
+        return `${hr}j lalu`;
     }
 
-    return `${Math.round(days / 30)} bulan lalu`;
-}
+    const day = Math.floor(hr / 24);
+
+    if (day < 30) {
+        return `${day}h lalu`;
+    }
+
+    return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+};
 
 /**
  * Searchable location picker for the hero search bar. Uses Command inside a
@@ -300,102 +311,105 @@ function FilterSelect({
     );
 }
 
-const HIGHLIGHTS: Record<JobHighlight, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
-    urgent: { label: 'Butuh Cepat', icon: Flame, className: 'bg-orange-500 text-white' },
-    few_applicants: { label: 'Pelamar Masih Sedikit', icon: Zap, className: 'bg-amber-400 text-amber-950' },
-    fresh_grad: { label: 'Fresh Graduate', icon: GraduationCap, className: 'bg-emerald-500 text-white' },
-    remote: { label: 'Kerja Remote', icon: Globe, className: 'bg-brand-blue text-white' },
-    high_salary: { label: 'Gaji Tinggi', icon: Banknote, className: 'bg-violet-500 text-white' },
-    featured: { label: 'Pilihan', icon: Sparkles, className: 'bg-sky-500 text-white' },
-};
-
 function JobCard({ job }: { job: FeaturedJob }) {
-    const salary = salaryRange(job.salary_min, job.salary_max);
-    const posted = timeAgo(job.published_at);
-    const highlight = job.highlight ? HIGHLIGHTS[job.highlight] : null;
+    const salary =
+        job.is_salary_visible && job.salary_min
+            ? job.salary_max && job.salary_max !== job.salary_min
+                ? `${formatRupiahShort(job.salary_min)} – ${formatRupiahShort(job.salary_max)}`
+                : formatRupiahShort(job.salary_min)
+            : 'Negotiable';
+
+    const verified = job.company_verified;
+    const isHot = job.is_featured;
 
     return (
-        <div className="group/card relative flex flex-col rounded-2xl border border-border/60 bg-background p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10">
-            {/* Highlight badge */}
-            {highlight && (
-                <span
-                    className={cn(
-                        'mb-3 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm',
-                        highlight.className,
-                    )}
+        <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5">
+            {/* Top decorative gradient strip on hover */}
+            <span
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
+            />
+
+            <div className="flex items-start justify-between gap-2 p-4 pb-3">
+                {isHot ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm">
+                        <Flame className="size-3" /> Loker Butuh Cepat
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                        Lowongan
+                    </span>
+                )}
+                <button
+                    type="button"
+                    aria-label="Simpan lowongan"
+                    className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-brand-blue/10 hover:text-brand-blue"
                 >
-                    <highlight.icon className="size-3" /> {highlight.label}
-                </span>
-            )}
+                    <Bookmark className="size-4" />
+                </button>
+            </div>
 
-            {/* Company + title */}
-            <div className="flex items-start gap-3">
-                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 ring-1 ring-border/60">
-                    {job.company_logo ? (
-                        <img src={job.company_logo} alt={job.company_name ?? ''} loading="lazy" className="size-full object-cover" />
-                    ) : (
-                        <span className="bg-gradient-to-br from-brand-blue to-brand-cyan bg-clip-text text-sm font-bold text-transparent">
-                            {initials(job.company_name ?? job.title)}
+            <Link href={`/jobs/${job.slug}`} className="flex flex-1 flex-col gap-3 px-4 pb-4">
+                <div className="flex items-start gap-3">
+                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-background ring-1 ring-border/30">
+                        {job.company_logo ? (
+                            <img src={job.company_logo} alt={job.company_name ?? ''} loading="lazy" className="size-full object-contain p-1" />
+                        ) : (
+                            <span className="text-sm font-semibold text-brand-navy">{initials(job.company_name ?? job.title)}</span>
+                        )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="line-clamp-2 text-base font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-brand-blue">
+                            {job.title}
+                        </h3>
+                        <div className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                            <span className="truncate">{job.company_name ?? '-'}</span>
+                            {verified && (
+                                <BadgeCheck className="size-3.5 shrink-0 fill-brand-blue text-white" aria-label="Verified" />
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <ul className="space-y-1.5 text-sm">
+                    {job.employment_type && (
+                        <li className="flex items-center gap-2 text-brand-blue">
+                            <Briefcase className="size-3.5 shrink-0" />
+                            <span className="font-medium">{formatStatus(job.employment_type)}</span>
+                        </li>
+                    )}
+                    <li className="flex items-center gap-2 text-foreground/80">
+                        <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">
+                            {job.work_arrangement ? `${formatStatus(job.work_arrangement)} · ` : ''}
+                            {job.city ?? 'Lokasi fleksibel'}
                         </span>
+                    </li>
+                    {job.experience_level && (
+                        <li className="flex items-center gap-2 text-foreground/80">
+                            <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+                            <span>Min. {formatStatus(job.experience_level)}</span>
+                        </li>
                     )}
-                </div>
-                <div className="min-w-0 flex-1">
-                    <Link
-                        href={`/jobs/${job.slug}`}
-                        className="line-clamp-2 text-sm font-bold leading-snug text-brand-navy transition-colors hover:text-brand-blue"
-                    >
-                        {job.title}
-                    </Link>
-                    <div className="mt-0.5 truncate text-xs text-muted-foreground">{job.company_name ?? '-'}</div>
-                </div>
-            </div>
+                    <li className="flex items-center gap-2 text-foreground/80">
+                        <Wallet className="size-3.5 shrink-0 text-muted-foreground" />
+                        <span className="font-medium">{salary}</span>
+                    </li>
+                </ul>
+            </Link>
 
-            {/* Meta badges */}
-            <div className="mt-4 flex flex-wrap gap-1.5">
-                {job.employment_type && (
-                    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-brand-navy">
-                        {formatStatus(job.employment_type)}
-                    </span>
-                )}
-                {job.city && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-brand-navy">
-                        <MapPin className="size-3 text-muted-foreground" /> {job.city}
-                    </span>
-                )}
-                {job.work_arrangement && (
-                    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-brand-navy">
-                        {formatStatus(job.work_arrangement)}
-                    </span>
-                )}
-                {job.experience_level && (
-                    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-brand-navy">
-                        {formatStatus(job.experience_level)}
-                    </span>
-                )}
-            </div>
-
-            {salary && <div className="mt-4 text-sm font-bold text-brand-navy">{salary}</div>}
-
-            {/* Footer */}
-            <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-4">
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                        <Users className="size-3" /> {compact(job.applications_count)} pelamar
-                    </span>
-                    {posted && (
-                        <>
-                            <span aria-hidden>·</span>
-                            <span className="inline-flex items-center gap-1">
-                                <Clock className="size-3" /> {posted}
-                            </span>
-                        </>
-                    )}
+            <div className="flex items-center justify-between gap-2 border-t bg-muted/20 px-4 py-2.5 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                    <Clock className="size-3.5" />
+                    {job.published_at ? `Diposting ${formatRelative(job.published_at)}` : 'Baru saja'}
                 </span>
-                <Button asChild size="sm" className="h-8 rounded-lg bg-gradient-to-r from-brand-blue to-[#1565E0] px-4 text-xs font-bold text-white shadow-sm shadow-brand-blue/30 hover:shadow-md">
-                    <Link href={`/jobs/${job.slug}`}>Lamar</Link>
-                </Button>
+                {job.skills.length > 0 && (
+                    <span className="hidden truncate font-medium text-foreground/70 sm:inline">
+                        {job.skills.slice(0, 2).join(' · ')}
+                    </span>
+                )}
             </div>
-        </div>
+        </article>
     );
 }
 
