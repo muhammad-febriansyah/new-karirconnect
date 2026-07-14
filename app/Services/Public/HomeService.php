@@ -91,7 +91,7 @@ class HomeService
             ->whereNotNull('published_at')
             ->orderByDesc('is_featured')
             ->latest('published_at')
-            ->limit(6)
+            ->limit(18)
             ->get()
             ->map(fn (Job $j) => [
                 'slug' => $j->slug,
