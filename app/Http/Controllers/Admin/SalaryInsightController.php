@@ -35,7 +35,7 @@ class SalaryInsightController extends Controller
                     'source' => $insight->source,
                     'last_updated_at' => optional($insight->last_updated_at)->toIso8601String(),
                 ]),
-            'cities' => City::query()->orderBy('name')->limit(100)->get(['id', 'name']),
+            'cities' => City::query()->orderBy('name')->get(['id', 'name']),
             'experienceLevels' => collect(ExperienceLevel::cases())
                 ->map(fn (ExperienceLevel $level): array => [
                     'value' => $level->value,

@@ -20,6 +20,7 @@ import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AppLogo from '@/components/app-logo';
 import { DatePickerField } from '@/components/form/date-picker-field';
+import { SelectControl } from '@/components/form/select-control';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,13 +28,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -289,25 +283,16 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                             <InputError message={form.errors.date_of_birth} />
                                         </Field>
                                         <Field label="Jenis Kelamin">
-                                            <Select
+                                            <SelectControl
                                                 value={form.data.gender}
                                                 onValueChange={(v) => form.setData('gender', v)}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {options.genders.map((o) => (
-                                                        <SelectItem key={o.value} value={o.value}>
-                                                            {o.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                options={options.genders}
+                                                placeholder="Pilih"
+                                            />
                                             <InputError message={form.errors.gender} />
                                         </Field>
                                         <Field label="Provinsi">
-                                            <Select
+                                            <SelectControl
                                                 value={form.data.province_id}
                                                 onValueChange={(v) => {
                                                     form.setData((prev) => ({
@@ -316,37 +301,21 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                                         city_id: '',
                                                     }));
                                                 }}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih provinsi" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {options.provinces.map((o) => (
-                                                        <SelectItem key={o.value} value={o.value}>
-                                                            {o.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                options={options.provinces}
+                                                placeholder="Pilih provinsi"
+                                                searchPlaceholder="Cari provinsi…"
+                                            />
                                             <InputError message={form.errors.province_id} />
                                         </Field>
                                         <Field label="Kota">
-                                            <Select
+                                            <SelectControl
                                                 value={form.data.city_id}
                                                 onValueChange={(v) => form.setData('city_id', v)}
                                                 disabled={!form.data.province_id}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder={form.data.province_id ? 'Pilih kota' : 'Pilih provinsi dulu'} />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {filteredCities.map((o) => (
-                                                        <SelectItem key={o.value} value={o.value}>
-                                                            {o.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                options={filteredCities}
+                                                placeholder={form.data.province_id ? 'Pilih kota' : 'Pilih provinsi dulu'}
+                                                searchPlaceholder="Cari kota…"
+                                            />
                                             <InputError message={form.errors.city_id} />
                                         </Field>
                                     </FieldGroup>
@@ -366,21 +335,12 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                             <InputError message={form.errors.current_position} />
                                         </Field>
                                         <Field label="Level Pengalaman">
-                                            <Select
+                                            <SelectControl
                                                 value={form.data.experience_level}
                                                 onValueChange={(v) => form.setData('experience_level', v)}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih level" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {options.experience_levels.map((o) => (
-                                                        <SelectItem key={o.value} value={o.value}>
-                                                            {o.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                options={options.experience_levels}
+                                                placeholder="Pilih level"
+                                            />
                                             <InputError message={form.errors.experience_level} />
                                         </Field>
                                     </FieldGroup>
@@ -669,7 +629,7 @@ export default function EmployeeOnboarding({ user, profile, options }: Props) {
                                     </FieldGroup>
                                 </SectionCard>
 
-                                <div className="sticky bottom-4 z-10 flex flex-col-reverse gap-2 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                                <div className="sticky bottom-4 z-10 flex flex-col-reverse gap-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -775,7 +735,7 @@ function WelcomeNote({ name, onStart }: { name: string; onStart: () => void }) {
                         {WELCOME_FEATURES.map((feature) => (
                             <div
                                 key={feature.title}
-                                className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
+                                className="flex items-start gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-xs"
                             >
                                 <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl', feature.tone)}>
                                     <feature.icon className="size-5" />
@@ -793,7 +753,7 @@ function WelcomeNote({ name, onStart }: { name: string; onStart: () => void }) {
                 <div className="space-y-5">
                     <WelcomeIllustration />
 
-                    <Card className="border-border/70 shadow-sm">
+                    <Card className="border-border/60 shadow-xs">
                         <CardContent className="space-y-5 p-5 sm:p-6">
                             <div className="space-y-1">
                                 <h2 className="text-lg font-bold tracking-tight text-brand-navy">4 Langkah Mudah</h2>
@@ -869,7 +829,7 @@ function WelcomeNote({ name, onStart }: { name: string; onStart: () => void }) {
 
 function WelcomeIllustration() {
     return (
-        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-blue/10 via-brand-cyan/5 to-transparent p-6">
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-brand-blue/10 via-brand-cyan/5 to-transparent p-6">
             <div className="absolute -right-6 -top-6 size-24 rounded-full bg-brand-cyan/15 blur-2xl" />
             <div className="absolute bottom-4 left-6 text-brand-blue/40">
                 <Sparkles className="size-5" />
@@ -899,10 +859,10 @@ function WelcomeIllustration() {
 
                 {/* floating badges */}
                 <div className="flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-sm">
+                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-xs">
                         <Briefcase className="size-4 text-brand-blue" /> Loker baru
                     </span>
-                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-sm">
+                    <span className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-brand-navy shadow-xs">
                         <Search className="size-4 text-brand-cyan" /> Cari kerja
                     </span>
                 </div>
@@ -921,7 +881,7 @@ function SectionCard({
     children: React.ReactNode;
 }) {
     return (
-        <Card className="border-border/70 shadow-sm">
+        <Card className="border-border/60 shadow-xs">
             <CardContent className="space-y-4 p-5 sm:p-6">
                 <div className="space-y-1">
                     <h3 className="text-base font-bold tracking-tight text-brand-navy">{title}</h3>
@@ -996,7 +956,7 @@ function SkillPicker({
                                 'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                                 active
                                     ? 'border-brand-blue bg-brand-blue text-white'
-                                    : 'border-border/70 bg-card hover:border-brand-blue/40 hover:bg-brand-blue/5',
+                                    : 'border-border/60 bg-card hover:border-brand-blue/40 hover:bg-brand-blue/5',
                             )}
                         >
                             {o.label}

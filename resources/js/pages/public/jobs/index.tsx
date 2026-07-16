@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
+import { SelectControl } from '@/components/form/select-control';
 import { SeoHead } from '@/components/seo-head';
 import {
     Breadcrumb,
@@ -29,12 +30,14 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as jobBrowseIndex } from '@/routes/public/jobs';
 import type { SharedPageProps } from '@/types/shared';
+
+/** Sentinel for "no filter applied". Mapped back to null before hitting the server. */
+const ALL_FILTER = '__all__';
 
 type Option = { value: string; label: string };
 
@@ -206,7 +209,7 @@ function CompanyAvatar({ name, logoUrl }: { name: string; logoUrl: string | null
     );
 
     return (
-        <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-background ring-1 ring-border/30">
+        <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-background ring-1 ring-border/30">
             {logoUrl ? (
                 <img src={logoUrl} alt={name} className="size-full object-contain p-1" />
             ) : (
@@ -322,8 +325,8 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
                                 className={cn(
                                     'group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all sm:text-sm',
                                     active
-                                        ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-sm'
-                                        : 'border-border/70 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
+                                        ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-xs'
+                                        : 'border-border/60 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
                                 )}
                             >
                                 <span
@@ -341,7 +344,7 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
                 </div>
 
                 {/* Search panel — clean white card */}
-                <div className="rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-4">
+                <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-xs sm:p-4">
                     <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <div className="relative flex-1">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -474,7 +477,7 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
                         <button
                             type="button"
                             onClick={() => setShowAllCategories((prev) => !prev)}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-amber-500/85 to-orange-500/85 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-amber-500/85 to-orange-500/85 px-3 py-2 text-sm font-semibold text-white shadow-xs transition-all hover:shadow-md"
                         >
                             {showAllCategories ? 'Lebih Sedikit' : 'Lihat Semua'}
                             <ChevronDown className={cn('size-4 transition-transform', showAllCategories && 'rotate-180')} />
@@ -554,27 +557,22 @@ function FilterSelect({
     onChange: (value: string | null) => void;
     defaultLabel?: string;
 }) {
+    const withAllOption = useMemo(
+        () => [
+            { value: ALL_FILTER, label: defaultLabel ?? `Semua ${placeholder.toLowerCase()}` },
+            ...options,
+        ],
+        [defaultLabel, options, placeholder],
+    );
+
     return (
-        <Select
-            value={value ?? '__all__'}
-            onValueChange={(v) => onChange(v === '__all__' ? null : v)}
-        >
-            <SelectTrigger className="h-9 w-auto min-w-[120px] rounded-lg border-border/60 bg-background text-sm">
-                <SelectValue placeholder={placeholder}>
-                    {value
-                        ? options.find((o) => o.value === value)?.label ?? placeholder
-                        : (defaultLabel ?? placeholder)}
-                </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="__all__">{defaultLabel ?? `Semua ${placeholder.toLowerCase()}`}</SelectItem>
-                {options.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
+        <SelectControl
+            value={value ?? ALL_FILTER}
+            onValueChange={(v) => onChange(v === ALL_FILTER ? null : v)}
+            options={withAllOption}
+            searchPlaceholder={`Cari ${placeholder.toLowerCase()}…`}
+            className="h-9 w-auto min-w-[120px] rounded-lg border-border/60 bg-background text-sm"
+        />
     );
 }
 
@@ -628,7 +626,7 @@ function JobCard({ job }: { job: JobRow }) {
 
             <div className="flex items-start justify-between gap-2 p-4 pb-3">
                 {isHot ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-xs">
                         <Flame className="size-3" /> Loker Butuh Cepat
                     </span>
                 ) : (

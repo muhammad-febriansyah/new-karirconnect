@@ -21,19 +21,13 @@ import {
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { SelectControl } from '@/components/form/select-control';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -201,39 +195,22 @@ return options.cities;
                                         <InputError message={form.errors.tagline} />
                                     </Field>
                                     <Field label="Industri">
-                                        <Select
+                                        <SelectControl
                                             value={form.data.industry_id}
                                             onValueChange={(v) => form.setData('industry_id', v)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Pilih industri" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.industries.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            options={options.industries}
+                                            placeholder="Pilih industri"
+                                            searchPlaceholder="Cari industri…"
+                                        />
                                         <InputError message={form.errors.industry_id} />
                                     </Field>
                                     <Field label="Ukuran Perusahaan">
-                                        <Select
+                                        <SelectControl
                                             value={form.data.company_size_id}
                                             onValueChange={(v) => form.setData('company_size_id', v)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Pilih ukuran" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.company_sizes.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            options={options.company_sizes}
+                                            placeholder="Pilih ukuran"
+                                        />
                                         <InputError message={form.errors.company_size_id} />
                                     </Field>
                                     <Field label="Tahun Berdiri">
@@ -261,7 +238,7 @@ return options.cities;
                             <SectionCard title="Lokasi & Kontak">
                                 <FieldGroup>
                                     <Field label="Provinsi">
-                                        <Select
+                                        <SelectControl
                                             value={form.data.province_id}
                                             onValueChange={(v) =>
                                                 form.setData((prev) => ({
@@ -270,37 +247,21 @@ return options.cities;
                                                     city_id: '',
                                                 }))
                                             }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Pilih provinsi" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {options.provinces.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            options={options.provinces}
+                                            placeholder="Pilih provinsi"
+                                            searchPlaceholder="Cari provinsi…"
+                                        />
                                         <InputError message={form.errors.province_id} />
                                     </Field>
                                     <Field label="Kota">
-                                        <Select
+                                        <SelectControl
                                             value={form.data.city_id}
                                             onValueChange={(v) => form.setData('city_id', v)}
                                             disabled={!form.data.province_id}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder={form.data.province_id ? 'Pilih kota' : 'Pilih provinsi dulu'} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {filteredCities.map((o) => (
-                                                    <SelectItem key={o.value} value={o.value}>
-                                                        {o.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            options={filteredCities}
+                                            placeholder={form.data.province_id ? 'Pilih kota' : 'Pilih provinsi dulu'}
+                                            searchPlaceholder="Cari kota…"
+                                        />
                                         <InputError message={form.errors.city_id} />
                                     </Field>
                                     <Field label="Alamat Lengkap" full>
@@ -355,7 +316,7 @@ return options.cities;
                                 </FieldGroup>
                             </SectionCard>
 
-                            <div className="sticky bottom-4 flex justify-end gap-2 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur">
+                            <div className="sticky bottom-4 flex justify-end gap-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur">
                                 <Button
                                     type="submit"
                                     disabled={form.processing}
@@ -444,7 +405,7 @@ function WelcomeNote({
     return (
         <div className="space-y-6">
             {/* Hero */}
-            <Card className="overflow-hidden border-brand-blue/15 bg-[#f6f9fe] shadow-sm">
+            <Card className="overflow-hidden border-brand-blue/15 bg-[#f6f9fe] shadow-xs">
                 <CardContent className="grid items-center gap-6 p-6 sm:p-8 lg:grid-cols-2">
                     <div className="space-y-3">
                         <h1 className="text-2xl font-bold leading-tight tracking-tight text-brand-navy sm:text-3xl">
@@ -469,7 +430,7 @@ function WelcomeNote({
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     {WELCOME_FEATURES.map((feature) => (
-                        <Card key={feature.title} className="border-border/70 shadow-sm">
+                        <Card key={feature.title} className="border-border/60 shadow-xs">
                             <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
                                 <span className={cn('flex size-12 items-center justify-center rounded-2xl', feature.tone)}>
                                     <feature.icon className="size-6" />
@@ -485,7 +446,7 @@ function WelcomeNote({
             {/* CTA banner */}
             <div className="flex flex-col gap-4 rounded-2xl border border-brand-blue/20 bg-gradient-to-r from-brand-blue/8 via-brand-cyan/8 to-transparent p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <div className="flex items-start gap-3">
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-white shadow-sm">
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-white shadow-xs">
                         <Send className="size-5" />
                     </span>
                     <p className="max-w-md text-sm font-semibold leading-relaxed text-brand-navy sm:text-base">
@@ -530,7 +491,7 @@ function Stepper({ step }: { step: 1 | 2 | 3 }) {
     ] as const;
 
     return (
-        <ol className="flex items-center justify-between gap-2 rounded-2xl border border-border/70 bg-card p-3 shadow-sm">
+        <ol className="flex items-center justify-between gap-2 rounded-2xl border border-border/60 bg-card p-3 shadow-xs">
             {items.map((item, idx) => {
                 const Icon = item.icon;
                 const isActive = step === item.id;
@@ -629,18 +590,12 @@ return;
                 <div className="space-y-4">
                     <FieldGroup>
                         <Field label="Jenis Dokumen" full>
-                            <Select value={docType} onValueChange={setDocType}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {documentTypes.map((o) => (
-                                        <SelectItem key={o.value} value={o.value}>
-                                            {o.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SelectControl
+                                value={docType}
+                                onValueChange={setDocType}
+                                options={documentTypes}
+                                placeholder="Pilih jenis dokumen"
+                            />
                         </Field>
                     </FieldGroup>
 
@@ -704,7 +659,7 @@ return;
                 )}
             </SectionCard>
 
-            <div className="sticky bottom-4 flex flex-col-reverse gap-2 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+            <div className="sticky bottom-4 flex flex-col-reverse gap-2 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
                 <Button type="button" variant="ghost" onClick={onBack} className="rounded-xl">
                     <ArrowLeft className="size-4" /> Kembali
                 </Button>
@@ -723,7 +678,7 @@ return;
 
 function FinishStep({ company, onFinalize }: { company: Props['company']; onFinalize: () => void }) {
     return (
-        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 shadow-sm">
+        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 shadow-xs">
             <CardContent className="space-y-6 p-6 sm:p-8">
                 <div className="flex flex-col items-center text-center">
                     <span className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
@@ -868,7 +823,7 @@ function SectionCard({
     children: React.ReactNode;
 }) {
     return (
-        <Card className="border-border/70 shadow-sm">
+        <Card className="border-border/60 shadow-xs">
             <CardContent className="space-y-4 p-5 sm:p-6">
                 <div className="space-y-1">
                     <h3 className="text-base font-bold tracking-tight text-brand-navy">{title}</h3>

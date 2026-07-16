@@ -1,13 +1,21 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Save } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { useMemo, type FormEvent } from 'react';
 import { MoneyInput } from '@/components/form/money-input';
+import { SelectControl } from '@/components/form/select-control';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const EMPLOYMENT_TYPE_OPTIONS = [
+    { value: 'full_time', label: 'Full-time' },
+    { value: 'part_time', label: 'Part-time' },
+    { value: 'contract', label: 'Kontrak' },
+    { value: 'freelance', label: 'Freelance' },
+    { value: 'internship', label: 'Magang' },
+];
 
 type Options = {
     categories: Array<{ id: number; name: string; slug: string }>;
@@ -33,6 +41,16 @@ export default function EmployeeSalarySubmissionForm({ options }: Props) {
         is_anonymous: true,
     });
 
+    const categoryOptions = useMemo(
+        () => options.categories.map((c) => ({ value: String(c.id), label: c.name })),
+        [options.categories],
+    );
+
+    const cityOptions = useMemo(
+        () => options.cities.map((c) => ({ value: String(c.id), label: c.name })),
+        [options.cities],
+    );
+
     const submit = (e: FormEvent) => {
         e.preventDefault();
         post('/employee/salary-submissions');
@@ -57,36 +75,32 @@ export default function EmployeeSalarySubmissionForm({ options }: Props) {
                             </div>
                             <div className="space-y-2.5">
                                 <Label className="leading-none">Kategori</Label>
-                                <Select value={String(data.job_category_id)} onValueChange={(v) => setData('job_category_id', Number(v) || '')}>
-                                    <SelectTrigger className="w-full"><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
-                                    <SelectContent>
-                                        {options.categories.map((c) => (
-                                            <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={String(data.job_category_id)}
+                                    onValueChange={(v) => setData('job_category_id', Number(v) || '')}
+                                    options={categoryOptions}
+                                    placeholder="Pilih kategori"
+                                    searchPlaceholder="Cari kategori…"
+                                />
                             </div>
                             <div className="space-y-2.5">
                                 <Label className="leading-none">Kota</Label>
-                                <Select value={String(data.city_id)} onValueChange={(v) => setData('city_id', Number(v) || '')}>
-                                    <SelectTrigger className="w-full"><SelectValue placeholder="Pilih kota" /></SelectTrigger>
-                                    <SelectContent>
-                                        {options.cities.map((c) => (
-                                            <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={String(data.city_id)}
+                                    onValueChange={(v) => setData('city_id', Number(v) || '')}
+                                    options={cityOptions}
+                                    placeholder="Pilih kota"
+                                    searchPlaceholder="Cari kota…"
+                                />
                             </div>
                             <div className="space-y-2.5">
                                 <Label className="leading-none">Level Pengalaman</Label>
-                                <Select value={data.experience_level} onValueChange={(v) => setData('experience_level', v)}>
-                                    <SelectTrigger className="w-full"><SelectValue placeholder="Pilih level pengalaman" /></SelectTrigger>
-                                    <SelectContent>
-                                        {options.experience_levels.map((l) => (
-                                            <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={data.experience_level}
+                                    onValueChange={(v) => setData('experience_level', v)}
+                                    options={options.experience_levels}
+                                    placeholder="Pilih level pengalaman"
+                                />
                             </div>
                             <div className="space-y-2.5">
                                 <Label className="leading-none">Tahun Pengalaman</Label>
@@ -94,16 +108,12 @@ export default function EmployeeSalarySubmissionForm({ options }: Props) {
                             </div>
                             <div className="space-y-2.5">
                                 <Label className="leading-none">Tipe Kerja</Label>
-                                <Select value={data.employment_type} onValueChange={(v) => setData('employment_type', v)}>
-                                    <SelectTrigger className="w-full"><SelectValue placeholder="Pilih tipe kerja" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="full_time">Full-time</SelectItem>
-                                        <SelectItem value="part_time">Part-time</SelectItem>
-                                        <SelectItem value="contract">Kontrak</SelectItem>
-                                        <SelectItem value="freelance">Freelance</SelectItem>
-                                        <SelectItem value="internship">Magang</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={data.employment_type}
+                                    onValueChange={(v) => setData('employment_type', v)}
+                                    options={EMPLOYMENT_TYPE_OPTIONS}
+                                    placeholder="Pilih tipe kerja"
+                                />
                             </div>
                         </div>
                     </Section>

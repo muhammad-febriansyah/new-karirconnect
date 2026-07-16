@@ -33,7 +33,7 @@ class SalaryInsightController extends Controller
             'curatedInsights' => $curatedInsights,
             'options' => [
                 'categories' => JobCategory::query()->orderBy('name')->get(['id', 'name', 'slug']),
-                'cities' => City::query()->orderBy('name')->limit(50)->get(['id', 'name']),
+                'cities' => City::query()->orderBy('name')->get(['id', 'name']),
                 'experience_levels' => [
                     ['value' => 'entry', 'label' => 'Entry'],
                     ['value' => 'junior', 'label' => 'Junior'],

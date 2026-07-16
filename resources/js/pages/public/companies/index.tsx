@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
+import { SelectControl } from '@/components/form/select-control';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -22,16 +23,12 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as companiesIndex } from '@/routes/public/companies';
+
+/** Sentinel for "no filter applied". Mapped back to null before hitting the server. */
+const ALL_FILTER = '__all__';
 
 type Option = { value: string; label: string };
 
@@ -97,20 +94,14 @@ export default function PublicCompaniesIndex({ companies, filters, options }: Pr
         router.get(companiesIndex().url, {}, { preserveScroll: false, replace: true });
     };
 
-    const activeIndustryLabel = useMemo(
-        () =>
-            filters.industry_id
-                ? options.industries.find((i) => i.value === String(filters.industry_id))?.label
-                : null,
-        [filters.industry_id, options.industries],
+    const industryOptions = useMemo(
+        () => [{ value: ALL_FILTER, label: 'Semua industri' }, ...options.industries],
+        [options.industries],
     );
 
-    const activeProvinceLabel = useMemo(
-        () =>
-            filters.province_id
-                ? options.provinces.find((i) => i.value === String(filters.province_id))?.label
-                : null,
-        [filters.province_id, options.provinces],
+    const provinceOptions = useMemo(
+        () => [{ value: ALL_FILTER, label: 'Semua provinsi' }, ...options.provinces],
+        [options.provinces],
     );
 
     return (
@@ -159,8 +150,8 @@ export default function PublicCompaniesIndex({ companies, filters, options }: Pr
                             className={cn(
                                 'group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all sm:text-sm',
                                 filters.verified_only
-                                    ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-sm'
-                                    : 'border-border/70 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
+                                    ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-xs'
+                                    : 'border-border/60 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
                             )}
                         >
                             <span
@@ -188,8 +179,8 @@ export default function PublicCompaniesIndex({ companies, filters, options }: Pr
                                     className={cn(
                                         'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all sm:text-sm',
                                         active
-                                            ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-sm'
-                                            : 'border-border/70 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
+                                            ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-xs'
+                                            : 'border-border/60 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
                                     )}
                                 >
                                     <span className="line-clamp-1 max-w-[160px]">{industry.label}</span>
@@ -199,7 +190,7 @@ export default function PublicCompaniesIndex({ companies, filters, options }: Pr
                     </div>
 
                     {/* Search panel */}
-                    <div className="rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-4">
+                    <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-xs sm:p-4">
                         <form
                             onSubmit={onSubmit}
                             className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center"
@@ -222,47 +213,25 @@ export default function PublicCompaniesIndex({ companies, filters, options }: Pr
                         </form>
 
                         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3 text-sm">
-                            <Select
-                                value={filters.industry_id ? String(filters.industry_id) : '__all__'}
+                            <SelectControl
+                                value={filters.industry_id ? String(filters.industry_id) : ALL_FILTER}
                                 onValueChange={(v) =>
-                                    apply({ industry_id: v === '__all__' ? null : Number(v) })
+                                    apply({ industry_id: v === ALL_FILTER ? null : Number(v) })
                                 }
-                            >
-                                <SelectTrigger className="h-9 w-auto min-w-[140px] rounded-lg border-border/60 bg-background">
-                                    <SelectValue>
-                                        {activeIndustryLabel ?? 'Semua industri'}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="__all__">Semua industri</SelectItem>
-                                    {options.industries.map((c) => (
-                                        <SelectItem key={c.value} value={c.value}>
-                                            {c.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                options={industryOptions}
+                                searchPlaceholder="Cari industri…"
+                                className="h-9 w-auto min-w-[140px] rounded-lg border-border/60 bg-background"
+                            />
 
-                            <Select
-                                value={filters.province_id ? String(filters.province_id) : '__all__'}
+                            <SelectControl
+                                value={filters.province_id ? String(filters.province_id) : ALL_FILTER}
                                 onValueChange={(v) =>
-                                    apply({ province_id: v === '__all__' ? null : Number(v) })
+                                    apply({ province_id: v === ALL_FILTER ? null : Number(v) })
                                 }
-                            >
-                                <SelectTrigger className="h-9 w-auto min-w-[140px] rounded-lg border-border/60 bg-background">
-                                    <SelectValue>
-                                        {activeProvinceLabel ?? 'Semua provinsi'}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="__all__">Semua provinsi</SelectItem>
-                                    {options.provinces.map((c) => (
-                                        <SelectItem key={c.value} value={c.value}>
-                                            {c.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                options={provinceOptions}
+                                searchPlaceholder="Cari provinsi…"
+                                className="h-9 w-auto min-w-[140px] rounded-lg border-border/60 bg-background"
+                            />
 
                             {hasActiveFilters && (
                                 <button
@@ -359,7 +328,7 @@ function CompanyCard({ company }: { company: CompanyRow }) {
     return (
         <Link
             href={`/companies/${company.slug}`}
-            className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5"
+            className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5"
         >
             {/* Top accent strip */}
             <span
@@ -382,7 +351,7 @@ function CompanyCard({ company }: { company: CompanyRow }) {
 
             {/* Logo, hovers above the gradient strip */}
             <div className="relative -mt-8 px-5">
-                <div className="flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm ring-4 ring-card transition-transform group-hover:scale-105">
+                <div className="flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-background shadow-xs ring-4 ring-card transition-transform group-hover:scale-105">
                     {company.logo_url ? (
                         <img
                             src={company.logo_url}

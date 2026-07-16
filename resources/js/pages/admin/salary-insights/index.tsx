@@ -3,11 +3,12 @@ import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-t
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { ChevronDown } from 'lucide-react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import SalaryInsightController from '@/actions/App/Http/Controllers/Admin/SalaryInsightController';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { InputField } from '@/components/form/input-field';
 import { MoneyInput } from '@/components/form/money-input';
+import { SelectControl } from '@/components/form/select-control';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { ActionButton, ActionGroup } from '@/components/ui/action-button';
@@ -17,7 +18,6 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/format-date';
 import { formatRupiah } from '@/lib/format-rupiah';
@@ -66,6 +66,14 @@ export default function SalaryInsightsIndex({ items, cities, experienceLevels }:
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
     const form = useForm(defaults);
+
+    const cityOptions = useMemo(
+        () => [
+            { value: 'all', label: 'Nasional' },
+            ...cities.map((city) => ({ value: String(city.id), label: city.name })),
+        ],
+        [cities],
+    );
 
     const openFor = (item?: Item) => {
         setEditing(item ?? null);
@@ -235,26 +243,22 @@ export default function SalaryInsightsIndex({ items, cities, experienceLevels }:
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <Label>Kota</Label>
-                                <Select value={String(form.data.city_id)} onValueChange={(value) => form.setData('city_id', value === 'all' ? '' : value)}>
-                                    <SelectTrigger><SelectValue placeholder="Semua kota" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Nasional</SelectItem>
-                                        {cities.map((city) => (
-                                            <SelectItem key={city.id} value={String(city.id)}>{city.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={String(form.data.city_id)}
+                                    onValueChange={(value) => form.setData('city_id', value === 'all' ? '' : value)}
+                                    options={cityOptions}
+                                    placeholder="Semua kota"
+                                    searchPlaceholder="Cari kota…"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>Level Pengalaman</Label>
-                                <Select value={form.data.experience_level} onValueChange={(value) => form.setData('experience_level', value)}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih level pengalaman" /></SelectTrigger>
-                                    <SelectContent>
-                                        {experienceLevels.map((level) => (
-                                            <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={form.data.experience_level}
+                                    onValueChange={(value) => form.setData('experience_level', value)}
+                                    options={experienceLevels}
+                                    placeholder="Pilih level pengalaman"
+                                />
                             </div>
                         </div>
                         <div className="grid gap-4 md:grid-cols-3">

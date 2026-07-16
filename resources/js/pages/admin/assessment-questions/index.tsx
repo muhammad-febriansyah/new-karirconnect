@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import AssessmentQuestionController from '@/actions/App/Http/Controllers/Admin/AssessmentQuestionController';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { InputField } from '@/components/form/input-field';
+import { SelectControl } from '@/components/form/select-control';
 import { TextareaField } from '@/components/form/textarea-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
@@ -109,6 +110,10 @@ export default function AssessmentQuestionIndex({ items = [], skills, selectedSk
     const generateForm = useForm<GenerateFormShape>(defaultGenerateForm);
     const fieldErrors = form.errors as Record<string, string | undefined>;
     const isSkillDetail = selectedSkill !== null;
+    const skillOptions = useMemo(
+        () => skills.map((skill) => ({ value: String(skill.id), label: skill.name })),
+        [skills],
+    );
     const filteredSkills = useMemo(() => {
         const keyword = globalFilter.toLowerCase().trim();
 
@@ -547,14 +552,13 @@ export default function AssessmentQuestionIndex({ items = [], skills, selectedSk
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <Label>Skill</Label>
-                                <Select value={form.data.skill_id} onValueChange={(value) => form.setData('skill_id', value)}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih skill" /></SelectTrigger>
-                                    <SelectContent>
-                                        {skills.map((skill) => (
-                                            <SelectItem key={skill.id} value={String(skill.id)}>{skill.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={form.data.skill_id}
+                                    onValueChange={(value) => form.setData('skill_id', value)}
+                                    options={skillOptions}
+                                    placeholder="Pilih skill"
+                                    searchPlaceholder="Cari skill…"
+                                />
                                 {form.errors.skill_id && <p className="text-xs text-destructive">{form.errors.skill_id}</p>}
                             </div>
                             <div className="space-y-2">
@@ -647,14 +651,13 @@ export default function AssessmentQuestionIndex({ items = [], skills, selectedSk
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <Label>Skill</Label>
-                                <Select value={generateForm.data.skill_id} onValueChange={(value) => generateForm.setData('skill_id', value)}>
-                                    <SelectTrigger><SelectValue placeholder="Pilih skill" /></SelectTrigger>
-                                    <SelectContent>
-                                        {skills.map((skill) => (
-                                            <SelectItem key={skill.id} value={String(skill.id)}>{skill.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SelectControl
+                                    value={generateForm.data.skill_id}
+                                    onValueChange={(value) => generateForm.setData('skill_id', value)}
+                                    options={skillOptions}
+                                    placeholder="Pilih skill"
+                                    searchPlaceholder="Cari skill…"
+                                />
                                 {generateForm.errors.skill_id && <p className="text-xs text-destructive">{generateForm.errors.skill_id}</p>}
                             </div>
                             <div className="space-y-2">

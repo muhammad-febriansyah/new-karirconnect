@@ -204,7 +204,7 @@ class JobBrowseController extends Controller
                 ->map(fn ($c) => ['value' => (string) $c->id, 'label' => $c->name])->all(),
             'provinces' => Province::query()->orderBy('name')->get(['id', 'name'])
                 ->map(fn ($p) => ['value' => (string) $p->id, 'label' => $p->name])->all(),
-            'cities' => City::query()->orderBy('name')->limit(500)->get(['id', 'name', 'province_id'])
+            'cities' => City::query()->orderBy('name')->get(['id', 'name', 'province_id'])
                 ->map(fn ($c) => ['value' => (string) $c->id, 'label' => $c->name, 'province_id' => $c->province_id])->all(),
             'skills' => Skill::query()->where('is_active', true)->orderBy('name')->limit(200)->get(['id', 'name'])
                 ->map(fn ($s) => ['value' => (string) $s->id, 'label' => $s->name])->all(),

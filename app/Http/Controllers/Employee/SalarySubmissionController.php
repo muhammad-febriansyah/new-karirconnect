@@ -118,7 +118,7 @@ class SalarySubmissionController extends Controller
     {
         return [
             'categories' => JobCategory::query()->orderBy('name')->get(['id', 'name', 'slug']),
-            'cities' => City::query()->orderBy('name')->limit(100)->get(['id', 'name']),
+            'cities' => City::query()->orderBy('name')->get(['id', 'name']),
             'experience_levels' => [
                 ['value' => 'entry', 'label' => 'Entry'],
                 ['value' => 'junior', 'label' => 'Junior'],

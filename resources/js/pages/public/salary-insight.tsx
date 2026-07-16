@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useMemo, type FormEvent, type ReactNode } from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
+import { SelectControl } from '@/components/form/select-control';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -27,13 +28,6 @@ import {
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
@@ -144,6 +138,16 @@ export default function SalaryInsightPage({
         experience_level: filters.experience_level ?? '',
         employment_type: filters.employment_type ?? '',
     });
+
+    const categoryOptions = useMemo(
+        () => options.categories.map((c) => ({ value: String(c.id), label: c.name })),
+        [options.categories],
+    );
+
+    const cityOptions = useMemo(
+        () => options.cities.map((c) => ({ value: String(c.id), label: c.name })),
+        [options.cities],
+    );
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
@@ -258,71 +262,41 @@ export default function SalaryInsightPage({
                     </div>
 
                     {/* Filter panel */}
-                    <div className="rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-4">
+                    <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-xs sm:p-4">
                         <form
                             onSubmit={submit}
                             className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 md:items-center xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
                         >
-                            <Select
+                            <SelectControl
                                 value={String(data.job_category_id)}
                                 onValueChange={(v) => setData('job_category_id', Number(v) || '')}
-                            >
-                                <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background sm:h-12">
-                                    <SelectValue placeholder="Kategori pekerjaan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {options.categories.map((c) => (
-                                        <SelectItem key={c.id} value={String(c.id)}>
-                                            {c.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
+                                options={categoryOptions}
+                                placeholder="Kategori pekerjaan"
+                                searchPlaceholder="Cari kategori…"
+                                className="h-11 rounded-xl border-border/60 bg-background sm:h-12"
+                            />
+                            <SelectControl
                                 value={String(data.city_id)}
                                 onValueChange={(v) => setData('city_id', Number(v) || '')}
-                            >
-                                <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background sm:h-12">
-                                    <SelectValue placeholder="Kota" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {options.cities.map((c) => (
-                                        <SelectItem key={c.id} value={String(c.id)}>
-                                            {c.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
+                                options={cityOptions}
+                                placeholder="Kota"
+                                searchPlaceholder="Cari kota…"
+                                className="h-11 rounded-xl border-border/60 bg-background sm:h-12"
+                            />
+                            <SelectControl
                                 value={data.experience_level}
                                 onValueChange={(v) => setData('experience_level', v)}
-                            >
-                                <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background sm:h-12">
-                                    <SelectValue placeholder="Level pengalaman" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {options.experience_levels.map((l) => (
-                                        <SelectItem key={l.value} value={l.value}>
-                                            {l.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
+                                options={options.experience_levels}
+                                placeholder="Level pengalaman"
+                                className="h-11 rounded-xl border-border/60 bg-background sm:h-12"
+                            />
+                            <SelectControl
                                 value={data.employment_type}
                                 onValueChange={(v) => setData('employment_type', v)}
-                            >
-                                <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background sm:h-12">
-                                    <SelectValue placeholder="Tipe kerja" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {EMPLOYMENT_TYPE_OPTIONS.map((t) => (
-                                        <SelectItem key={t.value} value={t.value}>
-                                            {t.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                options={EMPLOYMENT_TYPE_OPTIONS}
+                                placeholder="Tipe kerja"
+                                className="h-11 rounded-xl border-border/60 bg-background sm:h-12"
+                            />
                             <Button
                                 type="submit"
                                 disabled={processing}
@@ -361,7 +335,7 @@ export default function SalaryInsightPage({
                 </header>
 
                 {aggregate.sample_size === 0 ? (
-                    <section className="rounded-2xl border border-border/70 bg-card p-8 shadow-sm">
+                    <section className="rounded-2xl border border-border/60 bg-card p-8 shadow-xs">
                         <EmptyState
                             icon={LineChart}
                             title="Data belum cukup"
@@ -509,7 +483,7 @@ export default function SalaryInsightPage({
                                 <li key={`${c.slug}-${i}`}>
                                     <Link
                                         href={`/companies/${c.slug}`}
-                                        className="group flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-sm"
+                                        className="group flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xs"
                                     >
                                         <span
                                             className={cn(
@@ -675,7 +649,7 @@ export default function SalaryInsightPage({
 
                     <aside className="space-y-4">
                         {popularCategories.length > 0 && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center gap-2">
                                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                         <Layers className="size-4" />
@@ -700,7 +674,7 @@ export default function SalaryInsightPage({
                         )}
 
                         {/* Tips card */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="flex items-center gap-2">
                                 <span className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                                     <DollarSign className="size-4" />
@@ -718,7 +692,7 @@ export default function SalaryInsightPage({
                         </div>
 
                         {/* CTA - submit your salary */}
-                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-5 text-white shadow-sm">
+                        <div className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-5 text-white shadow-xs">
                             <h3 className="text-base font-semibold">Bantu komunitas</h3>
                             <p className="mt-1 text-xs text-white/80">
                                 Submit gaji Anda secara anonim. Setiap data membantu transparansi pasar
@@ -761,10 +735,10 @@ function HeroStat({
     return (
         <div
             className={cn(
-                'relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm',
+                'relative overflow-hidden rounded-2xl border bg-card p-5 shadow-xs',
                 tone === 'brand'
                     ? 'border-brand-blue/30 bg-gradient-to-br from-brand-blue/8 via-brand-cyan/5 to-transparent'
-                    : 'border-border/70',
+                    : 'border-border/60',
             )}
         >
             {tone === 'brand' && (
@@ -814,7 +788,7 @@ function ContentCard({
     children: ReactNode;
 }) {
     return (
-        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs sm:p-6">
             <div className="mb-4 flex items-start gap-2">
                 {Icon && (
                     <span className="mt-0.5 flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
