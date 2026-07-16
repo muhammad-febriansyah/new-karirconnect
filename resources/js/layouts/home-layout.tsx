@@ -156,23 +156,17 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                     href={item.href}
                                     prefetch
                                     className={cn(
-                                        'group/nav relative rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                        'rounded-full px-3.5 py-2 text-sm font-medium transition-colors',
                                         active
                                             ? onHero
-                                                ? 'text-white'
-                                                : 'text-brand-blue'
+                                                ? 'bg-white/15 text-white'
+                                                : 'bg-brand-blue/10 text-brand-blue'
                                             : onHero
-                                              ? 'text-white/80 hover:text-white'
-                                              : 'text-muted-foreground hover:text-brand-navy',
+                                              ? 'text-white/80 hover:bg-white/10 hover:text-white'
+                                              : 'text-muted-foreground hover:bg-muted/70 hover:text-brand-navy',
                                     )}
                                 >
                                     {item.label}
-                                    <span
-                                        className={cn(
-                                            'pointer-events-none absolute -bottom-px left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan transition-all duration-200',
-                                            active ? 'opacity-100' : 'opacity-0 group-hover/nav:opacity-60',
-                                        )}
-                                    />
                                 </Link>
                             );
                         })}
@@ -211,7 +205,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                         href={register()}
                                         prefetch
                                         className={cn(
-                                            'group/cta relative hidden h-10 items-center gap-1.5 overflow-hidden rounded-full px-5 text-sm font-semibold shadow-sm transition-all hover:shadow-lg sm:inline-flex',
+                                            'group/cta relative hidden h-10 items-center gap-1.5 overflow-hidden rounded-full px-5 text-sm font-semibold shadow-xs transition-all hover:shadow-lg sm:inline-flex',
                                             onHero
                                                 ? 'bg-white text-brand-blue hover:shadow-black/10'
                                                 : 'bg-brand-navy text-white hover:shadow-brand-blue/30',
@@ -299,7 +293,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                                     <Link
                                         href={register()}
                                         prefetch
-                                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-brand-navy text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-blue hover:shadow-md"
+                                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-brand-navy text-sm font-semibold text-white shadow-xs transition-all hover:bg-brand-blue hover:shadow-md"
                                     >
                                         Daftar Gratis
                                         <ArrowRight className="size-3.5" />

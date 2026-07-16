@@ -263,7 +263,7 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                 </Breadcrumb>
 
                 {/* ===== Hero card ===== */}
-                <section className="relative overflow-hidden rounded-2xl border border-border/70 bg-card">
+                <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0"
@@ -275,7 +275,7 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                     <div className="relative p-5 sm:p-7">
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex items-start gap-4">
-                                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-background ring-1 ring-border/30 sm:size-16">
+                                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-background ring-1 ring-border/30 sm:size-16">
                                     {job.company.logo_url ? (
                                         <img
                                             src={job.company.logo_url}
@@ -422,14 +422,18 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
 
                 {/* ===== Main grid ===== */}
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-                    <main className="space-y-6">
+                    {/* min-w-0: grid items default to min-width:auto, which lets wide
+                        children (the scrollable tab strip) stretch the whole page. */}
+                    <main className="min-w-0 space-y-6">
                         {/* Highlight stats */}
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            {/* Salary lives in the sticky apply box, which stays on screen
+                                beside this strip — repeating it here said the same thing twice. */}
                             <Highlight
-                                icon={Wallet}
-                                label="Gaji"
-                                value={salaryLabel ?? 'Negotiable'}
-                                hint={salaryLabel ? '/bulan' : 'Sesuai kesepakatan'}
+                                icon={MapPin}
+                                label="Lokasi"
+                                value={[job.city, job.province].filter(Boolean).join(', ') || 'Fleksibel'}
+                                hint={job.work_arrangement ? formatStatus(job.work_arrangement) : undefined}
                                 tone="brand"
                             />
                             <Highlight
@@ -440,7 +444,7 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                         ? formatStatus(job.employment_type)
                                         : '-'
                                 }
-                                hint={job.work_arrangement ? formatStatus(job.work_arrangement) : undefined}
+                                hint={job.is_anonymous ? 'Perusahaan konfidensial' : undefined}
                             />
                             <Highlight
                                 icon={GraduationCap}
@@ -543,31 +547,11 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                             </ContentCard>
                         )}
 
-                        {/* Bottom CTA inside content */}
-                        <section className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-sm sm:p-8">
-                            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="max-w-xl">
-                                    <h3 className="text-xl font-bold tracking-tight sm:text-2xl">
-                                        Tertarik dengan posisi ini?
-                                    </h3>
-                                    <p className="mt-1 text-sm text-white/80">
-                                        Kirim lamaran Anda sekarang. Profil dan CV terbaru akan otomatis diikutkan.
-                                    </p>
-                                </div>
-                                <Button
-                                    asChild
-                                    size="lg"
-                                    className="h-11 rounded-xl bg-white px-6 text-brand-navy hover:bg-white/90"
-                                >
-                                    <Link href={`/jobs/${job.slug}/apply`}>Lamar Sekarang</Link>
-                                </Button>
-                            </div>
-                        </section>
                     </main>
 
                     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
                         {/* Apply CTA card */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             {fullSalaryLabel ? (
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -641,7 +625,7 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                         </div>
 
                         {matchScore !== null && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
@@ -683,9 +667,9 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                         )}
 
                         {/* Company card */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-background">
+                                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-background">
                                     {job.company.logo_url ? (
                                         <img
                                             src={job.company.logo_url}
@@ -722,7 +706,7 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                         </div>
 
                         {/* Tips melamar */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="flex items-center gap-2">
                                 <span className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                                     <Lightbulb className="size-4" />
@@ -739,9 +723,12 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                             </ul>
                         </div>
 
-                        {similar.length > 0 && <SimilarJobsCard jobs={similar} />}
                     </aside>
                 </div>
+
+                {/* Full width: the sticky aside is taller than the article, so keeping
+                    similar jobs in the column left a long void beside it. */}
+                {similar.length > 0 && <SimilarJobsCard jobs={similar} />}
             </div>
 
             {/* Mobile sticky apply bar */}
@@ -801,12 +788,12 @@ function Highlight({
     return (
         <div
             className={cn(
-                'rounded-xl border bg-card p-3.5 shadow-sm sm:p-4',
+                'rounded-xl border bg-card p-3.5 shadow-xs sm:p-4',
                 tone === 'brand'
                     ? 'border-brand-blue/20 bg-brand-blue/5'
                     : tone === 'warn'
                       ? 'border-amber-500/30 bg-amber-50'
-                      : 'border-border/70',
+                      : 'border-border/60',
             )}
         >
             <div
@@ -824,9 +811,9 @@ function Highlight({
             <p className="mt-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {label}
             </p>
-            <p className="mt-0.5 truncate text-sm font-semibold text-foreground sm:text-base">{value}</p>
+            <p className="mt-0.5 text-sm font-semibold break-words text-foreground sm:text-base">{value}</p>
             {hint && (
-                <p className="mt-0.5 truncate text-xs text-muted-foreground" title={hint}>
+                <p className="mt-0.5 text-xs break-words text-muted-foreground" title={hint}>
                     {hint}
                 </p>
             )}
@@ -844,7 +831,7 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
     };
 
     return (
-        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+        <section className="mt-6 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
@@ -860,7 +847,7 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                 </Link>
             </div>
 
-            <ul className="mt-4 space-y-2">
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {jobs.map((s) => {
                     const salary = formatSalary(s);
                     const verified = s.company.verification_status === 'verified';
@@ -877,10 +864,10 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                         <li key={s.id}>
                             <Link
                                 href={`/jobs/${s.slug}`}
-                                className="group relative block overflow-hidden rounded-xl border border-transparent p-3 transition-all hover:-translate-y-0.5 hover:border-brand-blue/20 hover:bg-brand-blue/5 hover:shadow-sm"
+                                className="group relative block overflow-hidden rounded-xl border border-transparent p-3 transition-all hover:-translate-y-0.5 hover:border-brand-blue/20 hover:bg-brand-blue/5 hover:shadow-xs"
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/70 bg-background">
+                                    <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-background">
                                         {s.company.logo_url ? (
                                             <img
                                                 src={s.company.logo_url}
@@ -956,7 +943,7 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                     );
                 })}
             </ul>
-        </div>
+        </section>
     );
 }
 
@@ -986,14 +973,19 @@ function JobDetailTabs({
     }
 
     return (
-        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs sm:p-6">
             <Tabs defaultValue={sections[0].key} className="space-y-5">
-                <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/50 p-1">
+                {/* The h-9 on TabsList is variant-prefixed, so a plain h-auto does not
+                    override it — match the prefix or wrapped tabs spill out of the list. */}
+                <TabsList className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto bg-muted/50 p-1 group-data-[orientation=horizontal]/tabs:h-auto sm:flex-wrap">
                     {sections.map((section) => (
                         <TabsTrigger
                             key={section.key}
                             value={section.key}
-                            className="rounded-lg px-3.5 py-1.5 text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            // h-auto/flex-none override the base trigger's h-[calc(100%-1px)] and
+                            // flex-1: inside a wrapping list those make every tab as tall as the
+                            // whole list and force one per row, so they overlap the panel below.
+                            className="h-auto flex-none rounded-lg px-3.5 py-1.5 text-sm data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
                         >
                             {section.label}
                         </TabsTrigger>
@@ -1022,7 +1014,7 @@ function ContentCard({
     children: ReactNode;
 }) {
     return (
-        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs sm:p-6">
             <div className="mb-4 flex items-start gap-2">
                 {Icon && (
                     <span className="mt-0.5 flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">

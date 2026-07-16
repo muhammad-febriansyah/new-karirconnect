@@ -104,14 +104,6 @@ function formatRelative(iso: string | null): string {
     return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
 }
 
-function formatHostname(url: string): string {
-    try {
-        return new URL(url).hostname.replace(/^www\./, '');
-    } catch {
-        return url;
-    }
-}
-
 export default function PublicCompanyShow({ company, jobs }: Props) {
     const [copied, setCopied] = useState(false);
     const verified = company.verification_status === 'verified';
@@ -127,8 +119,6 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                 .toUpperCase() || 'PT',
         [company.name],
     );
-
-    const featuredCount = useMemo(() => jobs.filter((j) => j.is_featured).length, [jobs]);
 
     const handleShare = async () => {
         const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -174,9 +164,15 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                 </Breadcrumb>
 
                 {/* ===== Hero card with cover ===== */}
-                <section className="relative overflow-hidden rounded-2xl border border-border/70 bg-card">
-                    {/* Cover */}
-                    <div className="relative h-32 w-full overflow-hidden sm:h-44">
+                <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card">
+                    {/* Cover. Without an image this is just a brand gradient, so keep it
+                        a slim band rather than a tall empty block. */}
+                    <div
+                        className={cn(
+                            'relative w-full overflow-hidden',
+                            company.cover_url ? 'h-32 sm:h-44' : 'h-20 sm:h-24',
+                        )}
+                    >
                         {company.cover_url ? (
                             <img
                                 src={company.cover_url}
@@ -205,7 +201,7 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                     <div className="relative px-5 pb-5 sm:px-7 sm:pb-7">
                         {/* Logo overlapping cover */}
                         <div className="-mt-10 sm:-mt-12">
-                            <div className="flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-background shadow-md ring-4 ring-card sm:size-24">
+                            <div className="flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-background shadow-md ring-4 ring-card sm:size-24">
                                 {company.logo_url ? (
                                     <img
                                         src={company.logo_url}
@@ -309,35 +305,6 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                             </div>
                         </div>
 
-                        {/* Quick stats strip */}
-                        <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border/60 pt-5 sm:grid-cols-4">
-                            <Stat
-                                icon={Briefcase}
-                                label="Lowongan Aktif"
-                                value={String(jobs.length)}
-                                tone="brand"
-                            />
-                            <Stat
-                                icon={Flame}
-                                label="Butuh Cepat"
-                                value={String(featuredCount)}
-                                tone={featuredCount > 0 ? 'warn' : 'default'}
-                            />
-                            <Stat
-                                icon={Users}
-                                label="Ukuran Tim"
-                                value={company.size ?? 'N/A'}
-                            />
-                            <Stat
-                                icon={MapPin}
-                                label="Kantor"
-                                value={
-                                    company.offices.length > 0
-                                        ? `${company.offices.length} lokasi`
-                                        : (company.city ?? 'N/A')
-                                }
-                            />
-                        </div>
                     </div>
                 </section>
 
@@ -374,7 +341,7 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                         {/* Active jobs */}
                         <section
                             id="lowongan"
-                            className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6"
+                            className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs sm:p-6"
                         >
                             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex items-start gap-2">
@@ -425,83 +392,33 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                     </main>
 
                     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-                        {/* Profile summary */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-background">
-                                    {company.logo_url ? (
-                                        <img
-                                            src={company.logo_url}
-                                            alt={company.name}
-                                            className="size-full object-contain p-1.5"
-                                        />
-                                    ) : (
-                                        <span className="text-sm font-semibold text-brand-navy">
-                                            {initials}
-                                        </span>
-                                    )}
+                        {/* Identity (logo, name, industry, size, location, website) is
+                            already in the hero above — only the badges are new here. */}
+                        {company.badges.length > 0 && (
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
+                                <div className="flex items-center gap-2">
+                                    <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
+                                        <BadgeCheck className="size-4" />
+                                    </span>
+                                    <h3 className="text-sm font-semibold">Badge</h3>
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <h3 className="truncate font-semibold text-foreground">{company.name}</h3>
-                                    {company.industry && (
-                                        <p className="truncate text-xs text-muted-foreground">
-                                            {company.industry}
-                                        </p>
-                                    )}
+                                <div className="mt-4 flex flex-wrap gap-1.5">
+                                    {company.badges.map((b) => (
+                                        <Badge
+                                            key={b.id}
+                                            variant="secondary"
+                                            className="rounded-full border border-brand-blue/15 bg-brand-blue/5 text-brand-blue"
+                                        >
+                                            {b.name}
+                                        </Badge>
+                                    ))}
                                 </div>
                             </div>
-
-                            <ul className="mt-4 space-y-2.5 text-sm">
-                                {company.size && (
-                                    <li className="flex items-center gap-2 text-foreground/85">
-                                        <Users className="size-4 shrink-0 text-muted-foreground" />
-                                        {company.size}
-                                    </li>
-                                )}
-                                {(company.city || company.province) && (
-                                    <li className="flex items-center gap-2 text-foreground/85">
-                                        <MapPin className="size-4 shrink-0 text-muted-foreground" />
-                                        {[company.city, company.province].filter(Boolean).join(', ')}
-                                    </li>
-                                )}
-                                {company.website && (
-                                    <li className="flex items-center gap-2 text-foreground/85">
-                                        <Globe className="size-4 shrink-0 text-muted-foreground" />
-                                        <a
-                                            href={company.website}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="truncate text-brand-blue hover:underline"
-                                        >
-                                            {formatHostname(company.website)}
-                                        </a>
-                                    </li>
-                                )}
-                            </ul>
-
-                            {company.badges.length > 0 && (
-                                <div className="mt-4 border-t border-border/60 pt-4">
-                                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                                        Badge
-                                    </p>
-                                    <div className="mt-2 flex flex-wrap gap-1.5">
-                                        {company.badges.map((b) => (
-                                            <Badge
-                                                key={b.id}
-                                                variant="secondary"
-                                                className="rounded-full border border-brand-blue/15 bg-brand-blue/5 text-brand-blue"
-                                            >
-                                                {b.name}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                        )}
 
                         {/* Offices */}
                         {company.offices.length > 0 && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center gap-2">
                                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                         <MapPin className="size-4" />
@@ -552,7 +469,7 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                         )}
 
                         {/* CTA - Direktori */}
-                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-5 text-white shadow-sm">
+                        <div className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-5 text-white shadow-xs">
                             <h3 className="text-base font-semibold">Cari perusahaan lain?</h3>
                             <p className="mt-1 text-xs text-white/80">
                                 Telusuri direktori 1.000+ perusahaan terverifikasi yang sedang aktif merekrut.
@@ -574,50 +491,6 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
     );
 }
 
-function Stat({
-    icon: Icon,
-    label,
-    value,
-    tone = 'default',
-}: {
-    icon: LucideIcon;
-    label: string;
-    value: string;
-    tone?: 'default' | 'brand' | 'warn';
-}) {
-    return (
-        <div
-            className={cn(
-                'rounded-xl border bg-card p-3',
-                tone === 'brand'
-                    ? 'border-brand-blue/20 bg-brand-blue/5'
-                    : tone === 'warn'
-                      ? 'border-amber-500/30 bg-amber-50'
-                      : 'border-border/70',
-            )}
-        >
-            <div className="flex items-center gap-2">
-                <span
-                    className={cn(
-                        'flex size-7 items-center justify-center rounded-lg',
-                        tone === 'brand'
-                            ? 'bg-brand-blue/15 text-brand-blue'
-                            : tone === 'warn'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-muted text-foreground/70',
-                    )}
-                >
-                    <Icon className="size-3.5" />
-                </span>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {label}
-                </p>
-            </div>
-            <p className="mt-1.5 truncate text-base font-semibold text-foreground sm:text-lg">{value}</p>
-        </div>
-    );
-}
-
 function ContentCard({
     title,
     icon: Icon,
@@ -628,7 +501,7 @@ function ContentCard({
     children: ReactNode;
 }) {
     return (
-        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs sm:p-6">
             <div className="mb-4 flex items-start gap-2">
                 {Icon && (
                     <span className="mt-0.5 flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
@@ -655,7 +528,7 @@ function CompanyJobCard({ job }: { job: CompanyJob }) {
         <li>
             <Link
                 href={`/jobs/${job.slug}`}
-                className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/70 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-md hover:shadow-brand-blue/5"
+                className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-md hover:shadow-brand-blue/5"
             >
                 <span
                     aria-hidden
@@ -664,7 +537,7 @@ function CompanyJobCard({ job }: { job: CompanyJob }) {
 
                 <div className="flex items-start justify-between gap-2">
                     {job.is_featured ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-xs">
                             <Flame className="size-3" /> Butuh Cepat
                         </span>
                     ) : (
