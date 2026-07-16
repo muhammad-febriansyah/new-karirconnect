@@ -174,7 +174,7 @@ export default function AiInterviewsIndex({ sessions }: Props) {
 
                 <Section title="Mulai Latihan" description="Pilih mode wawancara yang kamu inginkan.">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card className="group relative overflow-hidden border-slate-200/70 shadow-sm transition hover:shadow-md">
+                        <Card className="group relative overflow-hidden border-slate-200/70 shadow-xs transition hover:shadow-md">
                             <span className="absolute inset-x-0 top-0 h-1 bg-slate-300" />
                             <CardContent className="space-y-4 p-6">
                                 <div className="flex items-start justify-between gap-2">
@@ -207,7 +207,7 @@ export default function AiInterviewsIndex({ sessions }: Props) {
                             </CardContent>
                         </Card>
 
-                        <Card className="group relative overflow-hidden border-slate-200/70 shadow-sm transition hover:shadow-md">
+                        <Card className="group relative overflow-hidden border-slate-200/70 shadow-xs transition hover:shadow-md">
                             <span
                                 className="absolute inset-x-0 top-0 h-1"
                                 style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
@@ -215,7 +215,7 @@ export default function AiInterviewsIndex({ sessions }: Props) {
                             <CardContent className="space-y-4 p-6">
                                 <div className="flex items-start justify-between gap-2">
                                     <div
-                                        className="flex size-12 items-center justify-center rounded-xl text-white shadow-sm"
+                                        className="flex size-12 items-center justify-center rounded-xl text-white shadow-xs"
                                         style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                                     >
                                         <Mic className="size-6" />

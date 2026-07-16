@@ -147,7 +147,7 @@ export default function CareerResourcesIndex({ filters, categories, items }: Pro
                     </div>
 
                     {/* Search + categories panel */}
-                    <div className="rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-4">
+                    <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-xs sm:p-4">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
@@ -226,7 +226,7 @@ export default function CareerResourcesIndex({ filters, categories, items }: Pro
                 )}
 
                 {/* ===== Bottom CTA ===== */}
-                <section className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-sm sm:p-8">
+                <section className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xs sm:p-8">
                     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
                             <span className="hidden size-12 items-center justify-center rounded-2xl bg-white/15 sm:flex">
@@ -275,8 +275,8 @@ function CategoryChip({
             className={cn(
                 'group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all sm:text-sm',
                 active
-                    ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-sm'
-                    : 'border-border/70 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
+                    ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue shadow-xs'
+                    : 'border-border/60 bg-card text-foreground/80 hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-foreground',
             )}
         >
             <span
@@ -299,7 +299,7 @@ function FeaturedArticleCard({ item }: { item: ResourceItem }) {
     return (
         <Link
             href={resourceShow(item.slug).url}
-            className="group relative block overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5"
+            className="group relative block overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5"
         >
             <span
                 aria-hidden
@@ -394,7 +394,7 @@ function ArticleCard({ item }: { item: ResourceItem }) {
     return (
         <Link
             href={resourceShow(item.slug).url}
-            className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5"
+            className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5"
         >
             <span
                 aria-hidden

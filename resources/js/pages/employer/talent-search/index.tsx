@@ -179,7 +179,7 @@ export default function EmployerTalentSearchIndex({ filters, results }: Props) {
                         <Button
                             type="submit"
                             disabled={processing}
-                            className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                            className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                         >
                             <Search className="size-4" /> Cari
                         </Button>
@@ -348,7 +348,7 @@ export default function EmployerTalentSearchIndex({ filters, results }: Props) {
                                                 <Button
                                                     asChild
                                                     size="sm"
-                                                    className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                                                    className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                                                 >
                                                     <Link href={`/employer/talent-search/${c.id}`}>
                                                         <Eye className="size-3.5" /> Lihat Profil

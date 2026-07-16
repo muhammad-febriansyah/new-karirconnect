@@ -392,7 +392,7 @@ function DateSeparator({ iso }: { iso: string | null }) {
     if (!iso) return null;
     return (
         <div className="flex items-center justify-center py-1.5">
-            <span className="rounded-full bg-background px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground shadow-sm ring-1 ring-border/60">
+            <span className="rounded-full bg-background px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground shadow-xs ring-1 ring-border/60">
                 {formatDateLabel(iso)}
             </span>
         </div>
@@ -422,7 +422,7 @@ function MessageBubble({
                 <span className="px-1 text-[10px] font-medium text-muted-foreground">{name}</span>
                 <div
                     className={cn(
-                        'rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm',
+                        'rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs',
                         isLeft
                             ? 'rounded-bl-md bg-background ring-1 ring-border/60 text-foreground'
                             : 'rounded-br-md bg-gradient-to-br from-brand-blue to-brand-cyan text-white',
@@ -492,7 +492,7 @@ function Composer({ messageId }: { messageId: number }) {
                     type="submit"
                     size="icon"
                     disabled={processing || data.reply_body.trim().length === 0}
-                    className="shrink-0 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan shadow-sm hover:brightness-105"
+                    className="shrink-0 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan shadow-xs hover:brightness-105"
                     aria-label="Kirim balasan"
                 >
                     <Send className="size-4" />

@@ -380,7 +380,7 @@ export default function AdminUsersIndex({ users, filters, roleOptions, totals }:
                                                         href={showRoute(u.id).url}
                                                         className="flex items-center gap-3 transition group-hover:opacity-95"
                                                     >
-                                                        <Avatar className="size-10 ring-2 ring-background shadow-sm">
+                                                        <Avatar className="size-10 ring-2 ring-background shadow-xs">
                                                             <AvatarImage src={u.avatar_url ?? undefined} alt={u.name} />
                                                             <AvatarFallback className="bg-gradient-to-br from-brand-blue to-brand-cyan text-xs font-semibold text-white">
                                                                 {initialsOf(u.name)}
@@ -615,7 +615,7 @@ function StatCard({
     }[tone];
 
     return (
-        <Card className={cn('relative overflow-hidden bg-gradient-to-br shadow-sm ring-1', TONE.bg, TONE.ring)}>
+        <Card className={cn('relative overflow-hidden bg-gradient-to-br shadow-xs ring-1', TONE.bg, TONE.ring)}>
             <span aria-hidden className={cn('absolute -right-6 -top-6 size-20 rounded-full blur-2xl', TONE.accent)} />
             <CardContent className="relative flex items-start justify-between gap-3 p-4">
                 <div className="min-w-0">

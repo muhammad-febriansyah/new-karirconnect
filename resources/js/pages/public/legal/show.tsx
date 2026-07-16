@@ -191,7 +191,7 @@ export default function PublicLegalShow({ page, relatedPages }: Props) {
                 </Breadcrumb>
 
                 {/* ===== Hero ===== */}
-                <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xl shadow-brand-navy/10 sm:p-10">
+                <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xl shadow-brand-navy/10 sm:p-10">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0 opacity-20"
@@ -279,7 +279,7 @@ export default function PublicLegalShow({ page, relatedPages }: Props) {
                 {/* ===== Body grid ===== */}
                 <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
                     <article className="min-w-0">
-                        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
+                        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xs sm:p-8">
                             <div
                                 className={cn(
                                     'prose prose-neutral max-w-none dark:prose-invert',
@@ -298,7 +298,7 @@ export default function PublicLegalShow({ page, relatedPages }: Props) {
                         </div>
 
                         {/* ===== Bottom CTA ===== */}
-                        <section className="mt-8 overflow-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
+                        <section className="mt-8 overflow-hidden rounded-2xl border border-border/60 bg-card p-6 shadow-xs sm:p-8">
                             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="max-w-xl">
                                     <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/15 bg-brand-blue/5 px-2.5 py-1 text-xs font-medium text-brand-blue">
@@ -327,7 +327,7 @@ export default function PublicLegalShow({ page, relatedPages }: Props) {
                     {/* ===== Sidebar ===== */}
                     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
                         {headings.length > 0 && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center gap-2">
                                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                         <BookOpen className="size-4" />
@@ -350,7 +350,7 @@ export default function PublicLegalShow({ page, relatedPages }: Props) {
                         )}
 
                         {/* About this document */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="flex items-center gap-2">
                                 <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                     <Sparkles className="size-4" />
@@ -403,7 +403,7 @@ export default function PublicLegalShow({ page, relatedPages }: Props) {
 
                         {/* Other legal documents */}
                         {relatedPages.length > 0 && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center gap-2">
                                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                         <FileText className="size-4" />

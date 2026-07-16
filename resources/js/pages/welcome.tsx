@@ -225,7 +225,7 @@ function LocationCombobox({
                         'flex flex-1 items-center gap-2 text-left text-sm text-brand-navy transition-all focus:outline-none',
                         bare
                             ? 'h-12 rounded-xl px-3 hover:bg-muted/40 sm:max-w-[15rem]'
-                            : 'h-14 rounded-2xl border border-border/70 bg-background px-5 hover:border-brand-blue/40 data-[state=open]:border-brand-blue/40 data-[state=open]:ring-2 data-[state=open]:ring-brand-blue/15 md:max-w-xs',
+                            : 'h-14 rounded-2xl border border-border/60 bg-background px-5 hover:border-brand-blue/40 data-[state=open]:border-brand-blue/40 data-[state=open]:ring-2 data-[state=open]:ring-brand-blue/15 md:max-w-xs',
                     )}
                 >
                     <MapPin className="size-4 shrink-0 text-muted-foreground/70" />
@@ -297,7 +297,7 @@ function FilterSelect({
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="h-10 w-full appearance-none rounded-xl border border-border/70 bg-background pl-4 pr-9 text-sm font-medium text-brand-navy transition-colors hover:border-brand-blue/40 focus:border-brand-blue/50 focus:outline-none focus:ring-2 focus:ring-brand-blue/15"
+                className="h-10 w-full appearance-none rounded-xl border border-border/60 bg-background pl-4 pr-9 text-sm font-medium text-brand-navy transition-colors hover:border-brand-blue/40 focus:border-brand-blue/50 focus:outline-none focus:ring-2 focus:ring-brand-blue/15"
             >
                 <option value="">{placeholder}</option>
                 {options.map((o) => (
@@ -332,7 +332,7 @@ function JobCard({ job }: { job: FeaturedJob }) {
 
             <div className="flex items-start justify-between gap-2 p-4 pb-3">
                 {isHot ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-xs">
                         <Flame className="size-3" /> Loker Butuh Cepat
                     </span>
                 ) : (
@@ -351,7 +351,7 @@ function JobCard({ job }: { job: FeaturedJob }) {
 
             <Link href={`/jobs/${job.slug}`} className="flex flex-1 flex-col gap-3 px-4 pb-4">
                 <div className="flex items-start gap-3">
-                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-background ring-1 ring-border/30">
+                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-background ring-1 ring-border/30">
                         {job.company_logo ? (
                             <img src={job.company_logo} alt={job.company_name ?? ''} loading="lazy" className="size-full object-contain p-1" />
                         ) : (
@@ -417,7 +417,7 @@ function CompanyGridCard({ company }: { company: TopCompany }) {
     return (
         <Link
             href={`/companies/${company.slug}`}
-            className="group/co flex flex-col rounded-2xl border border-border/60 bg-background p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md hover:shadow-brand-blue/10"
+            className="group/co flex flex-col rounded-2xl border border-border/60 bg-background p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md hover:shadow-brand-blue/10"
         >
             <div className="flex items-center gap-3">
                 <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 ring-1 ring-border/60">
@@ -450,7 +450,7 @@ function ArticleCard({ article, logoPath }: { article: Article; logoPath?: strin
     return (
         <Link
             href={`/career-resources/${article.slug}`}
-            className="group/art flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10"
+            className="group/art flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10"
         >
             <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-muted/40">
                 {hasThumb ? (
@@ -664,7 +664,7 @@ export default function Welcome({ home }: Props) {
                                 key={f.label}
                                 type="button"
                                 onClick={() => goToJobs(f.params)}
-                                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-navy shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:text-brand-blue"
+                                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-navy shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:text-brand-blue"
                             >
                                 <f.icon className="size-3.5 text-brand-blue" /> {f.label}
                             </button>
@@ -692,7 +692,7 @@ export default function Welcome({ home }: Props) {
                                 className={cn(
                                     'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-all',
                                     activeCategory === tab
-                                        ? 'border-brand-blue bg-brand-blue text-white shadow-sm shadow-brand-blue/30'
+                                        ? 'border-brand-blue bg-brand-blue text-white shadow-xs shadow-brand-blue/30'
                                         : 'border-border bg-background text-brand-navy hover:border-brand-blue/40 hover:bg-brand-blue/5',
                                 )}
                             >
@@ -720,7 +720,7 @@ export default function Welcome({ home }: Props) {
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-6 py-16 text-center">
+                        <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 py-16 text-center">
                             <p className="text-sm text-muted-foreground">Tidak ada lowongan yang cocok dengan filter ini.</p>
                         </div>
                     )}

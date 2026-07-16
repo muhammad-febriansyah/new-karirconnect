@@ -150,7 +150,7 @@ export default function EmployerMessageTemplatesIndex({ templates, categories }:
                                     ) : (
                                         <div className="grid gap-3 md:grid-cols-2">
                                             {group.items.map((t) => (
-                                                <Card key={t.id} className="border-border/70">
+                                                <Card key={t.id} className="border-border/60">
                                                     <CardContent className="space-y-3 p-4">
                                                         <div className="flex items-start justify-between gap-2">
                                                             <div className="min-w-0">

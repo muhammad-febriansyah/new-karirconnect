@@ -56,7 +56,7 @@ export function NotificationPermissionBanner() {
 
     return (
         <div className="mx-4 mt-4 flex items-start gap-3 rounded-xl border border-brand-blue/20 bg-gradient-to-r from-brand-blue/8 via-brand-cyan/8 to-transparent p-4 text-sm text-brand-navy sm:mx-6">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs">
                 <Bell className="size-4" />
             </span>
             <div className="flex-1">
@@ -70,7 +70,7 @@ export function NotificationPermissionBanner() {
                         size="sm"
                         onClick={request}
                         disabled={requesting}
-                        className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                        className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                     >
                         {requesting ? 'Memproses…' : 'Aktifkan Sekarang'}
                     </Button>

@@ -162,7 +162,7 @@ export default function AdminPricingPlansIndex({ plans, totals }: Props) {
                                             'hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-blue/10',
                                             plan.is_featured
                                                 ? 'border-brand-blue/40 shadow-lg shadow-brand-blue/15 ring-1 ring-brand-blue/20'
-                                                : 'border-border/60 shadow-sm',
+                                                : 'border-border/60 shadow-xs',
                                             !plan.is_active && 'opacity-70',
                                         )}
                                     >
@@ -334,7 +334,7 @@ function StatCard({
     gradient: string;
 }) {
     return (
-        <div className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:shadow-md">
+        <div className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-4 shadow-xs transition-all hover:shadow-md">
             <div className="flex items-center gap-3">
                 <div className={cn('flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md', gradient)}>
                     <Icon className="size-6" />

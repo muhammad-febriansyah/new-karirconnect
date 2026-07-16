@@ -63,7 +63,7 @@ export function PricingCard({
                 'relative flex h-full flex-col gap-0 overflow-hidden py-0 transition-all',
                 featured
                     ? 'border-primary/60 shadow-lg ring-2 ring-primary/30 lg:-mt-3'
-                    : 'border-border/70 hover:border-primary/40 hover:shadow-md',
+                    : 'border-border/60 hover:border-primary/40 hover:shadow-md',
                 disabled && 'opacity-60',
                 className,
             )}

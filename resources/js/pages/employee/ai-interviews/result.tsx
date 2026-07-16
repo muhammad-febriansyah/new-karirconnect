@@ -263,7 +263,7 @@ export default function AiInterviewResult({ session, analysis, analysis_pending,
                                         <GraduationCap className="size-7" />
                                     </div>
                                 ) : session.company_logo_url ? (
-                                    <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                                    <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
                                         <img
                                             src={session.company_logo_url}
                                             alt={session.company_name ?? ''}
@@ -328,7 +328,7 @@ export default function AiInterviewResult({ session, analysis, analysis_pending,
                                     icon={Target}
                                     description={scoreLabel(analysis.fit_score)}
                                 />
-                                <Card className={cn('border-0 shadow-sm', recTone.soft)}>
+                                <Card className={cn('border-0 shadow-xs', recTone.soft)}>
                                     <CardContent className="flex h-full flex-col justify-between gap-3 p-5">
                                         <div className="flex items-center gap-2">
                                             <Award className={cn('size-4', recTone.text)} />
@@ -339,7 +339,7 @@ export default function AiInterviewResult({ session, analysis, analysis_pending,
                                         <div>
                                             <div
                                                 className={cn(
-                                                    'inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-white shadow-sm',
+                                                    'inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-white shadow-xs',
                                                     recTone.bg,
                                                 )}
                                             >
@@ -393,11 +393,11 @@ export default function AiInterviewResult({ session, analysis, analysis_pending,
                                     </p>
                                 </div>
                                 <div className="grid w-full max-w-xl gap-2 text-left text-xs text-slate-600 sm:grid-cols-2">
-                                    <div className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-emerald-100">
+                                    <div className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-xs ring-1 ring-emerald-100">
                                         <Sparkles className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                                         <span>Skor & feedback bersifat rahasia dan hanya dilihat recruiter, bukan kandidat.</span>
                                     </div>
-                                    <div className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-emerald-100">
+                                    <div className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-xs ring-1 ring-emerald-100">
                                         <Clock className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                                         <span>Status lamaran &amp; jadwal interview lanjutan dapat dipantau di halaman lamaran.</span>
                                     </div>
@@ -476,7 +476,7 @@ export default function AiInterviewResult({ session, analysis, analysis_pending,
                                         ) : (
                                             <ul className="space-y-2">
                                                 {analysis.strengths.map((s, i) => (
-                                                    <li key={i} className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-emerald-100">
+                                                    <li key={i} className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-xs ring-1 ring-emerald-100">
                                                         <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                                                         <span className="text-sm text-slate-700">{s}</span>
                                                     </li>
@@ -502,7 +502,7 @@ export default function AiInterviewResult({ session, analysis, analysis_pending,
                                         ) : (
                                             <ul className="space-y-2">
                                                 {analysis.weaknesses.map((w, i) => (
-                                                    <li key={i} className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-amber-100">
+                                                    <li key={i} className="flex items-start gap-2 rounded-lg bg-white p-3 shadow-xs ring-1 ring-amber-100">
                                                         <Target className="mt-0.5 size-4 shrink-0 text-amber-600" />
                                                         <span className="text-sm text-slate-700">{w}</span>
                                                     </li>
@@ -524,7 +524,7 @@ export default function AiInterviewResult({ session, analysis, analysis_pending,
                                             {analysis.red_flags.map((rf, i) => (
                                                 <li
                                                     key={i}
-                                                    className="flex items-start gap-2 rounded-lg bg-white p-3 text-sm text-rose-800 shadow-sm ring-1 ring-rose-200"
+                                                    className="flex items-start gap-2 rounded-lg bg-white p-3 text-sm text-rose-800 shadow-xs ring-1 ring-rose-200"
                                                 >
                                                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                                                     <span>{rf}</span>
@@ -911,7 +911,7 @@ function StatTile({
         <Card>
             <CardContent className="flex items-center gap-3 p-4">
                 <div
-                    className="flex size-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                     style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}
                 >
                     <Icon className="size-5" />

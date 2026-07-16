@@ -11,7 +11,7 @@ type SectionProps = {
 
 export function Section({ title, description, actions, children, className }: SectionProps) {
     return (
-        <section className={cn('rounded-xl border bg-card p-4 shadow-sm sm:p-6', className)}>
+        <section className={cn('rounded-xl border bg-card p-4 shadow-xs sm:p-6', className)}>
             {(title || description || actions) && (
                 <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>

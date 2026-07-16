@@ -68,7 +68,7 @@ export default function Login({
                                         autoComplete="email"
                                         placeholder="kamu@perusahaan.com"
                                         className={cn(
-                                            'h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-sm',
+                                            'h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-xs',
                                             'transition-all duration-150',
                                             'placeholder:text-muted-foreground/50',
                                             'focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15',
@@ -107,7 +107,7 @@ export default function Login({
                                         autoComplete="current-password"
                                         placeholder="Masukkan kata sandi"
                                         className={cn(
-                                            'h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-sm',
+                                            'h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-xs',
                                             'transition-all duration-150',
                                             'placeholder:text-muted-foreground/50',
                                             'focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15',
@@ -172,7 +172,7 @@ export default function Login({
                             <a
                                 href={googleLoginUrl}
                                 className={cn(
-                                    'flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border/70 bg-background text-sm font-semibold text-brand-navy shadow-sm transition-all',
+                                    'flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border/60 bg-background text-sm font-semibold text-brand-navy shadow-xs transition-all',
                                     'hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue',
                                 )}
                             >
@@ -198,7 +198,7 @@ export default function Login({
                                     <div className="grid gap-2 sm:grid-cols-2">
                                         <Link
                                             href={registerLinks.jobseeker}
-                                            className="flex items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 py-3 text-sm font-semibold text-brand-navy shadow-sm transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
+                                            className="flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-4 py-3 text-sm font-semibold text-brand-navy shadow-xs transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
                                             tabIndex={7}
                                         >
                                             <UserRoundSearch className="size-4" />
@@ -206,7 +206,7 @@ export default function Login({
                                         </Link>
                                         <Link
                                             href={registerLinks.company}
-                                            className="flex items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 py-3 text-sm font-semibold text-brand-navy shadow-sm transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
+                                            className="flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-background px-4 py-3 text-sm font-semibold text-brand-navy shadow-xs transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
                                             tabIndex={8}
                                         >
                                             <BriefcaseBusiness className="size-4" />

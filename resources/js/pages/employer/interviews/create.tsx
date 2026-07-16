@@ -678,7 +678,7 @@ export default function InterviewCreate({ applications, preselectedIds, options,
 
                     {/* ===== Sidebar ===== */}
                     <aside className="min-w-0 space-y-4 lg:sticky lg:top-4 lg:self-start">
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="mb-3 flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-brand-navy">Ringkasan</h3>
                                 <Badge variant="secondary" className="text-[10px]">
@@ -754,7 +754,7 @@ export default function InterviewCreate({ applications, preselectedIds, options,
 
                         {/* Mini-preview */}
                         {(form.data.title || form.data.scheduled_at) && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center gap-2">
                                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                         <CalendarIcon className="size-4" />
@@ -1016,7 +1016,7 @@ function FormCard({
     children: React.ReactNode;
 }) {
     return (
-        <section className="rounded-2xl border border-border/70 bg-card shadow-sm">
+        <section className="rounded-2xl border border-border/60 bg-card shadow-xs">
             <header className="flex items-start gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                 <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                     <Icon className="size-4" />

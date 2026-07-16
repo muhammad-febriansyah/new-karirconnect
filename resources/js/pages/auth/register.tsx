@@ -85,7 +85,7 @@ export default function Register({
                                 <Link
                                     key={option.href}
                                     href={option.href}
-                                    className="group rounded-2xl border border-border/70 bg-background px-4 py-4 shadow-sm transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:shadow-md"
+                                    className="group rounded-2xl border border-border/60 bg-background px-4 py-4 shadow-xs transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:shadow-md"
                                 >
                                     <div className="flex items-start gap-3">
                                         <div className="mt-0.5 flex size-11 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue transition-colors group-hover:bg-brand-blue group-hover:text-white">
@@ -204,7 +204,7 @@ export default function Register({
                                     autoComplete="name"
                                     name="name"
                                     placeholder={meta.namePlaceholder}
-                                    className="h-12 rounded-xl border-border/60 bg-background text-sm shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
+                                    className="h-12 rounded-xl border-border/60 bg-background text-sm shadow-xs placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
                                 />
                                 <InputError message={errors.name} className="mt-1" />
                             </div>
@@ -223,7 +223,7 @@ export default function Register({
                                             autoComplete="organization"
                                             name="company_name"
                                             placeholder="Nama perusahaan"
-                                            className="h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
+                                            className="h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-xs placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
                                         />
                                     </div>
                                     <InputError message={errors.company_name} />
@@ -244,7 +244,7 @@ export default function Register({
                                         autoComplete="email"
                                         name="email"
                                         placeholder={meta.emailPlaceholder}
-                                        className="h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
+                                        className="h-12 rounded-xl border-border/60 bg-background pl-11 text-sm shadow-xs placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
                                     />
                                 </div>
                                 <InputError message={errors.email} />
@@ -261,7 +261,7 @@ export default function Register({
                                     autoComplete="new-password"
                                     name="password"
                                     placeholder="Masukkan kata sandi"
-                                    className="h-12 rounded-xl border-border/60 bg-background text-sm shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
+                                    className="h-12 rounded-xl border-border/60 bg-background text-sm shadow-xs placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -277,7 +277,7 @@ export default function Register({
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Ulangi kata sandi"
-                                    className="h-12 rounded-xl border-border/60 bg-background text-sm shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
+                                    className="h-12 rounded-xl border-border/60 bg-background text-sm shadow-xs placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
                                 />
                                 <InputError
                                     message={errors.password_confirmation}
@@ -314,7 +314,7 @@ export default function Register({
                                 <>
                                     <a
                                         href={googleUrl}
-                                        className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border/70 bg-background text-sm font-semibold text-brand-navy shadow-sm transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
+                                        className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border/60 bg-background text-sm font-semibold text-brand-navy shadow-xs transition-all hover:border-brand-blue/30 hover:bg-brand-blue/5 hover:text-brand-blue"
                                     >
                                         <GoogleMark className="size-4" />
                                         <span>Daftar dengan Google</span>

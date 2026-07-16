@@ -148,7 +148,7 @@ export default function AdminSettingsEdit({ currentGroup, groups, settings }: Pr
                 </Tabs>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <Card className="overflow-hidden border-border/70 shadow-sm">
+                    <Card className="overflow-hidden border-border/60 shadow-xs">
                         <CardHeader className="border-b bg-muted/20">
                             <CardTitle>{groups.find((g) => g.key === currentGroup)?.label ?? 'Pengaturan'}</CardTitle>
                             <CardDescription>

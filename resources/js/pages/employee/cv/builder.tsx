@@ -313,7 +313,7 @@ function AtsPanel({ result }: { result: AtsResult }) {
         <div className="space-y-3 lg:sticky lg:top-4">
             {/* Score card */}
             <Card
-                className="relative overflow-hidden border-slate-200/70 shadow-sm"
+                className="relative overflow-hidden border-slate-200/70 shadow-xs"
                 style={{ background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)' }}
             >
                 <div
@@ -336,7 +336,7 @@ function AtsPanel({ result }: { result: AtsResult }) {
             </Card>
 
             {/* Breakdown */}
-            <Card className="border-slate-200/70 shadow-sm">
+            <Card className="border-slate-200/70 shadow-xs">
                 <CardContent className="space-y-3 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <h3 className="text-sm font-semibold text-slate-900">Rincian Penilaian</h3>
@@ -385,7 +385,7 @@ function AtsPanel({ result }: { result: AtsResult }) {
 
             {/* Tips */}
             {result.tips.length > 0 && (
-                <Card className="border-amber-200/60 bg-amber-50/40 shadow-sm">
+                <Card className="border-amber-200/60 bg-amber-50/40 shadow-xs">
                     <CardContent className="space-y-2 p-4">
                         <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-900">
                             <Sparkles className="size-4" /> Saran Perbaikan
@@ -496,7 +496,7 @@ export default function CvBuilderPage({ data }: Props) {
                                         onClick={() => setStep(idx)}
                                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
                                             active
-                                                ? 'border-transparent text-white shadow-sm'
+                                                ? 'border-transparent text-white shadow-xs'
                                                 : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                                         }`}
                                         style={active ? { background: 'linear-gradient(135deg, #1080E0, #10C0E0)' } : undefined}
@@ -793,7 +793,7 @@ export default function CvBuilderPage({ data }: Props) {
                                 </Section>
                             )}
 
-                            <div className="sticky bottom-4 z-10 flex flex-col gap-2 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                            <div className="sticky bottom-4 z-10 flex flex-col gap-2 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-xs backdrop-blur sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-center gap-2">
                                     <Button
                                         type="button"
@@ -897,7 +897,7 @@ function SkillsEditor({ value, onChange }: { value: string[]; onChange: (skills:
                 <input
                     type="text"
                     placeholder="Ketik skill lalu tekan Enter (contoh: Laravel, PostgreSQL, Leadership)"
-                    className="flex h-9 flex-1 rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="flex h-9 flex-1 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {

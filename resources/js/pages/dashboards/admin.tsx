@@ -49,7 +49,7 @@ type StatCardProps = {
 
 function StatCard({ icon: Icon, label, value, sub, accent }: StatCardProps) {
     return (
-        <Card className="relative overflow-hidden border-slate-200/70 shadow-sm transition hover:shadow-md">
+        <Card className="relative overflow-hidden border-slate-200/70 shadow-xs transition hover:shadow-md">
             <span className="absolute inset-x-0 top-0 h-1" style={{ background: accent }} />
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -59,7 +59,7 @@ function StatCard({ icon: Icon, label, value, sub, accent }: StatCardProps) {
                         {sub && <div className="text-xs text-slate-500">{sub}</div>}
                     </div>
                     <div
-                        className="flex size-10 items-center justify-center rounded-xl text-white shadow-sm"
+                        className="flex size-10 items-center justify-center rounded-xl text-white shadow-xs"
                         style={{ background: accent }}
                     >
                         <Icon className="size-5" />
@@ -150,7 +150,7 @@ export default function AdminDashboard({ data }: Props) {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-3">
-                    <Card className="lg:col-span-2 border-slate-200/70 shadow-sm">
+                    <Card className="lg:col-span-2 border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1 flex items-center justify-between">
                                 <div>
@@ -163,7 +163,7 @@ export default function AdminDashboard({ data }: Props) {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1">
                                 <div className="text-sm font-semibold text-slate-900">Komposisi Pengguna</div>
@@ -175,7 +175,7 @@ export default function AdminDashboard({ data }: Props) {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1 flex items-center justify-between">
                                 <div>
@@ -188,7 +188,7 @@ export default function AdminDashboard({ data }: Props) {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1 flex items-center justify-between">
                                 <div>
@@ -227,7 +227,7 @@ export default function AdminDashboard({ data }: Props) {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-3 flex items-center justify-between">
                                 <div className="text-sm font-semibold text-slate-900">Order Terbaru</div>
@@ -253,7 +253,7 @@ export default function AdminDashboard({ data }: Props) {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-3 flex items-center justify-between">
                                 <div className="text-sm font-semibold text-slate-900">Perusahaan Baru</div>

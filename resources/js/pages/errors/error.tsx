@@ -149,7 +149,7 @@ export default function ErrorPage({ status, message }: Props) {
                     </Link>
 
                     {/* Status pill */}
-                    <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-1 py-1 pr-4 text-xs shadow-sm backdrop-blur">
+                    <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-1 py-1 pr-4 text-xs shadow-xs backdrop-blur">
                         <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-blue to-brand-cyan px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                             {content.badge}
                         </span>

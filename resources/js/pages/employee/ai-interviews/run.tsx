@@ -69,11 +69,11 @@ type SessionInfo = Props['session'];
 function InterviewContextHeader({ session }: { session: SessionInfo }) {
     if (session.is_practice) {
         return (
-            <div className="rounded-2xl border border-slate-200/70 bg-gradient-to-r from-white via-sky-50/40 to-white p-4 shadow-sm sm:p-5">
+            <div className="rounded-2xl border border-slate-200/70 bg-gradient-to-r from-white via-sky-50/40 to-white p-4 shadow-xs sm:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <div
-                            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+                            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                             style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                         >
                             <GraduationCap className="size-6" />
@@ -99,7 +99,7 @@ function InterviewContextHeader({ session }: { session: SessionInfo }) {
     }
 
     return (
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5">
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-xs sm:p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                     <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
@@ -127,7 +127,7 @@ function InterviewContextHeader({ session }: { session: SessionInfo }) {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <span
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm"
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-xs"
                         style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                     >
                         <Sparkles className="size-3.5" />
@@ -205,7 +205,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
                 <InterviewContextHeader session={session} />
 
                 {/* Progress strip */}
-                <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5">
+                <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-xs sm:p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
                             <div className="text-sm font-semibold text-slate-900">
@@ -265,7 +265,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
                             {/* AI message bubble */}
                             <div className="flex items-start gap-3">
                                 <div
-                                    className="flex size-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                                    className="flex size-10 shrink-0 items-center justify-center rounded-full text-white shadow-xs"
                                     style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                                 >
                                     <Bot className="size-5" />
@@ -280,7 +280,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
                                             <Radio className="size-3" /> Maks {currentQuestion.max_duration_seconds}s
                                         </span>
                                     </div>
-                                    <div className="rounded-2xl rounded-tl-sm border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5">
+                                    <div className="rounded-2xl rounded-tl-sm border border-slate-200/70 bg-white p-4 shadow-xs sm:p-5">
                                         <h2 className="text-lg font-semibold leading-relaxed text-slate-900 sm:text-xl">
                                             {currentQuestion.question}
                                         </h2>
@@ -292,7 +292,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
                             <form
                                 id="ai-answer-form"
                                 onSubmit={onSubmit}
-                                className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5"
+                                className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-xs sm:p-5"
                             >
                                 <div className="mb-2 flex items-center justify-between">
                                     <label className="text-sm font-semibold text-slate-900" htmlFor="answer-input">
@@ -372,7 +372,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
 
                         {/* Sidebar */}
                         <aside className="min-w-0 space-y-3 lg:sticky lg:top-4 lg:self-start">
-                            <Card className="border-slate-200/70 shadow-sm">
+                            <Card className="border-slate-200/70 shadow-xs">
                                 <CardContent className="p-4">
                                     <h3 className="mb-3 text-sm font-semibold text-slate-900">
                                         Daftar Pertanyaan
@@ -431,7 +431,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-slate-200/70 bg-slate-50/60 shadow-sm">
+                            <Card className="border-slate-200/70 bg-slate-50/60 shadow-xs">
                                 <CardContent className="space-y-1.5 p-4 text-xs leading-relaxed text-slate-600">
                                     <div className="text-sm font-semibold text-slate-900">Tips Singkat</div>
                                     <p>· Mulai dari konteks: situasi, peran, dan masalah.</p>
@@ -443,7 +443,7 @@ function TextRun({ session, questions, currentQuestion }: Props) {
                         </aside>
                     </div>
                 ) : (
-                    <Card className="border-emerald-200/70 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/40 shadow-sm">
+                    <Card className="border-emerald-200/70 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/40 shadow-xs">
                         <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
                             <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow">
                                 <CheckCircle2 className="size-7" />
@@ -1028,7 +1028,7 @@ function VoiceRun({ session, questions }: Props) {
                 )}
 
                 {connecting && (
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="flex flex-col items-center gap-3 p-8">
                             <Loader2 className="size-6 animate-spin text-[color:#1080E0]" />
                             <div className="text-sm text-slate-600">Menghubungkan ke AI...</div>
@@ -1237,7 +1237,7 @@ function VoiceRun({ session, questions }: Props) {
                             )}
 
                             {/* Live transcript */}
-                            <Card className="border-slate-200/70 shadow-sm">
+                            <Card className="border-slate-200/70 shadow-xs">
                                 <CardContent className="p-4">
                                     <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="text-sm font-semibold text-slate-900">Transcript Live</div>
@@ -1259,7 +1259,7 @@ function VoiceRun({ session, questions }: Props) {
                                             >
                                                 {line.speaker === 'ai' ? (
                                                     <div
-                                                        className="flex size-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                                                        className="flex size-7 shrink-0 items-center justify-center rounded-full text-white shadow-xs"
                                                         style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                                                     >
                                                         <Bot className="size-3.5" />
@@ -1270,7 +1270,7 @@ function VoiceRun({ session, questions }: Props) {
                                                     </div>
                                                 )}
                                                 <div
-                                                    className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-sm ${
+                                                    className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-xs ${
                                                         line.speaker === 'ai'
                                                             ? 'rounded-bl-sm bg-white text-slate-800 ring-1 ring-slate-200'
                                                             : 'rounded-br-sm text-white'
@@ -1292,7 +1292,7 @@ function VoiceRun({ session, questions }: Props) {
 
                         {/* Right rail: question stepper */}
                         <aside className="space-y-4">
-                            <Card className="border-slate-200/70 shadow-sm">
+                            <Card className="border-slate-200/70 shadow-xs">
                                 <CardContent className="p-4">
                                     <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                         <h3 className="text-sm font-semibold text-slate-900">Progres Pertanyaan</h3>
@@ -1347,7 +1347,7 @@ function VoiceRun({ session, questions }: Props) {
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-slate-200/70 bg-slate-50/50 shadow-sm">
+                            <Card className="border-slate-200/70 bg-slate-50/50 shadow-xs">
                                 <CardContent className="space-y-1 p-4 text-xs text-slate-600">
                                     <div className="font-semibold text-slate-700">Tips</div>
                                     <p>· Bicara natural, AI auto-deteksi kapan kamu selesai</p>
@@ -1475,7 +1475,7 @@ function DeviceCheckPanel({
 
     return (
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-            <Card className="relative overflow-hidden border-slate-200/70 shadow-sm">
+            <Card className="relative overflow-hidden border-slate-200/70 shadow-xs">
                 <span
                     className="absolute inset-x-0 top-0 h-1"
                     style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
@@ -1483,7 +1483,7 @@ function DeviceCheckPanel({
                 <CardContent className="space-y-5 p-6">
                     <div className="flex items-start gap-4">
                         <div
-                            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+                            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                             style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                         >
                             <Mic className="size-6" />
@@ -1710,7 +1710,7 @@ function DeviceCheckPanel({
 
             <aside className="space-y-3">
                 {/* Self-view: prominent camera preview ala video call */}
-                <Card className="overflow-hidden border-slate-200/70 shadow-sm">
+                <Card className="overflow-hidden border-slate-200/70 shadow-xs">
                     <div className="relative aspect-video bg-slate-950">
                         {cameraCheck === 'ok' ? (
                             <>
@@ -1755,7 +1755,7 @@ function DeviceCheckPanel({
                     </div>
                 </Card>
 
-                <Card className="border-slate-200/70 bg-slate-50/50 shadow-sm">
+                <Card className="border-slate-200/70 bg-slate-50/50 shadow-xs">
                     <CardContent className="space-y-2 p-4 text-xs text-slate-600">
                         <div className="text-sm font-semibold text-slate-900">Tips Sebelum Mulai</div>
                         <ul className="space-y-1.5">
@@ -1768,7 +1768,7 @@ function DeviceCheckPanel({
                     </CardContent>
                 </Card>
 
-                <Card className="border-slate-200/70 shadow-sm">
+                <Card className="border-slate-200/70 shadow-xs">
                     <CardContent className="space-y-2 p-4 text-xs text-slate-600">
                         <div className="text-sm font-semibold text-slate-900">Yang akan terjadi</div>
                         <ol className="ml-4 list-decimal space-y-1">

@@ -81,7 +81,7 @@ type StatCardProps = {
 
 function StatCard({ icon: Icon, label, value, sub, accent }: StatCardProps) {
     return (
-        <Card className="relative overflow-hidden border-slate-200/70 shadow-sm transition hover:shadow-md">
+        <Card className="relative overflow-hidden border-slate-200/70 shadow-xs transition hover:shadow-md">
             <span className="absolute inset-x-0 top-0 h-1" style={{ background: accent }} />
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -90,7 +90,7 @@ function StatCard({ icon: Icon, label, value, sub, accent }: StatCardProps) {
                         <div className="text-2xl font-bold text-slate-900">{value}</div>
                         {sub && <div className="text-xs text-slate-500">{sub}</div>}
                     </div>
-                    <div className="flex size-10 items-center justify-center rounded-xl text-white shadow-sm" style={{ background: accent }}>
+                    <div className="flex size-10 items-center justify-center rounded-xl text-white shadow-xs" style={{ background: accent }}>
                         <Icon className="size-5" />
                     </div>
                 </div>
@@ -172,7 +172,7 @@ export default function EmployerDashboard({ data }: Props) {
                 <CompanyStatusBanner status={data.company!.status} verificationStatus={data.company!.verification_status} />
 
                 {data.company!.missing_items.length > 0 && (
-                    <Card className="border-amber-200 bg-amber-50/40 shadow-sm">
+                    <Card className="border-amber-200 bg-amber-50/40 shadow-xs">
                         <CardContent className="space-y-3 p-4 sm:p-5">
                             <div className="flex items-center justify-between gap-2">
                                 <div>
@@ -239,7 +239,7 @@ export default function EmployerDashboard({ data }: Props) {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-3">
-                    <Card className="lg:col-span-2 border-slate-200/70 shadow-sm">
+                    <Card className="lg:col-span-2 border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1 flex items-center justify-between">
                                 <div>
@@ -252,7 +252,7 @@ export default function EmployerDashboard({ data }: Props) {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="space-y-3 p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-900"><CreditCard className="size-4" /> Langganan</div>
@@ -294,7 +294,7 @@ export default function EmployerDashboard({ data }: Props) {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1">
                                 <div className="text-sm font-semibold text-slate-900">Jadwal Interview</div>
@@ -304,7 +304,7 @@ export default function EmployerDashboard({ data }: Props) {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1">
                                 <div className="text-sm font-semibold text-slate-900">Distribusi Status Lamaran</div>
@@ -325,7 +325,7 @@ export default function EmployerDashboard({ data }: Props) {
                 </div>
 
                 {statusEntries.length > 0 && (
-                    <Card className="border-slate-200/70 shadow-sm">
+                    <Card className="border-slate-200/70 shadow-xs">
                         <CardContent className="p-4">
                             <div className="mb-1">
                                 <div className="text-sm font-semibold text-slate-900">Funnel Hiring</div>
@@ -373,7 +373,7 @@ export default function EmployerDashboard({ data }: Props) {
                 )}
 
                 {data.company!.verification_status !== 'verified' && (
-                    <Card className="border-amber-200 bg-amber-50/50 shadow-sm">
+                    <Card className="border-amber-200 bg-amber-50/50 shadow-xs">
                         <CardContent className="flex items-center justify-between gap-3 p-4">
                             <div>
                                 <div className="flex items-center gap-2 font-semibold"><ShieldCheck className="size-4 text-amber-600" /> Verifikasi Perusahaan</div>

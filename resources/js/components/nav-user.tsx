@@ -41,7 +41,7 @@ export function NavUser() {
                             className={cn(
                                 'group/user h-auto rounded-xl border border-transparent py-2 transition-all',
                                 'hover:border-brand-blue/20 hover:bg-gradient-to-r hover:from-brand-blue/5 hover:to-transparent',
-                                'data-[state=open]:border-brand-blue/30 data-[state=open]:bg-brand-blue/5 data-[state=open]:shadow-sm',
+                                'data-[state=open]:border-brand-blue/30 data-[state=open]:bg-brand-blue/5 data-[state=open]:shadow-xs',
                             )}
                             data-test="sidebar-menu-button"
                         >

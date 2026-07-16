@@ -160,7 +160,7 @@ export default function PublicFaq({ items }: Props) {
                 </Breadcrumb>
 
                 {/* ===== Hero ===== */}
-                <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xl shadow-brand-navy/10 sm:p-10">
+                <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xl shadow-brand-navy/10 sm:p-10">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0 opacity-20"
@@ -300,7 +300,7 @@ export default function PublicFaq({ items }: Props) {
 
                 {/* ===== FAQ list ===== */}
                 {grouped.length === 0 ? (
-                    <section className="rounded-2xl border border-dashed border-border/70 bg-card p-12 text-center shadow-sm">
+                    <section className="rounded-2xl border border-dashed border-border/60 bg-card p-12 text-center shadow-xs">
                         <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                             <Search className="size-5" />
                         </span>
@@ -361,7 +361,7 @@ export default function PublicFaq({ items }: Props) {
                                         </div>
                                     </div>
 
-                                    <div className="rounded-2xl border border-border/70 bg-card shadow-sm">
+                                    <div className="rounded-2xl border border-border/60 bg-card shadow-xs">
                                         <Accordion
                                             type="single"
                                             collapsible
@@ -411,7 +411,7 @@ export default function PublicFaq({ items }: Props) {
                 )}
 
                 {/* ===== Bottom CTA ===== */}
-                <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xl shadow-brand-navy/10 sm:p-10">
+                <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xl shadow-brand-navy/10 sm:p-10">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute -left-12 -bottom-12 size-72 rounded-full bg-brand-cyan/30 blur-3xl"

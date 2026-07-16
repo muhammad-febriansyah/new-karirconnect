@@ -72,7 +72,7 @@ export function ImageUploadField({
         >
             <div
                 className={cn(
-                    'rounded-3xl border border-dashed bg-gradient-to-br from-muted/30 via-background to-muted/10 p-4 shadow-sm',
+                    'rounded-3xl border border-dashed bg-gradient-to-br from-muted/30 via-background to-muted/10 p-4 shadow-xs',
                     error && 'border-destructive',
                 )}
             >
@@ -95,7 +95,7 @@ export function ImageUploadField({
 
                         <div
                             className={cn(
-                                'relative overflow-hidden rounded-2xl border bg-background/90 shadow-sm',
+                                'relative overflow-hidden rounded-2xl border bg-background/90 shadow-xs',
                                 isCoverField ? 'min-h-52' : 'min-h-64',
                                 error && 'border-destructive',
                             )}
@@ -159,7 +159,7 @@ export function ImageUploadField({
                         </div>
                     </div>
 
-                    <div className="space-y-3 rounded-2xl border bg-background/80 p-4 shadow-sm">
+                    <div className="space-y-3 rounded-2xl border bg-background/80 p-4 shadow-xs">
                         <div className="space-y-1">
                             <div className="text-sm font-semibold">Panduan cepat</div>
                             <p className="text-xs text-muted-foreground">

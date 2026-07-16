@@ -505,7 +505,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                         <Button
                                             asChild
                                             size="sm"
-                                            className="h-9 rounded-lg bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-sm hover:brightness-105"
+                                            className="h-9 rounded-lg bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-xs hover:brightness-105"
                                         >
                                             <a
                                                 href={application.cv.url}
@@ -604,7 +604,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                             className={cn(
                                                 'relative flex min-w-[88px] shrink-0 snap-start flex-col items-center gap-1 rounded-lg border p-2 text-center text-[10px] sm:min-w-0 sm:text-[11px]',
                                                 current &&
-                                                    'border-brand-blue/40 bg-gradient-to-br from-brand-blue/8 to-brand-cyan/8 shadow-sm ring-1 ring-brand-blue/20',
+                                                    'border-brand-blue/40 bg-gradient-to-br from-brand-blue/8 to-brand-cyan/8 shadow-xs ring-1 ring-brand-blue/20',
                                                 passed &&
                                                     !current &&
                                                     'border-brand-blue/20 bg-brand-blue/5',
@@ -616,7 +616,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                                 className={cn(
                                                     'flex size-6 items-center justify-center rounded-full text-[10px] font-bold',
                                                     passed
-                                                        ? 'bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm'
+                                                        ? 'bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs'
                                                         : 'bg-muted text-muted-foreground',
                                                 )}
                                             >
@@ -667,7 +667,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                         className={cn(
                                             'inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all sm:gap-2 sm:px-3',
                                             active
-                                                ? 'bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-sm'
+                                                ? 'bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-xs'
                                                 : 'text-muted-foreground hover:bg-background hover:text-brand-navy',
                                         )}
                                     >
@@ -761,7 +761,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                                         key={exp.id}
                                                         className="relative"
                                                     >
-                                                        <span className="absolute top-1 -left-[34px] flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm ring-2 ring-background">
+                                                        <span className="absolute top-1 -left-[34px] flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs ring-2 ring-background">
                                                             <Building2 className="size-3" />
                                                         </span>
                                                         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -840,7 +840,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                                     key={edu.id}
                                                     className="relative"
                                                 >
-                                                    <span className="absolute top-1 -left-[34px] flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm ring-2 ring-background">
+                                                    <span className="absolute top-1 -left-[34px] flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs ring-2 ring-background">
                                                         <GraduationCap className="size-3" />
                                                     </span>
                                                     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -963,7 +963,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                                         key={log.id}
                                                         className="relative"
                                                     >
-                                                        <span className="absolute top-1 -left-[34px] flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm ring-2 ring-background">
+                                                        <span className="absolute top-1 -left-[34px] flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs ring-2 ring-background">
                                                             <ArrowRight className="size-3" />
                                                         </span>
                                                         <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -1285,7 +1285,7 @@ export default function ApplicantShow({ application, statusOptions }: Props) {
                                     <Button
                                         type="submit"
                                         disabled={form.processing}
-                                        className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                                        className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                                     >
                                         Perbarui Status
                                     </Button>

@@ -208,7 +208,7 @@ function ExamMode({ assessment }: Props) {
             <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
                 <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
                     <div
-                        className="flex size-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+                        className="flex size-10 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                         style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                     >
                         <GraduationCap className="size-5" />
@@ -258,7 +258,7 @@ function ExamMode({ assessment }: Props) {
                     {/* Question card */}
                     <div className="space-y-4">
                         {current ? (
-                            <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+                            <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-7">
                                 <div className="mb-4 flex flex-wrap items-center gap-2">
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-2.5 py-1 text-xs font-medium text-white">
                                         Soal {currentIndex + 1}
@@ -296,7 +296,7 @@ function ExamMode({ assessment }: Props) {
                                                     key={option}
                                                     className={`group flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 text-sm transition ${
                                                         selected
-                                                            ? 'border-[color:#1080E0] bg-[color:#1080E0]/5 shadow-sm'
+                                                            ? 'border-[color:#1080E0] bg-[color:#1080E0]/5 shadow-xs'
                                                             : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                                                     }`}
                                                 >
@@ -375,7 +375,7 @@ function ExamMode({ assessment }: Props) {
                     {/* Sidebar — desktop */}
                     <aside className="hidden lg:block">
                         <div className="sticky top-24 space-y-4">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
                                 <div className="mb-3 flex items-center justify-between">
                                     <h3 className="text-sm font-semibold text-slate-900">Daftar Soal</h3>
                                     <span className="text-xs text-slate-500">{answeredCount}/{total}</span>
@@ -391,7 +391,7 @@ function ExamMode({ assessment }: Props) {
                             </div>
                             <Button
                                 onClick={() => setShowSubmitConfirm(true)}
-                                className="w-full text-white shadow-sm"
+                                className="w-full text-white shadow-xs"
                                 style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                             >
                                 <CheckCircle2 className="size-4" /> Selesai & Kirim
@@ -503,7 +503,7 @@ function QuestionGrid({
                 const isFlagged = flagged.has(q.id);
 
                 let style = 'bg-slate-100 text-slate-600 hover:bg-slate-200';
-                if (isCurrent) style = 'bg-slate-900 text-white shadow-sm ring-2 ring-slate-900';
+                if (isCurrent) style = 'bg-slate-900 text-white shadow-xs ring-2 ring-slate-900';
                 else if (answered) style = 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200';
 
                 return (
@@ -675,7 +675,7 @@ function ResultMode({ assessment }: Props) {
 
                 {/* Difficulty breakdown */}
                 <section className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
                         <div className="mb-4 flex items-center gap-2">
                             <BookOpen className="size-4 text-slate-500" />
                             <h3 className="font-semibold text-slate-900">Akurasi per Tingkat Kesulitan</h3>
@@ -715,7 +715,7 @@ function ResultMode({ assessment }: Props) {
                     </div>
 
                     {/* Improvements */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
                         <div className="mb-4 flex items-center gap-2">
                             <Lightbulb className="size-4 text-amber-500" />
                             <h3 className="font-semibold text-slate-900">Yang Perlu Ditingkatkan</h3>
@@ -739,7 +739,7 @@ function ResultMode({ assessment }: Props) {
                 </section>
 
                 {/* Per-question review */}
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
                     <div className="mb-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <BookOpen className="size-4 text-slate-500" />

@@ -182,7 +182,7 @@ export default function AdminSubscriptionShow({ subscription, company, plan, usa
                 </Breadcrumb>
 
                 {/* ===== Hero card ===== */}
-                <section className="relative overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs">
                     <div className={cn('h-2 bg-gradient-to-r', tier.gradient)} />
                     <div className="p-5 sm:p-6">
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -462,7 +462,7 @@ export default function AdminSubscriptionShow({ subscription, company, plan, usa
                     {/* ===== Sidebar ===== */}
                     <aside className="space-y-4">
                         {/* Plan summary */}
-                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs">
                             <div className={cn('h-1.5 bg-gradient-to-r', tier.gradient)} />
                             <div className="p-5">
                                 <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ export default function AdminSubscriptionShow({ subscription, company, plan, usa
                         </div>
 
                         {/* Timeline */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="flex items-center gap-2">
                                 <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                     <Calendar className="size-4" />
@@ -553,7 +553,7 @@ export default function AdminSubscriptionShow({ subscription, company, plan, usa
                         </div>
 
                         {/* MRR contribution */}
-                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-5 text-white shadow-sm">
+                        <div className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-5 text-white shadow-xs">
                             <div className="flex items-center gap-2">
                                 <CircleDollarSign className="size-5" />
                                 <h3 className="text-sm font-semibold">Kontribusi MRR</h3>
@@ -644,7 +644,7 @@ function ContentCard({
     children: ReactNode;
 }) {
     return (
-        <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs sm:p-6">
             <div className="mb-4 flex items-start gap-2">
                 <span className="mt-0.5 flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                     <Icon className="size-4" />

@@ -227,7 +227,7 @@ export default function PublicAbout({ page }: PageProps) {
 
                         {/* Hero visual */}
                         <div className="relative">
-                            <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card shadow-xl shadow-brand-blue/5">
+                            <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card shadow-xl shadow-brand-blue/5">
                                 {page.hero_image_url ? (
                                     <img
                                         src={page.hero_image_url}
@@ -293,7 +293,7 @@ export default function PublicAbout({ page }: PageProps) {
                                 )}
                             </div>
                             {/* Floating badge */}
-                            <div className="absolute -bottom-5 -left-5 hidden rounded-2xl border border-border/70 bg-card p-3 shadow-lg sm:flex sm:items-center sm:gap-2">
+                            <div className="absolute -bottom-5 -left-5 hidden rounded-2xl border border-border/60 bg-card p-3 shadow-lg sm:flex sm:items-center sm:gap-2">
                                 <span className="flex size-9 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
                                     <Heart className="size-4" />
                                 </span>
@@ -309,7 +309,7 @@ export default function PublicAbout({ page }: PageProps) {
                 </section>
 
                 {/* ===== Stats strip ===== */}
-                <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 shadow-xl shadow-brand-navy/10 sm:p-10">
+                <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 shadow-xl shadow-brand-navy/10 sm:p-10">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0 opacity-20"
@@ -348,7 +348,7 @@ export default function PublicAbout({ page }: PageProps) {
                         title="Kenapa KarirConnect ada"
                         description="Sebuah perjalanan singkat dari ide ke platform yang dipakai ribuan profesional."
                     />
-                    <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
+                    <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xs sm:p-8">
                         <SafeHtml
                             html={storyBody}
                             className="prose prose-neutral max-w-none prose-headings:text-foreground prose-p:leading-relaxed prose-p:text-foreground/85 prose-strong:text-foreground"
@@ -441,7 +441,7 @@ export default function PublicAbout({ page }: PageProps) {
                         </div>
                         <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
                             {page.office_address && (
-                                <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+                                <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xs">
                                     <span className="flex size-9 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
                                         <Building2 className="size-5" />
                                     </span>
@@ -454,7 +454,7 @@ export default function PublicAbout({ page }: PageProps) {
                                 </div>
                             )}
                             {page.office_map_embed && (
-                                <div className="aspect-video overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                                <div className="aspect-video overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs">
                                     <iframe
                                         src={page.office_map_embed}
                                         title="Lokasi Kantor"
@@ -469,7 +469,7 @@ export default function PublicAbout({ page }: PageProps) {
                 )}
 
                 {/* ===== Bottom CTA ===== */}
-                <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-8 text-white shadow-xl shadow-brand-navy/10 sm:p-12">
+                <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-8 text-white shadow-xl shadow-brand-navy/10 sm:p-12">
                     <div
                         aria-hidden
                         className="pointer-events-none absolute -right-12 -top-12 size-72 rounded-full bg-brand-cyan/30 blur-3xl"
@@ -552,10 +552,10 @@ function FocusCard({
     return (
         <div
             className={cn(
-                'relative overflow-hidden rounded-2xl border p-6 shadow-sm sm:p-8',
+                'relative overflow-hidden rounded-2xl border p-6 shadow-xs sm:p-8',
                 tone === 'brand'
                     ? 'border-brand-blue/20 bg-gradient-to-br from-brand-blue/8 via-brand-cyan/5 to-transparent'
-                    : 'border-border/70 bg-card',
+                    : 'border-border/60 bg-card',
             )}
         >
             {tone === 'brand' && (
@@ -597,7 +597,7 @@ function ValueCard({ value, index }: { value: ValueItem; index: number }) {
     const tone = tones[index % tones.length];
 
     return (
-        <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-lg hover:shadow-brand-blue/5">
+        <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-6 shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-lg hover:shadow-brand-blue/5">
             <span
                 aria-hidden
                 className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
@@ -632,7 +632,7 @@ function TeamCard({ member }: { member: TeamItem }) {
             .toUpperCase() || '?';
 
     return (
-        <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-lg hover:shadow-brand-blue/5">
+        <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-lg hover:shadow-brand-blue/5">
             <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-brand-blue/10 via-brand-cyan/5 to-transparent">
                 {member.photo_url ? (
                     <img

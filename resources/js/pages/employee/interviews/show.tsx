@@ -297,7 +297,7 @@ export default function EmployeeInterviewShow({ interview }: Props) {
                                         <>
                                             <Button
                                                 asChild
-                                                className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                                                className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                                             >
                                                 <a href={interview.meeting_url} target="_blank" rel="noreferrer">
                                                     <Video className="size-4" /> Buka Meeting Link
@@ -525,7 +525,7 @@ export default function EmployeeInterviewShow({ interview }: Props) {
                                     <div className="space-y-2">
                                         <Button
                                             onClick={() => handleResponse('accepted')}
-                                            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 font-semibold shadow-sm hover:brightness-105"
+                                            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 font-semibold shadow-xs hover:brightness-105"
                                         >
                                             <CheckCircle2 className="size-4" /> Terima Jadwal
                                         </Button>
@@ -621,7 +621,7 @@ export default function EmployeeInterviewShow({ interview }: Props) {
                                         </div>
                                         <Button
                                             type="submit"
-                                            className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                                            className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                                             disabled={reschedule.processing}
                                         >
                                             <Send className="size-4" /> Kirim Permintaan

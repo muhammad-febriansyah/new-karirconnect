@@ -167,9 +167,9 @@ export default function Profile({
 
                 <form
                     onSubmit={submit}
-                    className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"
+                    className="overflow-hidden rounded-xl border border-border/60 bg-background shadow-xs"
                 >
-                    <div className="border-b border-border/70 bg-gradient-to-r from-brand-blue/8 via-brand-cyan/8 to-transparent px-5 py-5">
+                    <div className="border-b border-border/60 bg-gradient-to-r from-brand-blue/8 via-brand-cyan/8 to-transparent px-5 py-5">
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="relative shrink-0">
@@ -389,7 +389,7 @@ export default function Profile({
                         )}
                     </div>
 
-                    <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-xs text-muted-foreground">
                             {form.progress
                                 ? `Mengunggah avatar... ${form.progress.percentage}%`
@@ -433,11 +433,11 @@ export default function Profile({
                                 passwordInput.current?.focus();
                             }
                         }}
-                        className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"
+                        className="overflow-hidden rounded-xl border border-border/60 bg-background shadow-xs"
                     >
                         {({ errors, processing }) => (
                             <>
-                                <div className="border-b border-border/70 bg-gradient-to-r from-brand-navy/6 via-brand-blue/6 to-transparent px-5 py-5">
+                                <div className="border-b border-border/60 bg-gradient-to-r from-brand-navy/6 via-brand-blue/6 to-transparent px-5 py-5">
                                     <div className="flex items-start gap-4">
                                         <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
                                             <LockKeyhole className="size-5" />
@@ -505,7 +505,7 @@ export default function Profile({
                                     </FieldShell>
                                 </div>
 
-                                <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                                     <p className="text-xs text-muted-foreground">
                                         Form akan dikosongkan otomatis setelah
                                         kata sandi berhasil diperbarui.

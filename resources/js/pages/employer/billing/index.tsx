@@ -150,7 +150,7 @@ export default function EmployerBillingIndex({ plans, currentSubscription, order
                 {/* Active subscription overview */}
                 {currentSubscription && (
                     <div
-                        className="relative overflow-hidden rounded-2xl border border-slate-200/70 shadow-sm"
+                        className="relative overflow-hidden rounded-2xl border border-slate-200/70 shadow-xs"
                         style={{
                             background:
                                 'linear-gradient(135deg, rgba(16,128,224,0.05) 0%, rgba(16,192,224,0.05) 100%), white',

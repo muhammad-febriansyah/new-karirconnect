@@ -292,7 +292,7 @@ export default function EmployerTalentShow({ profile, isSaved }: Props) {
                                         size="sm"
                                         onClick={startChat}
                                         disabled={profile.user_id === null}
-                                        className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                                        className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                                     >
                                         <MessageCircle className="size-3.5" /> Mulai Chat
                                     </Button>
@@ -369,7 +369,7 @@ export default function EmployerTalentShow({ profile, isSaved }: Props) {
                                         className={cn(
                                             'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all',
                                             active
-                                                ? 'bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-sm'
+                                                ? 'bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-xs'
                                                 : 'text-muted-foreground hover:bg-background hover:text-brand-navy',
                                         )}
                                     >
@@ -485,7 +485,7 @@ export default function EmployerTalentShow({ profile, isSaved }: Props) {
                                         <ol className="relative ml-3 space-y-5 border-l-2 border-brand-blue/15 pl-6">
                                             {profile.work_experiences.map((exp, i) => (
                                                 <li key={exp.id ?? i} className="relative">
-                                                    <span className="absolute -left-[34px] top-1 flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm ring-2 ring-background">
+                                                    <span className="absolute -left-[34px] top-1 flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs ring-2 ring-background">
                                                         <Building2 className="size-3" />
                                                     </span>
                                                     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -531,7 +531,7 @@ export default function EmployerTalentShow({ profile, isSaved }: Props) {
                                         <ol className="relative ml-3 space-y-5 border-l-2 border-brand-blue/15 pl-6">
                                             {profile.educations.map((edu, i) => (
                                                 <li key={edu.id ?? i} className="relative">
-                                                    <span className="absolute -left-[34px] top-1 flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm ring-2 ring-background">
+                                                    <span className="absolute -left-[34px] top-1 flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs ring-2 ring-background">
                                                         <GraduationCap className="size-3" />
                                                     </span>
                                                     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -568,7 +568,7 @@ export default function EmployerTalentShow({ profile, isSaved }: Props) {
                                                     key={cert.id ?? i}
                                                     className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/20 p-3"
                                                 >
-                                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-sm">
+                                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-xs">
                                                         <BadgeCheck className="size-4" />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
@@ -627,7 +627,7 @@ export default function EmployerTalentShow({ profile, isSaved }: Props) {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                                        className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                                     >
                                         <Send className="size-4" /> Kirim Pesan
                                     </Button>

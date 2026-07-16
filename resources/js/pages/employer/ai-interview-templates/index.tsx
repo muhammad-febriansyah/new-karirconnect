@@ -719,7 +719,7 @@ function QuestionForm({ template, question, categoryOptions, onCancel, onSaved }
     return (
         <form
             onSubmit={onSubmit}
-            className="space-y-3 rounded-lg border-2 border-sky-200 bg-white p-4 shadow-sm"
+            className="space-y-3 rounded-lg border-2 border-sky-200 bg-white p-4 shadow-xs"
         >
             <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-slate-900">

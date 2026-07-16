@@ -228,7 +228,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                     <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                             <div
-                                className="flex size-9 items-center justify-center rounded-xl text-white shadow-sm"
+                                className="flex size-9 items-center justify-center rounded-xl text-white shadow-xs"
                                 style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                             >
                                 <Sparkles className="size-4" />
@@ -243,7 +243,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                         <Button
                             asChild
                             size="sm"
-                            className="text-white shadow-sm"
+                            className="text-white shadow-xs"
                             style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                         >
                             <Link href="/employee/career-coach">
@@ -277,7 +277,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setFilter('active')}
-                                    className={`inline-flex items-center justify-center gap-1.5 rounded-md py-1.5 transition ${filter === 'active' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                    className={`inline-flex items-center justify-center gap-1.5 rounded-md py-1.5 transition ${filter === 'active' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                                 >
                                     Aktif
                                     <span
@@ -289,7 +289,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setFilter('archived')}
-                                    className={`inline-flex items-center justify-center gap-1.5 rounded-md py-1.5 transition ${filter === 'archived' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                    className={`inline-flex items-center justify-center gap-1.5 rounded-md py-1.5 transition ${filter === 'archived' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                                 >
                                     Diarsipkan
                                     <span
@@ -340,7 +340,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                                 >
                                                     <div
                                                         className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                                                            isActive ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-600 group-hover:bg-white group-hover:ring-1 group-hover:ring-slate-200'
+                                                            isActive ? 'text-white shadow-xs' : 'bg-slate-100 text-slate-600 group-hover:bg-white group-hover:ring-1 group-hover:ring-slate-200'
                                                         }`}
                                                         style={
                                                             isActive
@@ -415,7 +415,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                     </div>
 
                                     <form onSubmit={onStartSessionFromHome} className="space-y-2">
-                                        <div className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm transition focus-within:border-slate-300 focus-within:shadow-md focus-within:ring-2 focus-within:ring-slate-100">
+                                        <div className="rounded-3xl border border-slate-200 bg-white p-3 shadow-xs transition focus-within:border-slate-300 focus-within:shadow-md focus-within:ring-2 focus-within:ring-slate-100">
                                             {startSession.data.attachment && (
                                                 <div className="mb-2 flex max-w-full items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs text-slate-700">
                                                     <Paperclip className="size-3.5 shrink-0" />
@@ -547,7 +547,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                         </Link>
                                     </Button>
                                     <div
-                                        className="flex size-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm"
+                                        className="flex size-10 shrink-0 items-center justify-center rounded-xl text-white shadow-xs"
                                         style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                                     >
                                         <Bot className="size-5" />
@@ -620,14 +620,14 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                                         </div>
                                                     ) : (
                                                         <div
-                                                            className="flex size-8 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                                                            className="flex size-8 shrink-0 items-center justify-center rounded-full text-white shadow-xs"
                                                             style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                                                         >
                                                             <Bot className="size-4" />
                                                         </div>
                                                     )}
                                                     <div
-                                                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm sm:max-w-[75%] ${
+                                                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs sm:max-w-[75%] ${
                                                             isUser
                                                                 ? 'rounded-br-md text-white'
                                                                 : 'rounded-bl-md bg-white text-slate-800 ring-1 ring-slate-200'
@@ -652,12 +652,12 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                         {sendMessage.processing && (
                                             <div className="flex items-end gap-2">
                                                 <div
-                                                    className="flex size-8 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                                                    className="flex size-8 shrink-0 items-center justify-center rounded-full text-white shadow-xs"
                                                     style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                                                 >
                                                     <Bot className="size-4" />
                                                 </div>
-                                                <div className="rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200">
+                                                <div className="rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-xs ring-1 ring-slate-200">
                                                     <div className="flex gap-1">
                                                         <span
                                                             className="size-1.5 animate-bounce rounded-full bg-slate-400"
@@ -692,7 +692,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                         </div>
                                     ) : (
                                         <form onSubmit={onSendMessage}>
-                                            <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-2 shadow-sm transition focus-within:border-slate-300 focus-within:shadow-md focus-within:ring-2 focus-within:ring-slate-100">
+                                            <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-2 shadow-xs transition focus-within:border-slate-300 focus-within:shadow-md focus-within:ring-2 focus-within:ring-slate-100">
                                                 {sendMessage.data.attachment && (
                                                     <div className="mb-2 flex max-w-full items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs text-slate-700">
                                                         <Paperclip className="size-3.5 shrink-0" />
@@ -748,7 +748,7 @@ export default function CareerCoachIndex({ sessions, activeSession }: Props) {
                                                             sendMessage.processing ||
                                                             (sendMessage.data.message.trim().length === 0 && !sendMessage.data.attachment)
                                                         }
-                                                        className="rounded-full text-white shadow-sm"
+                                                        className="rounded-full text-white shadow-xs"
                                                         style={{ background: 'linear-gradient(135deg, #1080E0, #10C0E0)' }}
                                                     >
                                                         {sendMessage.processing ? (

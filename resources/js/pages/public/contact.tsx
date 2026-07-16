@@ -137,7 +137,7 @@ export default function PublicContact() {
                 {/* ===== Contact form ===== */}
                 <section>
                     {/* Form card */}
-                    <div className="mx-auto w-full max-w-3xl rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
+                    <div className="mx-auto w-full max-w-3xl rounded-2xl border border-border/60 bg-card p-6 shadow-xs sm:p-8">
                         <div className="flex items-start gap-3">
                             <span className="flex size-9 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue">
                                 <Send className="size-4" />
@@ -165,7 +165,7 @@ export default function PublicContact() {
                                         className={cn(
                                             'group relative flex items-start gap-3 overflow-hidden rounded-xl border p-3 text-left transition-all hover:-translate-y-0.5',
                                             active
-                                                ? 'border-brand-blue/40 bg-brand-blue/5 shadow-sm ring-1 ring-brand-blue/20'
+                                                ? 'border-brand-blue/40 bg-brand-blue/5 shadow-xs ring-1 ring-brand-blue/20'
                                                 : 'border-border/60 bg-card hover:border-brand-blue/30',
                                         )}
                                     >
@@ -301,7 +301,7 @@ export default function PublicContact() {
                         {FAQ_ITEMS.map((item, i) => (
                             <div
                                 key={i}
-                                className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all hover:border-brand-blue/30 hover:shadow-md"
+                                className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs transition-all hover:border-brand-blue/30 hover:shadow-md"
                             >
                                 <p className="text-sm font-semibold text-foreground">{item.q}</p>
                                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

@@ -196,7 +196,7 @@ export default function ApplicationShow({ application }: Props) {
                                             key={step.key}
                                             className={cn(
                                                 'relative flex flex-col items-center gap-1 rounded-lg border p-2 text-center text-[10px] sm:text-[11px]',
-                                                current && 'border-brand-blue/40 bg-gradient-to-br from-brand-blue/8 to-brand-cyan/8 shadow-sm ring-1 ring-brand-blue/20',
+                                                current && 'border-brand-blue/40 bg-gradient-to-br from-brand-blue/8 to-brand-cyan/8 shadow-xs ring-1 ring-brand-blue/20',
                                                 passed && !current && 'border-brand-blue/20 bg-brand-blue/5',
                                                 !passed && 'border-border/60 bg-background',
                                             )}
@@ -205,7 +205,7 @@ export default function ApplicationShow({ application }: Props) {
                                                 className={cn(
                                                     'flex size-6 items-center justify-center rounded-full text-[10px] font-bold',
                                                     passed
-                                                        ? 'bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm'
+                                                        ? 'bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs'
                                                         : 'bg-muted text-muted-foreground',
                                                 )}
                                             >
@@ -255,7 +255,7 @@ export default function ApplicationShow({ application }: Props) {
                                     <ol className="relative ml-3 space-y-4 border-l-2 border-brand-blue/15 pl-6">
                                         {application.status_logs.map((log) => (
                                             <li key={log.id} className="relative">
-                                                <span className="absolute -left-[34px] top-1 flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-sm ring-2 ring-background">
+                                                <span className="absolute -left-[34px] top-1 flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-xs ring-2 ring-background">
                                                     <ArrowRight className="size-3" />
                                                 </span>
                                                 <div className="flex flex-wrap items-center gap-2 text-sm">

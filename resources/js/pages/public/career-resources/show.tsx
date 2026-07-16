@@ -269,7 +269,7 @@ el.id = `heading-${i}`;
 
                     {/* Cover */}
                     {hasThumb ? (
-                        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs">
                             <img
                                 src={item.thumbnail!}
                                 alt={item.title}
@@ -283,7 +283,7 @@ el.id = `heading-${i}`;
                             />
                         </div>
                     ) : (
-                        <div className="relative flex aspect-[16/8] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-muted/40 shadow-sm">
+                        <div className="relative flex aspect-[16/8] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/40 shadow-xs">
                             {logoPath ? (
                                 <img src={logoPath} alt="KarirConnect" className="h-16 w-auto opacity-90 sm:h-20" />
                             ) : (
@@ -333,7 +333,7 @@ el.id = `heading-${i}`;
                         )}
 
                         {/* Bottom navigation CTA */}
-                        <section className="mt-10 overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-sm sm:p-8">
+                        <section className="mt-10 overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-brand-navy via-brand-blue to-brand-blue p-6 text-white shadow-xs sm:p-8">
                             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="max-w-xl">
                                     <h3 className="text-xl font-bold tracking-tight sm:text-2xl">
@@ -368,7 +368,7 @@ el.id = `heading-${i}`;
                     {/* ===== Sidebar ===== */}
                     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
                         {headings.length > 0 && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center gap-2">
                                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                         <BookOpen className="size-4" />
@@ -394,7 +394,7 @@ el.id = `heading-${i}`;
                         )}
 
                         {/* Reading info */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="flex items-center gap-2">
                                 <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                     <Sparkles className="size-4" />
@@ -444,7 +444,7 @@ el.id = `heading-${i}`;
                         </div>
 
                         {related.length > 0 && (
-                            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                            <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                                 <div className="flex items-center gap-2">
                                     <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                         <BookOpen className="size-4" />

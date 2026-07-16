@@ -215,7 +215,7 @@ export default function EmployerJobShow({ job, screeningTypeOptions }: Props) {
                             <div className="flex shrink-0 flex-wrap gap-2 lg:flex-col lg:items-stretch">
                                 <Button
                                     asChild
-                                    className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-sm hover:brightness-105"
+                                    className="bg-gradient-to-r from-brand-blue to-brand-cyan font-semibold shadow-xs hover:brightness-105"
                                 >
                                     <Link href={`/employer/applicants?job=${job.id}`}>
                                         <Users className="size-4" />
@@ -263,7 +263,7 @@ export default function EmployerJobShow({ job, screeningTypeOptions }: Props) {
                                         )}
                                     />
                                     <div className="relative flex items-center gap-3">
-                                        <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm', s.tone)}>
+                                        <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-xs', s.tone)}>
                                             <s.icon className="size-4" />
                                         </div>
                                         <div className="min-w-0">

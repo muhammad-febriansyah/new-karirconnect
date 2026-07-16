@@ -273,7 +273,7 @@ export default function AdminUserShow({ user, stats, applications, postedJobs, a
                 </div>
 
                 {/* Hero */}
-                <div className={cn('relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm sm:p-6', heroRing, 'ring-1')}>
+                <div className={cn('relative overflow-hidden rounded-2xl border bg-card p-5 shadow-xs sm:p-6', heroRing, 'ring-1')}>
                     <div className={cn('absolute inset-x-0 top-0 h-32 bg-gradient-to-r', heroGradient, 'opacity-90')} />
                     <div
                         aria-hidden
@@ -789,7 +789,7 @@ function MiniStat({
     }[tone];
 
     return (
-        <Card className="overflow-hidden shadow-sm">
+        <Card className="overflow-hidden shadow-xs">
             <CardContent className="flex items-center gap-3 p-4">
                 <div className={cn('flex size-10 items-center justify-center rounded-xl ring-1 ring-inset', TONE)}>
                     <Icon className="size-5" />
@@ -857,7 +857,7 @@ function CompanyRow({ company, role }: { company: Company; role: string }) {
     return (
         <Link
             href={`/admin/companies/${company.id}`}
-            className="group flex items-center justify-between gap-3 rounded-md border bg-background p-3 transition hover:border-foreground/20 hover:shadow-sm"
+            className="group flex items-center justify-between gap-3 rounded-md border bg-background p-3 transition hover:border-foreground/20 hover:shadow-xs"
         >
             <div className="flex min-w-0 items-center gap-3">
                 <Avatar className="size-10 rounded-md">

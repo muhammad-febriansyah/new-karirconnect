@@ -286,7 +286,7 @@ function EditCompanyForm({ company, options }: { company: CompanyPayload; option
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <Card className="overflow-hidden border-border/70 shadow-sm">
+                    <Card className="overflow-hidden border-border/60 shadow-xs">
                         <CardHeader className="border-b bg-muted/20">
                             <CardTitle>Editor Profil Perusahaan</CardTitle>
                             <CardDescription>
@@ -462,7 +462,7 @@ function EditCompanyForm({ company, options }: { company: CompanyPayload; option
                                                 const cityOptions = options.cities.filter((city) => !office.province_id || String(city.province_id) === office.province_id);
 
                                                 return (
-                                                    <div key={office.id ?? `new-${index}`} className="rounded-xl border bg-background p-4 shadow-sm">
+                                                    <div key={office.id ?? `new-${index}`} className="rounded-xl border bg-background p-4 shadow-xs">
                                                         <div className="mb-4 flex items-center justify-between gap-3">
                                                             <div className="flex items-center gap-2">
                                                                 <MapPin className="size-4 text-muted-foreground" />
