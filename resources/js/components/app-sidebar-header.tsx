@@ -1,11 +1,12 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronDown, Search } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { GlobalSearch, useGlobalSearchShortcut } from '@/components/global-search';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { UserMenuContent } from '@/components/user-menu-content';
@@ -23,6 +24,9 @@ export function AppSidebarHeader({
     const { auth } = usePage<SharedPageProps>().props;
     const getInitials = useInitials();
     const meta = getRoleMeta(auth.user?.role as UserRole | undefined);
+    const [searchOpen, setSearchOpen] = useState(false);
+
+    useGlobalSearchShortcut(useCallback(() => setSearchOpen(true), []));
 
     return (
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur-md transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-6">
@@ -42,29 +46,32 @@ export function AppSidebarHeader({
                 </div>
             </div>
 
-            {/* Search bar */}
-            <div className="group relative hidden w-full max-w-md md:flex">
-                <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-brand-blue" />
-                <Input
-                    type="search"
-                    placeholder="Cari halaman, menu, atau data…"
-                    className={cn(
-                        'h-10 rounded-xl border-border/50 bg-muted/30 pl-10 pr-16 shadow-none',
-                        'transition-all duration-200',
-                        'placeholder:text-muted-foreground/60',
-                        'focus-visible:border-brand-blue/50 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-brand-blue/15',
-                        'hover:border-border hover:bg-muted/50',
-                    )}
-                />
+            {/* Search — opens the command palette; ⌘K does the same. */}
+            <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className={cn(
+                    'group relative hidden h-10 w-full max-w-md items-center rounded-xl border border-border/50 bg-muted/30 pl-10 pr-16 text-left md:flex',
+                    'transition-all duration-200',
+                    'hover:border-border hover:bg-muted/50',
+                    'focus-visible:border-brand-blue/50 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-brand-blue/15 focus-visible:outline-none',
+                )}
+            >
+                <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground transition-colors group-hover:text-brand-blue" />
+                <span className="truncate text-sm text-muted-foreground/60">
+                    Cari halaman, menu, atau data…
+                </span>
                 <kbd className={cn(
                     'pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 items-center gap-0.5',
                     'rounded-md border border-border/60 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground',
-                    'shadow-sm md:inline-flex',
+                    'shadow-xs md:inline-flex',
                 )}>
                     <span className="text-[11px] leading-none">⌘</span>
                     <span className="leading-none">K</span>
                 </kbd>
-            </div>
+            </button>
+
+            <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
 
             <div className="flex shrink-0 items-center gap-1.5">
                 <div className="rounded-lg border border-border/40 bg-muted/30 transition-colors hover:border-brand-blue/30 hover:bg-brand-blue/5">
@@ -81,7 +88,7 @@ export function AppSidebarHeader({
                                 className={cn(
                                     'group/userbtn h-11 gap-2.5 rounded-xl border border-transparent px-1.5 transition-all',
                                     'hover:border-brand-blue/20 hover:bg-brand-blue/5',
-                                    'data-[state=open]:border-brand-blue/30 data-[state=open]:bg-brand-blue/8 data-[state=open]:shadow-sm',
+                                    'data-[state=open]:border-brand-blue/30 data-[state=open]:bg-brand-blue/8 data-[state=open]:shadow-xs',
                                     'lg:pr-3',
                                 )}
                             >

@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceTokenController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Public\AboutPageController as PublicAboutPageController;
 use App\Http\Controllers\Public\ApplicationController as PublicApplicationController;
@@ -96,6 +97,10 @@ Route::prefix('companies')->name('public.companies.')->group(function (): void {
 
 Route::middleware(['auth', 'verified', 'onboarding', 'employer.onboarded'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('search', GlobalSearchController::class)
+        ->middleware('throttle:30,1')
+        ->name('search');
 
     Route::prefix('notifications')->name('notifications.')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
