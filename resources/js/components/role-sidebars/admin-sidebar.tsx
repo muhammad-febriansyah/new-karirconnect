@@ -7,6 +7,7 @@ import {
     Building2,
     ClipboardList,
     CreditCard,
+    Factory,
     HelpCircle,
     LayoutGrid,
     Megaphone,
@@ -46,6 +47,7 @@ import TalentSearchLogController from '@/actions/App/Http/Controllers/Admin/Tale
 import UserController from '@/actions/App/Http/Controllers/Admin/UserController';
 import { dashboard } from '@/routes';
 import { edit as adminSettingsEdit } from '@/routes/admin/settings';
+import { index as industriesIndex } from '@/routes/admin/industries';
 import { index as jobCategoriesIndex } from '@/routes/admin/job-categories';
 import { index as skillsIndex } from '@/routes/admin/skills';
 import { edit as profileEdit } from '@/routes/profile';
@@ -84,6 +86,11 @@ export const adminMainNavSections: NavSection[] = [
                 title: 'Tambah Perusahaan',
                 href: CompanyController.create().url,
                 icon: Plus,
+            },
+            {
+                title: 'Industri',
+                href: industriesIndex().url,
+                icon: Factory,
             },
             {
                 title: 'Verifikasi Perusahaan',

@@ -60,7 +60,7 @@ export default function AdminCompanyCreate({ industries, companySizes }: Props) 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <InputField
                                     id="owner_name"
-                                    label="Nama owner"
+                                    label="Nama owner/PIC"
                                     required
                                     value={data.owner_name}
                                     onChange={(e) => setData('owner_name', e.target.value)}
@@ -69,7 +69,7 @@ export default function AdminCompanyCreate({ industries, companySizes }: Props) 
                                 />
                                 <InputField
                                     id="owner_email"
-                                    label="Email owner"
+                                    label="Email owner/PIC"
                                     type="email"
                                     required
                                     value={data.owner_email}
@@ -80,7 +80,7 @@ export default function AdminCompanyCreate({ industries, companySizes }: Props) 
                                 />
                                 <InputField
                                     id="owner_phone"
-                                    label="Telepon owner"
+                                    label="Telepon owner/PIC"
                                     value={data.owner_phone}
                                     onChange={(e) => setData('owner_phone', e.target.value)}
                                     placeholder="+62 812 3456 7890"
