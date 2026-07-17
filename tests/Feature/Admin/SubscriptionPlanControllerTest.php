@@ -23,13 +23,19 @@ test('admin can list pricing plans with stats', function () {
     SubscriptionPlan::factory()->create(['is_active' => false]);
     SubscriptionPlan::factory()->create(['is_featured' => true]);
 
+    // Counted, not hardcoded: the Trial plan arrives from a data migration
+    // (seed_trial_subscription_plan), so the listing holds the five created
+    // here plus whatever the migrations seeded. Pinning a literal made this
+    // assertion go stale the moment that migration was added.
+    $expected = SubscriptionPlan::query()->count();
+
     $this->actingAs($admin)
         ->get(route('admin.pricing-plans.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('admin/pricing-plans/index')
-            ->where('totals.plans', 5)
-            ->has('plans', 5));
+            ->where('totals.plans', $expected)
+            ->has('plans', $expected));
 });
 
 test('admin can create a new pricing plan', function () {
