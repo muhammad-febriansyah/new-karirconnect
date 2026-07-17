@@ -30,6 +30,21 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Database Dump
+    |--------------------------------------------------------------------------
+    |
+    | Used by the admin database export. Set DB_DUMP_BINARY to an absolute path
+    | when mysqldump is not on the web server's PATH, which is common because
+    | PHP-FPM runs with a narrower PATH than an interactive shell.
+    |
+    */
+
+    'dump' => [
+        'binary' => env('DB_DUMP_BINARY', 'mysqldump'),
+    ],
+
     'connections' => [
 
         'sqlite' => [

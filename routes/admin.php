@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CareerResourceController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CompanySizeController;
 use App\Http\Controllers\Admin\CompanyVerificationController;
+use App\Http\Controllers\Admin\DatabaseBackupController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\IndustryController;
 use App\Http\Controllers\Admin\JobCategoryController;
@@ -41,6 +42,18 @@ Route::middleware(['auth', 'verified', 'role:admin'])
                     ->name('group');
                 Route::post('/', [SettingController::class, 'update'])->name('update');
                 Route::post('test-email', [SettingController::class, 'testEmail'])->name('test-email');
+            });
+
+        /*
+         * The dump is POST-only on purpose. As a GET it could be fired by a
+         * link, an <img src>, or a browser prefetch -- dumping the entire
+         * database as a side effect of hovering a bookmark.
+         */
+        Route::prefix('database')
+            ->as('database.')
+            ->group(function (): void {
+                Route::get('/', [DatabaseBackupController::class, 'index'])->name('index');
+                Route::post('export', [DatabaseBackupController::class, 'download'])->name('export');
             });
 
         Route::prefix('about-page')
