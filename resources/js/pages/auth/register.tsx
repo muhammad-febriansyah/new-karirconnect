@@ -1,5 +1,15 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { AlertCircle, ArrowRight, BriefcaseBusiness, Building2, Mail, Sparkles, UserRoundSearch, Building } from 'lucide-react';
+import {
+    AlertCircle,
+    ArrowRight,
+    BriefcaseBusiness,
+    Building2,
+    Mail,
+    Sparkles,
+    UserRoundSearch,
+    Building,
+} from 'lucide-react';
+import { useEffect } from 'react';
 import GoogleMark from '@/components/google-mark';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -8,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { AnalyticsEvent, trackEvent } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
@@ -63,7 +74,7 @@ export default function Register({
 
                 <div className="space-y-5">
                     <div className="space-y-2 text-center lg:text-left">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-blue ring-1 ring-brand-blue/15">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-blue/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-brand-blue uppercase ring-1 ring-brand-blue/15">
                             <Sparkles className="size-3" />
                             Mulai sekarang
                         </span>
@@ -71,13 +82,16 @@ export default function Register({
                             Pilih jenis akun
                         </h2>
                         <p className="text-sm leading-relaxed text-muted-foreground">
-                            Gunakan alur pendaftaran yang sesuai agar dashboard dan fitur Anda langsung tepat sasaran.
+                            Gunakan alur pendaftaran yang sesuai agar dashboard
+                            dan fitur Anda langsung tepat sasaran.
                         </p>
                     </div>
 
                     <div className="grid gap-3">
                         {roleOptions.map((option) => {
-                            const Icon = option.label.toLowerCase().includes('perusahaan')
+                            const Icon = option.label
+                                .toLowerCase()
+                                .includes('perusahaan')
                                 ? BriefcaseBusiness
                                 : UserRoundSearch;
 
@@ -110,7 +124,10 @@ export default function Register({
 
                     <p className="text-center text-sm text-muted-foreground">
                         Sudah punya akun?{' '}
-                        <TextLink href={loginUrl} className="font-semibold text-brand-blue hover:text-brand-blue/80">
+                        <TextLink
+                            href={loginUrl}
+                            className="font-semibold text-brand-blue hover:text-brand-blue/80"
+                        >
                             Masuk di sini
                         </TextLink>
                     </p>
@@ -122,6 +139,12 @@ export default function Register({
     const meta = roleMeta[role];
     const RoleIcon = meta.icon;
 
+    // The signup funnel. Page views say how many reached this form; these say
+    // how many tried, how many got in, and what stopped the rest.
+    useEffect(() => {
+        trackEvent(AnalyticsEvent.RegisterStart, { role });
+    }, [role]);
+
     return (
         <>
             <Head title={title ?? 'Register'} />
@@ -130,6 +153,20 @@ export default function Register({
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
                 className="flex flex-col gap-6"
+                onSubmit={() =>
+                    trackEvent(AnalyticsEvent.RegisterSubmit, { role })
+                }
+                onSuccess={() =>
+                    trackEvent(AnalyticsEvent.RegisterSuccess, { role })
+                }
+                onError={(errors) =>
+                    trackEvent(AnalyticsEvent.RegisterFailed, {
+                        role,
+                        // Field names only. The values are the user's own
+                        // credentials and must never reach Google.
+                        reason: Object.keys(errors).join(','),
+                    })
+                }
             >
                 {({ processing, errors }) => (
                     <>
@@ -155,9 +192,17 @@ export default function Register({
                             >
                                 <AlertCircle className="mt-0.5 size-4 shrink-0" />
                                 <div className="space-y-1">
-                                    <p className="font-semibold">Pendaftaran gagal</p>
+                                    <p className="font-semibold">
+                                        Pendaftaran gagal
+                                    </p>
                                     <ul className="space-y-0.5 text-destructive/90">
-                                        {[...new Set(Object.values(errors).filter(Boolean))].map((message) => (
+                                        {[
+                                            ...new Set(
+                                                Object.values(errors).filter(
+                                                    Boolean,
+                                                ),
+                                            ),
+                                        ].map((message) => (
                                             <li key={message}>{message}</li>
                                         ))}
                                     </ul>
@@ -175,7 +220,7 @@ export default function Register({
                                         <RoleIcon className="size-5" />
                                     </div>
                                     <div>
-                                        <div className="text-xs font-semibold uppercase tracking-wider text-brand-blue/80">
+                                        <div className="text-xs font-semibold tracking-wider text-brand-blue/80 uppercase">
                                             Tipe akun
                                         </div>
                                         <div className="text-sm font-semibold text-brand-navy">
@@ -192,7 +237,10 @@ export default function Register({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-brand-navy/80">
+                                <Label
+                                    htmlFor="name"
+                                    className="text-xs font-semibold tracking-wider text-brand-navy/80 uppercase"
+                                >
                                     {meta.nameLabel}
                                 </Label>
                                 <Input
@@ -206,16 +254,22 @@ export default function Register({
                                     placeholder={meta.namePlaceholder}
                                     className="h-12 rounded-xl border-border/60 bg-background text-sm shadow-xs placeholder:text-muted-foreground/50 focus-visible:border-brand-blue/60 focus-visible:ring-4 focus-visible:ring-brand-blue/15"
                                 />
-                                <InputError message={errors.name} className="mt-1" />
+                                <InputError
+                                    message={errors.name}
+                                    className="mt-1"
+                                />
                             </div>
 
                             {role === 'employer' && (
                                 <div className="grid gap-2">
-                                    <Label htmlFor="company_name" className="text-xs font-semibold uppercase tracking-wider text-brand-navy/80">
+                                    <Label
+                                        htmlFor="company_name"
+                                        className="text-xs font-semibold tracking-wider text-brand-navy/80 uppercase"
+                                    >
                                         Nama Perusahaan
                                     </Label>
                                     <div className="relative">
-                                        <Building className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                                        <Building className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground/70" />
                                         <Input
                                             id="company_name"
                                             type="text"
@@ -231,11 +285,14 @@ export default function Register({
                             )}
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-brand-navy/80">
+                                <Label
+                                    htmlFor="email"
+                                    className="text-xs font-semibold tracking-wider text-brand-navy/80 uppercase"
+                                >
                                     Alamat Email
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                                    <Mail className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground/70" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -251,7 +308,10 @@ export default function Register({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-brand-navy/80">
+                                <Label
+                                    htmlFor="password"
+                                    className="text-xs font-semibold tracking-wider text-brand-navy/80 uppercase"
+                                >
                                     Kata Sandi
                                 </Label>
                                 <PasswordInput
@@ -267,7 +327,10 @@ export default function Register({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation" className="text-xs font-semibold uppercase tracking-wider text-brand-navy/80">
+                                <Label
+                                    htmlFor="password_confirmation"
+                                    className="text-xs font-semibold tracking-wider text-brand-navy/80 uppercase"
+                                >
                                     Konfirmasi Kata Sandi
                                 </Label>
                                 <PasswordInput

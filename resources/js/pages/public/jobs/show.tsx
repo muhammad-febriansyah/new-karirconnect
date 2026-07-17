@@ -21,7 +21,7 @@ import {
     Wallet,
     type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { SeoHead } from '@/components/seo-head';
 import { SafeHtml } from '@/components/shared/safe-html';
@@ -37,13 +37,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AnalyticsEvent, trackEvent } from '@/lib/analytics';
 import { formatDate } from '@/lib/format-date';
 import { stripHtml } from '@/lib/sanitize-html';
 import { formatStatus } from '@/lib/format-status';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as jobBrowseIndex } from '@/routes/public/jobs';
-import { destroy as savedJobDestroy, store as savedJobStore } from '@/routes/employee/saved-jobs';
+import {
+    destroy as savedJobDestroy,
+    store as savedJobStore,
+} from '@/routes/employee/saved-jobs';
 import type { Auth } from '@/types';
 
 type Job = {
@@ -76,7 +80,12 @@ type Job = {
     province: string | null;
     city: string | null;
     skills: string[];
-    screening_questions: { id: number; question: string; type: string | null; is_required: boolean }[];
+    screening_questions: {
+        id: number;
+        question: string;
+        type: string | null;
+        is_required: boolean;
+    }[];
     views_count: number;
     applications_count: number;
 };
@@ -126,7 +135,8 @@ function formatRupiah(value: number | null): string {
 
 function formatRupiahShort(value: number | null): string {
     if (!value) return '';
-    if (value >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}jt`;
+    if (value >= 1_000_000)
+        return `Rp ${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}jt`;
     if (value >= 1_000) return `Rp ${(value / 1_000).toFixed(0)}rb`;
     return `Rp ${value}`;
 }
@@ -141,7 +151,11 @@ function formatRelative(iso: string | null): string {
     if (hr < 24) return `${hr} jam lalu`;
     const day = Math.floor(hr / 24);
     if (day < 30) return `${day} hari lalu`;
-    return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
 }
 
 function daysUntil(iso: string | null): number | null {
@@ -157,17 +171,37 @@ const APPLICATION_TIPS = [
     'Pastikan profil dan portofolio terbaru sebelum menekan Lamar.',
 ];
 
-export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved, similar }: Props) {
+export default function PublicJobShow({
+    job,
+    matchScore,
+    matchBreakdown,
+    isSaved,
+    similar,
+}: Props) {
     const auth = (usePage().props as unknown as { auth?: Auth }).auth;
     const isEmployee = auth?.user?.role === 'employee';
     const [copied, setCopied] = useState(false);
+
+    // The step between landing and registering: did they actually reach a job?
+    // Keyed on the slug so navigating between jobs re-fires.
+    useEffect(() => {
+        trackEvent(AnalyticsEvent.ViewJob, {
+            job_slug: job.slug,
+            // Not the company name: it is masked for anonymous postings, and
+            // sending it here would leak the employer to Google anyway.
+            is_signed_in: Boolean(auth?.user),
+        });
+    }, [job.slug, auth?.user]);
 
     const seoDescription = useMemo(
         () =>
             [
                 job.is_anonymous ? 'Perusahaan konfidensial' : job.company.name,
                 job.city ?? undefined,
-                job.description?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() ?? undefined,
+                job.description
+                    ?.replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim() ?? undefined,
             ]
                 .filter(Boolean)
                 .join(' · ')
@@ -212,9 +246,15 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
             return;
         }
         if (isSaved) {
-            router.delete(savedJobDestroy(job.slug).url, { preserveScroll: true });
+            router.delete(savedJobDestroy(job.slug).url, {
+                preserveScroll: true,
+            });
         } else {
-            router.post(savedJobStore(job.slug).url, {}, { preserveScroll: true });
+            router.post(
+                savedJobStore(job.slug).url,
+                {},
+                { preserveScroll: true },
+            );
         }
     };
 
@@ -238,7 +278,12 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
 
     return (
         <>
-            <SeoHead title={job.title} description={seoDescription} canonical={`/jobs/${job.slug}`} type="article" />
+            <SeoHead
+                title={job.title}
+                description={seoDescription}
+                canonical={`/jobs/${job.slug}`}
+                type="article"
+            />
 
             <div className="space-y-6 pb-24 lg:pb-0">
                 {/* Breadcrumb */}
@@ -252,12 +297,16 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link href={jobBrowseIndex().url}>Lowongan</Link>
+                                <Link href={jobBrowseIndex().url}>
+                                    Lowongan
+                                </Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage className="line-clamp-1">{job.title}</BreadcrumbPage>
+                            <BreadcrumbPage className="line-clamp-1">
+                                {job.title}
+                            </BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
@@ -283,7 +332,9 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                             className="size-full object-contain p-1.5"
                                         />
                                     ) : (
-                                        <span className="text-base font-semibold text-brand-navy">{initials}</span>
+                                        <span className="text-base font-semibold text-brand-navy">
+                                            {initials}
+                                        </span>
                                     )}
                                 </div>
                                 <div className="min-w-0 flex-1">
@@ -300,7 +351,9 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                                         {job.company.name}
                                                     </Link>
                                                 ) : (
-                                                    <span className="font-medium text-foreground">{job.company.name}</span>
+                                                    <span className="font-medium text-foreground">
+                                                        {job.company.name}
+                                                    </span>
                                                 )}
                                                 {verified && (
                                                     <BadgeCheck
@@ -317,55 +370,82 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                     <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-foreground/80">
                                         <span className="inline-flex items-center gap-1.5">
                                             <MapPin className="size-4 text-muted-foreground" />
-                                            {[job.city, job.province].filter(Boolean).join(', ') || 'Lokasi fleksibel'}
+                                            {[job.city, job.province]
+                                                .filter(Boolean)
+                                                .join(', ') ||
+                                                'Lokasi fleksibel'}
                                         </span>
                                         {job.employment_type && (
                                             <>
-                                                <span className="text-muted-foreground/50">·</span>
+                                                <span className="text-muted-foreground/50">
+                                                    ·
+                                                </span>
                                                 <span className="inline-flex items-center gap-1.5">
                                                     <Briefcase className="size-4 text-muted-foreground" />
-                                                    {formatStatus(job.employment_type)}
+                                                    {formatStatus(
+                                                        job.employment_type,
+                                                    )}
                                                 </span>
                                             </>
                                         )}
                                         {job.work_arrangement && (
                                             <>
-                                                <span className="text-muted-foreground/50">·</span>
-                                                <span>{formatStatus(job.work_arrangement)}</span>
+                                                <span className="text-muted-foreground/50">
+                                                    ·
+                                                </span>
+                                                <span>
+                                                    {formatStatus(
+                                                        job.work_arrangement,
+                                                    )}
+                                                </span>
                                             </>
                                         )}
                                         {job.experience_level && (
                                             <>
-                                                <span className="text-muted-foreground/50">·</span>
-                                                <span>{formatStatus(job.experience_level)}</span>
+                                                <span className="text-muted-foreground/50">
+                                                    ·
+                                                </span>
+                                                <span>
+                                                    {formatStatus(
+                                                        job.experience_level,
+                                                    )}
+                                                </span>
                                             </>
                                         )}
                                     </div>
                                     <div className="mt-3 flex flex-wrap items-center gap-2">
                                         {job.is_featured && (
                                             <Badge className="gap-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white">
-                                                <Flame className="size-3" /> Butuh Cepat
+                                                <Flame className="size-3" />{' '}
+                                                Butuh Cepat
                                             </Badge>
                                         )}
-                                        {remainingDays !== null && remainingDays <= 7 && remainingDays > 0 && (
-                                            <Badge
-                                                variant="outline"
-                                                className="gap-1 border-amber-500/40 bg-amber-50 text-amber-700"
-                                            >
-                                                <Clock className="size-3" /> {remainingDays} hari lagi
-                                            </Badge>
-                                        )}
+                                        {remainingDays !== null &&
+                                            remainingDays <= 7 &&
+                                            remainingDays > 0 && (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="gap-1 border-amber-500/40 bg-amber-50 text-amber-700"
+                                                >
+                                                    <Clock className="size-3" />{' '}
+                                                    {remainingDays} hari lagi
+                                                </Badge>
+                                            )}
                                         {remainingDays === 0 && (
                                             <Badge
                                                 variant="outline"
                                                 className="gap-1 border-rose-500/40 bg-rose-50 text-rose-700"
                                             >
-                                                <Clock className="size-3" /> Tutup hari ini
+                                                <Clock className="size-3" />{' '}
+                                                Tutup hari ini
                                             </Badge>
                                         )}
                                         {job.published_at && (
                                             <span className="text-xs text-muted-foreground">
-                                                Diposting {formatRelative(job.published_at)}
+                                                Diposting{' '}
+                                                {formatRelative(
+                                                    job.published_at,
+                                                )}
                                             </span>
                                         )}
                                     </div>
@@ -378,7 +458,9 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                     size="lg"
                                     className="h-11 flex-1 rounded-xl bg-brand-blue px-6 hover:bg-brand-blue/90 sm:flex-none"
                                 >
-                                    <Link href={`/jobs/${job.slug}/apply`}>Lamar Sekarang</Link>
+                                    <Link href={`/jobs/${job.slug}/apply`}>
+                                        Lamar Sekarang
+                                    </Link>
                                 </Button>
                                 <div className="flex gap-2">
                                     {isEmployee && (
@@ -387,10 +469,15 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                             variant="outline"
                                             size="icon"
                                             onClick={toggleSave}
-                                            aria-label={isSaved ? 'Hapus dari tersimpan' : 'Simpan lowongan'}
+                                            aria-label={
+                                                isSaved
+                                                    ? 'Hapus dari tersimpan'
+                                                    : 'Simpan lowongan'
+                                            }
                                             className={cn(
                                                 'size-11 rounded-xl border-border/60',
-                                                isSaved && 'border-brand-blue/40 bg-brand-blue/5 text-brand-blue',
+                                                isSaved &&
+                                                    'border-brand-blue/40 bg-brand-blue/5 text-brand-blue',
                                             )}
                                         >
                                             {isSaved ? (
@@ -432,8 +519,16 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                             <Highlight
                                 icon={MapPin}
                                 label="Lokasi"
-                                value={[job.city, job.province].filter(Boolean).join(', ') || 'Fleksibel'}
-                                hint={job.work_arrangement ? formatStatus(job.work_arrangement) : undefined}
+                                value={
+                                    [job.city, job.province]
+                                        .filter(Boolean)
+                                        .join(', ') || 'Fleksibel'
+                                }
+                                hint={
+                                    job.work_arrangement
+                                        ? formatStatus(job.work_arrangement)
+                                        : undefined
+                                }
                                 tone="brand"
                             />
                             <Highlight
@@ -444,13 +539,25 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                         ? formatStatus(job.employment_type)
                                         : '-'
                                 }
-                                hint={job.is_anonymous ? 'Perusahaan konfidensial' : undefined}
+                                hint={
+                                    job.is_anonymous
+                                        ? 'Perusahaan konfidensial'
+                                        : undefined
+                                }
                             />
                             <Highlight
                                 icon={GraduationCap}
                                 label="Pengalaman"
-                                value={job.experience_level ? formatStatus(job.experience_level) : 'Semua level'}
-                                hint={job.min_education ? `Min. ${formatStatus(job.min_education)}` : undefined}
+                                value={
+                                    job.experience_level
+                                        ? formatStatus(job.experience_level)
+                                        : 'Semua level'
+                                }
+                                hint={
+                                    job.min_education
+                                        ? `Min. ${formatStatus(job.min_education)}`
+                                        : undefined
+                                }
                             />
                             <Highlight
                                 icon={Calendar}
@@ -467,7 +574,11 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                           ? 'Tutup hari ini'
                                           : undefined
                                 }
-                                tone={remainingDays !== null && remainingDays <= 3 ? 'warn' : 'default'}
+                                tone={
+                                    remainingDays !== null && remainingDays <= 3
+                                        ? 'warn'
+                                        : 'default'
+                                }
                             />
                         </div>
 
@@ -475,11 +586,17 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-2.5 text-sm text-muted-foreground">
                             <span className="inline-flex items-center gap-1.5">
                                 <Eye className="size-4" />
-                                <span className="font-medium text-foreground">{job.views_count}</span> dilihat
+                                <span className="font-medium text-foreground">
+                                    {job.views_count}
+                                </span>{' '}
+                                dilihat
                             </span>
                             <span className="inline-flex items-center gap-1.5">
                                 <Users className="size-4" />
-                                <span className="font-medium text-foreground">{job.applications_count}</span> pelamar
+                                <span className="font-medium text-foreground">
+                                    {job.applications_count}
+                                </span>{' '}
+                                pelamar
                             </span>
                             {job.screening_questions.length > 0 && (
                                 <span className="inline-flex items-center gap-1.5">
@@ -493,7 +610,10 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                         </div>
 
                         {job.skills.length > 0 && (
-                            <ContentCard title="Skill yang Dicari" icon={Sparkles}>
+                            <ContentCard
+                                title="Skill yang Dicari"
+                                icon={Sparkles}
+                            >
                                 <div className="flex flex-wrap gap-1.5">
                                     {job.skills.map((skill) => (
                                         <span
@@ -527,11 +647,15 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                                 {i + 1}
                                             </span>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-foreground">{q.question}</p>
+                                                <p className="text-foreground">
+                                                    {q.question}
+                                                </p>
                                                 <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                                                     {q.type && (
                                                         <span className="rounded-md bg-muted px-1.5 py-0.5">
-                                                            {formatStatus(q.type)}
+                                                            {formatStatus(
+                                                                q.type,
+                                                            )}
                                                         </span>
                                                     )}
                                                     {q.is_required && (
@@ -546,7 +670,6 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                 </ol>
                             </ContentCard>
                         )}
-
                     </main>
 
                     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
@@ -554,19 +677,27 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                         <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             {fullSalaryLabel ? (
                                 <div className="space-y-1">
-                                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                    <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Estimasi Gaji
                                     </p>
-                                    <p className="text-xl font-bold text-foreground">{fullSalaryLabel}</p>
-                                    <p className="text-xs text-muted-foreground">/ bulan</p>
+                                    <p className="text-xl font-bold text-foreground">
+                                        {fullSalaryLabel}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        / bulan
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="space-y-1">
-                                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                    <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Gaji
                                     </p>
-                                    <p className="text-xl font-bold text-foreground">Negotiable</p>
-                                    <p className="text-xs text-muted-foreground">Sesuai kesepakatan</p>
+                                    <p className="text-xl font-bold text-foreground">
+                                        Negotiable
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Sesuai kesepakatan
+                                    </p>
                                 </div>
                             )}
                             <Button
@@ -574,7 +705,9 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                 size="lg"
                                 className="mt-4 h-11 w-full rounded-xl bg-brand-blue hover:bg-brand-blue/90"
                             >
-                                <Link href={`/jobs/${job.slug}/apply`}>Lamar Sekarang</Link>
+                                <Link href={`/jobs/${job.slug}/apply`}>
+                                    Lamar Sekarang
+                                </Link>
                             </Button>
                             <div className="mt-2 grid grid-cols-2 gap-2">
                                 {isEmployee && (
@@ -584,7 +717,8 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                         onClick={toggleSave}
                                         className={cn(
                                             'h-10 rounded-xl border-border/60',
-                                            isSaved && 'border-brand-blue/40 bg-brand-blue/5 text-brand-blue',
+                                            isSaved &&
+                                                'border-brand-blue/40 bg-brand-blue/5 text-brand-blue',
                                         )}
                                     >
                                         {isSaved ? (
@@ -606,11 +740,13 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                 >
                                     {copied ? (
                                         <>
-                                            <CheckCircle2 className="size-4 text-emerald-600" /> Tersalin
+                                            <CheckCircle2 className="size-4 text-emerald-600" />{' '}
+                                            Tersalin
                                         </>
                                     ) : (
                                         <>
-                                            <LinkIcon className="size-4" /> Bagikan
+                                            <LinkIcon className="size-4" />{' '}
+                                            Bagikan
                                         </>
                                     )}
                                 </Button>
@@ -631,37 +767,75 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                         <span className="flex size-7 items-center justify-center rounded-lg bg-brand-blue/10 text-brand-blue">
                                             <Sparkles className="size-4" />
                                         </span>
-                                        <h3 className="text-sm font-semibold">Match Score</h3>
+                                        <h3 className="text-sm font-semibold">
+                                            Match Score
+                                        </h3>
                                     </div>
-                                    <span className="text-2xl font-bold tabular-nums text-foreground">
+                                    <span className="text-2xl font-bold text-foreground tabular-nums">
                                         {matchScore}
-                                        <span className="text-sm font-normal text-muted-foreground">/100</span>
+                                        <span className="text-sm font-normal text-muted-foreground">
+                                            /100
+                                        </span>
                                     </span>
                                 </div>
-                                <Progress value={matchScore} className="mt-3 h-2" />
+                                <Progress
+                                    value={matchScore}
+                                    className="mt-3 h-2"
+                                />
                                 {matchBreakdown && (
                                     <ul className="mt-4 space-y-2.5 text-xs">
                                         {[
-                                            { label: 'Skill', value: matchBreakdown.skills, max: 50 },
-                                            { label: 'Pengalaman', value: matchBreakdown.experience, max: 20 },
-                                            { label: 'Lokasi', value: matchBreakdown.location, max: 15 },
-                                            { label: 'Gaji', value: matchBreakdown.salary, max: 15 },
+                                            {
+                                                label: 'Skill',
+                                                value: matchBreakdown.skills,
+                                                max: 50,
+                                            },
+                                            {
+                                                label: 'Pengalaman',
+                                                value: matchBreakdown.experience,
+                                                max: 20,
+                                            },
+                                            {
+                                                label: 'Lokasi',
+                                                value: matchBreakdown.location,
+                                                max: 15,
+                                            },
+                                            {
+                                                label: 'Gaji',
+                                                value: matchBreakdown.salary,
+                                                max: 15,
+                                            },
                                         ].map((row) => (
-                                            <li key={row.label} className="space-y-1">
+                                            <li
+                                                key={row.label}
+                                                className="space-y-1"
+                                            >
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-muted-foreground">{row.label}</span>
-                                                    <span className="tabular-nums font-medium text-foreground">
+                                                    <span className="text-muted-foreground">
+                                                        {row.label}
+                                                    </span>
+                                                    <span className="font-medium text-foreground tabular-nums">
                                                         {row.value}
-                                                        <span className="text-muted-foreground/60"> / {row.max}</span>
+                                                        <span className="text-muted-foreground/60">
+                                                            {' '}
+                                                            / {row.max}
+                                                        </span>
                                                     </span>
                                                 </div>
-                                                <Progress value={(row.value / row.max) * 100} className="h-1" />
+                                                <Progress
+                                                    value={
+                                                        (row.value / row.max) *
+                                                        100
+                                                    }
+                                                    className="h-1"
+                                                />
                                             </li>
                                         ))}
                                     </ul>
                                 )}
                                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                                    Berdasarkan skill, pengalaman, lokasi, dan ekspektasi gaji dari profil Anda.
+                                    Berdasarkan skill, pengalaman, lokasi, dan
+                                    ekspektasi gaji dari profil Anda.
                                 </p>
                             </div>
                         )}
@@ -682,10 +856,14 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <h3 className="truncate font-semibold text-foreground">
-                                        {job.is_anonymous ? 'Perusahaan Konfidensial' : job.company.name}
+                                        {job.is_anonymous
+                                            ? 'Perusahaan Konfidensial'
+                                            : job.company.name}
                                     </h3>
                                     {!job.is_anonymous && verified && (
-                                        <StatusBadge tone="success">Verified</StatusBadge>
+                                        <StatusBadge tone="success">
+                                            Verified
+                                        </StatusBadge>
                                     )}
                                 </div>
                             </div>
@@ -700,7 +878,11 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                     variant="outline"
                                     className="mt-4 h-10 w-full rounded-xl border-border/60"
                                 >
-                                    <Link href={`/companies/${job.company.slug}`}>Lihat Profil Perusahaan</Link>
+                                    <Link
+                                        href={`/companies/${job.company.slug}`}
+                                    >
+                                        Lihat Profil Perusahaan
+                                    </Link>
                                 </Button>
                             )}
                         </div>
@@ -711,18 +893,24 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                                 <span className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                                     <Lightbulb className="size-4" />
                                 </span>
-                                <h3 className="text-sm font-semibold">Tips Melamar</h3>
+                                <h3 className="text-sm font-semibold">
+                                    Tips Melamar
+                                </h3>
                             </div>
                             <ul className="mt-3 space-y-2.5 text-sm">
                                 {APPLICATION_TIPS.map((tip, i) => (
-                                    <li key={i} className="flex gap-2 text-foreground/80">
+                                    <li
+                                        key={i}
+                                        className="flex gap-2 text-foreground/80"
+                                    >
                                         <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                                        <span className="leading-relaxed">{tip}</span>
+                                        <span className="leading-relaxed">
+                                            {tip}
+                                        </span>
                                     </li>
                                 ))}
                             </ul>
                         </div>
-
                     </aside>
                 </div>
 
@@ -735,9 +923,13 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
             <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur lg:hidden">
                 <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs text-muted-foreground">{job.title}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                            {job.title}
+                        </p>
                         <p className="truncate text-sm font-semibold text-foreground">
-                            {salaryLabel ? `${salaryLabel} / bulan` : 'Negotiable'}
+                            {salaryLabel
+                                ? `${salaryLabel} / bulan`
+                                : 'Negotiable'}
                         </p>
                     </div>
                     {isEmployee && (
@@ -746,10 +938,13 @@ export default function PublicJobShow({ job, matchScore, matchBreakdown, isSaved
                             variant="outline"
                             size="icon"
                             onClick={toggleSave}
-                            aria-label={isSaved ? 'Hapus dari tersimpan' : 'Simpan'}
+                            aria-label={
+                                isSaved ? 'Hapus dari tersimpan' : 'Simpan'
+                            }
                             className={cn(
                                 'size-10 shrink-0 rounded-xl border-border/60',
-                                isSaved && 'border-brand-blue/40 bg-brand-blue/5 text-brand-blue',
+                                isSaved &&
+                                    'border-brand-blue/40 bg-brand-blue/5 text-brand-blue',
                             )}
                         >
                             {isSaved ? (
@@ -808,12 +1003,17 @@ function Highlight({
             >
                 <Icon className="size-4" />
             </div>
-            <p className="mt-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="mt-2.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
                 {label}
             </p>
-            <p className="mt-0.5 text-sm font-semibold break-words text-foreground sm:text-base">{value}</p>
+            <p className="mt-0.5 text-sm font-semibold break-words text-foreground sm:text-base">
+                {value}
+            </p>
             {hint && (
-                <p className="mt-0.5 text-xs break-words text-muted-foreground" title={hint}>
+                <p
+                    className="mt-0.5 text-xs break-words text-muted-foreground"
+                    title={hint}
+                >
                     {hint}
                 </p>
             )}
@@ -850,7 +1050,8 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
             <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {jobs.map((s) => {
                     const salary = formatSalary(s);
-                    const verified = s.company.verification_status === 'verified';
+                    const verified =
+                        s.company.verification_status === 'verified';
                     const initials =
                         s.company.name
                             .split(' ')
@@ -882,7 +1083,7 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-start gap-1.5">
-                                            <p className="line-clamp-2 flex-1 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-brand-blue">
+                                            <p className="line-clamp-2 flex-1 text-sm leading-snug font-semibold text-foreground transition-colors group-hover:text-brand-blue">
                                                 {s.title}
                                             </p>
                                             {s.is_featured && (
@@ -895,7 +1096,9 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                                             )}
                                         </div>
                                         <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                                            <span className="line-clamp-1">{s.company.name}</span>
+                                            <span className="line-clamp-1">
+                                                {s.company.name}
+                                            </span>
                                             {verified && (
                                                 <BadgeCheck
                                                     className="size-3 shrink-0 fill-brand-blue text-white"
@@ -908,17 +1111,23 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                                             {s.city && (
                                                 <span className="inline-flex items-center gap-1 text-foreground/70">
                                                     <MapPin className="size-3 text-muted-foreground" />
-                                                    <span className="line-clamp-1">{s.city}</span>
+                                                    <span className="line-clamp-1">
+                                                        {s.city}
+                                                    </span>
                                                 </span>
                                             )}
                                             {s.employment_type && (
                                                 <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 font-medium text-foreground/80">
-                                                    {formatStatus(s.employment_type)}
+                                                    {formatStatus(
+                                                        s.employment_type,
+                                                    )}
                                                 </span>
                                             )}
                                             {s.work_arrangement && (
                                                 <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 font-medium text-foreground/80">
-                                                    {formatStatus(s.work_arrangement)}
+                                                    {formatStatus(
+                                                        s.work_arrangement,
+                                                    )}
                                                 </span>
                                             )}
                                         </div>
@@ -963,10 +1172,16 @@ function JobDetailTabs({
 }) {
     const sections = [
         { key: 'description', label: 'Deskripsi', html: description },
-        { key: 'responsibilities', label: 'Tanggung Jawab', html: responsibilities },
+        {
+            key: 'responsibilities',
+            label: 'Tanggung Jawab',
+            html: responsibilities,
+        },
         { key: 'requirements', label: 'Kualifikasi', html: requirements },
         { key: 'benefits', label: 'Benefit & Tunjangan', html: benefits },
-    ].filter((s): s is { key: string; label: string; html: string } => Boolean(s.html));
+    ].filter((s): s is { key: string; label: string; html: string } =>
+        Boolean(s.html),
+    );
 
     if (sections.length === 0) {
         return null;
@@ -993,8 +1208,15 @@ function JobDetailTabs({
                 </TabsList>
 
                 {sections.map((section) => (
-                    <TabsContent key={section.key} value={section.key} className="focus-visible:outline-none">
-                        <SafeHtml html={section.html} className={PROSE_CLASSES} />
+                    <TabsContent
+                        key={section.key}
+                        value={section.key}
+                        className="focus-visible:outline-none"
+                    >
+                        <SafeHtml
+                            html={section.html}
+                            className={PROSE_CLASSES}
+                        />
                     </TabsContent>
                 ))}
             </Tabs>
@@ -1022,9 +1244,13 @@ function ContentCard({
                     </span>
                 )}
                 <div className="min-w-0 flex-1">
-                    <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+                    <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                        {title}
+                    </h2>
                     {description && (
-                        <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                            {description}
+                        </p>
                     )}
                 </div>
             </div>

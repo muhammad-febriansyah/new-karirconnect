@@ -1,6 +1,7 @@
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { trackPageView } from '@/lib/analytics';
 import AdminLayout from '@/layouts/admin-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
@@ -15,11 +16,14 @@ function resolveAppName(): string {
         return 'KarirConnect';
     }
 
-    const pageScript = document.querySelector<HTMLScriptElement>('script[data-page]');
+    const pageScript =
+        document.querySelector<HTMLScriptElement>('script[data-page]');
 
     if (pageScript?.textContent) {
         try {
-            const page = JSON.parse(pageScript.textContent) as { props?: { app?: { name?: string } } };
+            const page = JSON.parse(pageScript.textContent) as {
+                props?: { app?: { name?: string } };
+            };
 
             if (page.props?.app?.name) {
                 return page.props.app.name;
@@ -33,6 +37,22 @@ function resolveAppName(): string {
 }
 
 const appName = resolveAppName();
+
+/*
+ * Page views for an SPA.
+ *
+ * Inertia swaps components without a document load, so gtag's own automatic
+ * pageview would fire once per session and never again -- every visitor would
+ * look like a one-page bounce, which is the exact question this is meant to
+ * answer. gtag is therefore configured with send_page_view:false and this is
+ * the only source of page views.
+ *
+ * One listener covers everything: Inertia fires 'navigate' for the initial page
+ * too (Router.fireInitialEvents), so sending a page view here as well would
+ * double-count the first page of every session. No-ops when no Measurement ID
+ * is configured.
+ */
+router.on('navigate', (event) => trackPageView(event.detail.page.url));
 
 createInertiaApp({
     title: (title) => {
@@ -49,7 +69,9 @@ createInertiaApp({
             case name === 'welcome':
                 return HomeLayout;
             case name.startsWith('errors/'):
-                return ({ children }: { children: React.ReactNode }) => <>{children}</>;
+                return ({ children }: { children: React.ReactNode }) => (
+                    <>{children}</>
+                );
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
