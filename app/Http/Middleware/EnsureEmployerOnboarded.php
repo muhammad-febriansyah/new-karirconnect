@@ -37,6 +37,13 @@ class EnsureEmployerOnboarded
             return $next($request);
         }
 
+        if ($request->is('api/*')) {
+            return response()->json([
+                'message' => 'Selesaikan onboarding perusahaan terlebih dahulu.',
+                'code' => 'employer_onboarding_required',
+            ], 403);
+        }
+
         return redirect()->to('/employer/onboarding');
     }
 }

@@ -30,8 +30,13 @@ class EnsureSubscriptionActive
 
         $company = Company::query()->where('owner_id', $user->id)->first();
         if (! $company) {
-            return redirect()->route('employer.company.edit')
-                ->with('error', 'Lengkapi profil perusahaan terlebih dahulu.');
+            return $this->deny(
+                $request,
+                'Lengkapi profil perusahaan terlebih dahulu.',
+                'company_missing',
+                fn () => redirect()->route('employer.company.edit')
+                    ->with('error', 'Lengkapi profil perusahaan terlebih dahulu.'),
+            );
         }
 
         $subscription = CompanySubscription::query()
@@ -42,16 +47,42 @@ class EnsureSubscriptionActive
             ->first();
 
         if (! $subscription || ! $subscription->isActive()) {
-            return redirect()->route('employer.billing.index')
-                ->with('warning', 'Fitur ini membutuhkan langganan aktif.');
+            return $this->deny(
+                $request,
+                'Fitur ini membutuhkan langganan aktif.',
+                'subscription_required',
+                fn () => redirect()->route('employer.billing.index')
+                    ->with('warning', 'Fitur ini membutuhkan langganan aktif.'),
+            );
         }
 
         if ($minTier !== null && ! $this->meetsTier($subscription->plan?->tier, $minTier)) {
-            return redirect()->route('employer.billing.index')
-                ->with('warning', "Fitur ini membutuhkan paket {$minTier} atau lebih tinggi.");
+            return $this->deny(
+                $request,
+                "Fitur ini membutuhkan paket {$minTier} atau lebih tinggi.",
+                'subscription_tier_too_low',
+                fn () => redirect()->route('employer.billing.index')
+                    ->with('warning', "Fitur ini membutuhkan paket {$minTier} atau lebih tinggi."),
+            );
         }
 
         return $next($request);
+    }
+
+    /**
+     * Web callers get the redirect they already expect; API callers get a
+     * status plus a machine-readable code, because a mobile client cannot do
+     * anything useful with a 302 to an HTML billing page.
+     *
+     * @param  Closure(): Response  $webResponse
+     */
+    private function deny(Request $request, string $message, string $code, Closure $webResponse): Response
+    {
+        if ($request->is('api/*')) {
+            return response()->json(['message' => $message, 'code' => $code], 403);
+        }
+
+        return $webResponse();
     }
 
     private function meetsTier(?SubscriptionTier $current, string $required): bool
