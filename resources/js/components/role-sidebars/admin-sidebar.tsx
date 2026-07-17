@@ -7,6 +7,7 @@ import {
     Building2,
     ClipboardList,
     CreditCard,
+    DatabaseBackup,
     Factory,
     HelpCircle,
     LayoutGrid,
@@ -33,6 +34,7 @@ import AssessmentQuestionController from '@/actions/App/Http/Controllers/Admin/A
 import CareerResourceController from '@/actions/App/Http/Controllers/Admin/CareerResourceController';
 import CompanyController from '@/actions/App/Http/Controllers/Admin/CompanyController';
 import CompanyVerificationController from '@/actions/App/Http/Controllers/Admin/CompanyVerificationController';
+import DatabaseBackupController from '@/actions/App/Http/Controllers/Admin/DatabaseBackupController';
 import FaqController from '@/actions/App/Http/Controllers/Admin/FaqController';
 import JobController from '@/actions/App/Http/Controllers/Admin/JobController';
 import LegalPageController from '@/actions/App/Http/Controllers/Admin/LegalPageController';
@@ -226,6 +228,11 @@ export const adminMainNavSections: NavSection[] = [
                 title: 'Pengaturan Sistem',
                 href: adminSettingsEdit().url,
                 icon: SettingsIcon,
+            },
+            {
+                title: 'Export Database',
+                href: DatabaseBackupController.index().url,
+                icon: DatabaseBackup,
             },
         ],
     },
