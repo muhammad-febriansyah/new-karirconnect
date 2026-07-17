@@ -5,6 +5,7 @@ use App\Enums\ReviewStatus;
 use App\Models\Company;
 use App\Models\CompanyReview;
 use App\Models\JobCategory;
+use App\Models\Report;
 use App\Models\User;
 use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
@@ -268,5 +269,46 @@ describe('admin billing views', function (): void {
             ->getJson('/api/v1/admin/audit-logs')
             ->assertOk()
             ->assertJsonStructure(['data', 'meta' => ['total']]);
+    });
+});
+
+describe('report moderation', function (): void {
+    it('reviews a report and records the reviewer', function (): void {
+        // Regression: this wrote to reviewed_by_user_id, a column that does not
+        // exist, so every review through the API died with "Unknown column".
+        $admin = apiAdminUser();
+        $report = Report::factory()->create(['status' => 'pending']);
+
+        $this->withHeaders(adminToken($admin))
+            ->postJson('/api/v1/admin/reports/'.$report->id.'/review', ['status' => 'reviewed'])
+            ->assertOk();
+
+        $report->refresh();
+
+        expect($report->status)->toBe('reviewed')
+            ->and($report->reviewed_by)->toBe($admin->id)
+            ->and($report->reviewed_at)->not->toBeNull();
+    });
+
+    it('exposes the report description rather than a missing details column', function (): void {
+        Report::factory()->create(['description' => 'Lowongan ini penipuan']);
+
+        $this->withHeaders(adminToken(apiAdminUser()))
+            ->getJson('/api/v1/admin/reports')
+            ->assertOk()
+            ->assertJsonPath('data.0.description', 'Lowongan ini penipuan');
+    });
+
+    it('counts pending reports in the queue badge', function (): void {
+        // Regression: the badge queried status 'open', a value nothing ever
+        // writes, so incoming abuse reports were invisible to admins forever.
+        Report::factory()->count(3)->create(['status' => 'pending']);
+        Report::factory()->create(['status' => 'reviewed']);
+        Report::factory()->create(['status' => 'dismissed']);
+
+        $this->withHeaders(adminToken(apiAdminUser()))
+            ->getJson('/api/v1/admin/queue-counts')
+            ->assertOk()
+            ->assertJsonPath('data.reports_pending', 3);
     });
 });

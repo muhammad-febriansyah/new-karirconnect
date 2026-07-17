@@ -44,6 +44,9 @@ class InterviewController extends Controller
             ->with([
                 'application:id,job_id,employee_profile_id',
                 'application.job:id,title,slug,company_id',
+                // InterviewResource reads job.company->name. Without this the
+                // list lazy-loads the company once per row.
+                'application.job.company:id,name',
                 'application.employeeProfile.user:id,name',
                 'participants.user:id,name',
             ])
@@ -63,6 +66,7 @@ class InterviewController extends Controller
 
         $interview->load([
             'application.job:id,title,slug,company_id',
+            'application.job.company:id,name',
             'application.employeeProfile.user:id,name,email',
             'participants.user:id,name',
             'rescheduleRequests',
@@ -87,7 +91,7 @@ class InterviewController extends Controller
         $interview = $this->schedule->execute($application, $request->user(), $request->validated());
 
         return response()->json([
-            'data' => new InterviewResource($interview->fresh(['application.job', 'participants.user'])),
+            'data' => new InterviewResource($interview->fresh(['application.job.company', 'participants.user'])),
         ], 201);
     }
 

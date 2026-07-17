@@ -9,6 +9,7 @@ use App\Enums\InterviewStatus;
 use App\Models\AiInterviewSession;
 use App\Models\AiInterviewTemplate;
 use App\Models\Application;
+use App\Models\CompanyMember;
 use App\Models\Interview;
 use App\Models\User;
 use App\Notifications\InterviewScheduledNotification;
@@ -51,12 +52,50 @@ class ScheduleInterviewAction
      *     interviewer_ids?: array<int, int>,
      * }  $data
      */
+    /**
+     * Keep only the ids that belong to the company owning the job being
+     * interviewed for.
+     *
+     * @param  array<int, int>  $interviewerIds
+     * @return array<int, int>
+     */
+    private function scopeToOrganizerCompany(array $interviewerIds, Application $application): array
+    {
+        if ($interviewerIds === []) {
+            return [];
+        }
+
+        $companyId = $application->job?->company_id;
+
+        if ($companyId === null) {
+            return [];
+        }
+
+        return CompanyMember::query()
+            ->where('company_id', $companyId)
+            ->whereIn('user_id', $interviewerIds)
+            ->pluck('user_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
     public function execute(Application $application, User $organizer, array $data): Interview
     {
         $start = Carbon::parse($data['scheduled_at'], $data['timezone'] ?? 'Asia/Jakarta');
         $duration = (int) ($data['duration_minutes'] ?? 60);
 
         $interviewerIds = array_values(array_unique(array_map('intval', $data['interviewer_ids'] ?? [])));
+
+        /*
+         * Second line of defence behind the FormRequests. This action is the
+         * shared sink for four routes (web and API, single and bulk), so a
+         * future caller that forgets to scope the ids would otherwise reopen
+         * the calendar oracle. Dropping unknown ids rather than erroring keeps
+         * the validated path -- where the ids are already company-scoped -- a
+         * no-op.
+         */
+        $interviewerIds = $this->scopeToOrganizerCompany($interviewerIds, $application);
+
         $candidateUserId = $application->employeeProfile?->user_id;
         if ($candidateUserId === null) {
             throw ValidationException::withMessages(['application' => 'Aplikasi tidak memiliki kandidat valid.']);

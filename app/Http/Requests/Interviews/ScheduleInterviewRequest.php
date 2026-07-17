@@ -12,9 +12,28 @@ use Illuminate\Validation\Rule;
 
 class ScheduleInterviewRequest extends FormRequest
 {
+    private ?Company $actingCompany = null;
+
+    private bool $companyResolved = false;
+
     public function authorize(): bool
     {
         return $this->user()?->role === UserRole::Employer;
+    }
+
+    /**
+     * The company the caller owns. Memoised because both the interviewer_ids
+     * rule and the ai_template_id check need it, and rules() runs before
+     * withValidator on every request.
+     */
+    private function actingCompany(): ?Company
+    {
+        if (! $this->companyResolved) {
+            $this->actingCompany = Company::query()->where('owner_id', $this->user()?->id)->first();
+            $this->companyResolved = true;
+        }
+
+        return $this->actingCompany;
     }
 
     /**
@@ -44,7 +63,21 @@ class ScheduleInterviewRequest extends FormRequest
             'location_map_url' => ['nullable', 'url', 'max:500'],
 
             'interviewer_ids' => ['nullable', 'array'],
-            'interviewer_ids.*' => ['integer', 'exists:users,id'],
+            /*
+             * Must be scoped to the acting company, not merely to a real user.
+             * The scheduler looks for conflicts across every interview these ids
+             * take part in, so a bare exists:users,id turns 422 "Slot bentrok"
+             * into an oracle: probe any user id against a moving time window and
+             * their whole calendar falls out. A successful call also writes them
+             * in as a participant, which then poisons their own conflict checks.
+             * The UI dropdown is already company-scoped (InterviewController::
+             * teamOptions), but that is presentation -- this is the enforcement.
+             */
+            'interviewer_ids.*' => [
+                'integer',
+                Rule::exists('company_members', 'user_id')
+                    ->where('company_id', $this->actingCompany()?->id ?? 0),
+            ],
 
             'ai_template_id' => [
                 Rule::requiredIf($mode === 'ai'),
@@ -67,7 +100,7 @@ class ScheduleInterviewRequest extends FormRequest
                 return; // already covered by required rule
             }
 
-            $company = Company::query()->where('owner_id', $this->user()->id)->first();
+            $company = $this->actingCompany();
             $template = AiInterviewTemplate::query()
                 ->withCount('questions')
                 ->where('id', $templateId)

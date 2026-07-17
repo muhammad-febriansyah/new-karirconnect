@@ -9,6 +9,7 @@ use App\Models\AiInterviewTemplate;
 use App\Models\AiInterviewTemplateQuestion;
 use App\Models\Application;
 use App\Models\Company;
+use App\Models\CompanyMember;
 use App\Models\EmployeeProfile;
 use App\Models\Interview;
 use App\Models\InterviewParticipant;
@@ -591,4 +592,208 @@ test('employer can view bulk schedule page', function () {
         ->get(route('employer.interviews.bulk.create'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('employer/interviews/bulk'));
+});
+
+describe('interviewer scoping', function (): void {
+    test('rejects an interviewer who is not a member of the acting company', function () {
+        // Regression: interviewer_ids only had exists:users,id. Any real user id
+        // passed, and the scheduler then searched that user's interviews across
+        // every company -- so a 422 "Slot bentrok" vs a 201 told the caller
+        // whether a stranger was busy at that moment. Sweep the clock and their
+        // whole calendar falls out.
+        ['owner' => $owner, 'application' => $application] = makeInterviewContext();
+
+        $victim = User::factory()->employer()->create();
+        Company::factory()->approved()->create(['owner_id' => $victim->id]);
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.store'), [
+                'application_id' => $application->id,
+                'stage' => 'hr',
+                'mode' => 'online',
+                'title' => 'Probe',
+                'scheduled_at' => now()->addDays(3)->setTime(10, 0)->toIso8601String(),
+                'duration_minutes' => 30,
+                'interviewer_ids' => [$victim->id],
+            ])
+            ->assertSessionHasErrors(['interviewer_ids.0']);
+
+        expect(Interview::query()->count())->toBe(0)
+            ->and(InterviewParticipant::query()->where('user_id', $victim->id)->count())->toBe(0);
+    });
+
+    test('accepts an interviewer who is a member of the acting company', function () {
+        // The mirror of the test above: the guard must not lock the employer out
+        // of scheduling their own team, which is the whole point of the field.
+        ['owner' => $owner, 'company' => $company, 'application' => $application] = makeInterviewContext();
+
+        $recruiter = User::factory()->employer()->create();
+        CompanyMember::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $recruiter->id,
+            'role' => 'recruiter',
+            'joined_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.store'), [
+                'application_id' => $application->id,
+                'stage' => 'hr',
+                'mode' => 'online',
+                'title' => 'Panel Round',
+                'scheduled_at' => now()->addDays(3)->setTime(10, 0)->toIso8601String(),
+                'duration_minutes' => 30,
+                'interviewer_ids' => [$recruiter->id],
+            ])
+            ->assertSessionHasNoErrors();
+
+        expect(InterviewParticipant::query()
+            ->where('user_id', $recruiter->id)
+            ->where('role', 'interviewer')
+            ->count())->toBe(1);
+    });
+
+    test('rejects a foreign interviewer on the bulk route too', function () {
+        ['owner' => $owner, 'application' => $application] = makeInterviewContext();
+
+        $victim = User::factory()->employee()->create();
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.bulk.store'), [
+                'application_ids' => [$application->id],
+                'stage' => 'hr',
+                'mode' => 'online',
+                'title' => 'Bulk Probe',
+                'start_at' => now()->addDays(3)->setTime(10, 0)->toIso8601String(),
+                'duration_minutes' => 30,
+                'gap_minutes' => 5,
+                'group_mode' => false,
+                'interviewer_ids' => [$victim->id],
+            ])
+            ->assertSessionHasErrors(['interviewer_ids.0']);
+
+        expect(Interview::query()->count())->toBe(0);
+    });
+});
+
+describe('interview slot boundaries', function (): void {
+    /**
+     * Existing interview 10:00-11:00 for the candidate.
+     *
+     * @return array{owner: User, application: Application}
+     */
+    function candidateBookedTenToEleven(): array
+    {
+        ['owner' => $owner, 'application' => $application, 'candidate' => $candidate] = makeInterviewContext();
+
+        $existing = Interview::factory()->create([
+            'application_id' => $application->id,
+            'scheduled_at' => now()->addDays(3)->setTime(10, 0),
+            'ends_at' => now()->addDays(3)->setTime(11, 0),
+            'duration_minutes' => 60,
+            'scheduled_by_user_id' => $owner->id,
+            'status' => InterviewStatus::Scheduled,
+        ]);
+        InterviewParticipant::factory()->create([
+            'interview_id' => $existing->id,
+            'user_id' => $candidate->id,
+            'role' => 'candidate',
+        ]);
+
+        return compact('owner', 'application');
+    }
+
+    test('allows an interview starting exactly when the previous one ends', function () {
+        // Regression: conflict detection used whereBetween, inclusive on both
+        // ends, while ends_at is exactly start + duration. The 10:00-11:00
+        // interview's ends_at of 11:00 fell inside the closed range [11:00,
+        // 12:00] and was reported as a conflict, so an employer could not run
+        // back-to-back rounds -- the ordinary shape of an interview day.
+        ['owner' => $owner, 'application' => $application] = candidateBookedTenToEleven();
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.store'), [
+                'application_id' => $application->id,
+                'stage' => 'user',
+                'mode' => 'online',
+                'title' => 'Back To Back',
+                'scheduled_at' => now()->addDays(3)->setTime(11, 0)->toIso8601String(),
+                'duration_minutes' => 60,
+            ])
+            ->assertSessionHasNoErrors();
+
+        expect(Interview::query()->count())->toBe(2);
+    });
+
+    test('allows an interview ending exactly when the next one starts', function () {
+        // The mirror boundary: 09:00-10:00 butts up against 10:00-11:00.
+        ['owner' => $owner, 'application' => $application] = candidateBookedTenToEleven();
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.store'), [
+                'application_id' => $application->id,
+                'stage' => 'screening',
+                'mode' => 'online',
+                'title' => 'Earlier Round',
+                'scheduled_at' => now()->addDays(3)->setTime(9, 0)->toIso8601String(),
+                'duration_minutes' => 60,
+            ])
+            ->assertSessionHasNoErrors();
+
+        expect(Interview::query()->count())->toBe(2);
+    });
+
+    test('still rejects a genuinely overlapping slot', function () {
+        // The fix must not swing the other way: real overlap stays a conflict.
+        ['owner' => $owner, 'application' => $application] = candidateBookedTenToEleven();
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.store'), [
+                'application_id' => $application->id,
+                'stage' => 'user',
+                'mode' => 'online',
+                'title' => 'Overlap',
+                'scheduled_at' => now()->addDays(3)->setTime(10, 30)->toIso8601String(),
+                'duration_minutes' => 60,
+            ])
+            ->assertSessionHasErrors(['scheduled_at']);
+
+        expect(Interview::query()->count())->toBe(1);
+    });
+
+    test('still rejects a slot fully swallowing an existing one', function () {
+        // Containment: 09:00-12:00 wraps the existing 10:00-11:00 entirely.
+        ['owner' => $owner, 'application' => $application] = candidateBookedTenToEleven();
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.store'), [
+                'application_id' => $application->id,
+                'stage' => 'user',
+                'mode' => 'online',
+                'title' => 'Swallow',
+                'scheduled_at' => now()->addDays(3)->setTime(9, 0)->toIso8601String(),
+                'duration_minutes' => 180,
+            ])
+            ->assertSessionHasErrors(['scheduled_at']);
+
+        expect(Interview::query()->count())->toBe(1);
+    });
+
+    test('still rejects a slot nested inside an existing one', function () {
+        // The inverse containment: 10:15-10:45 sits wholly inside 10:00-11:00.
+        ['owner' => $owner, 'application' => $application] = candidateBookedTenToEleven();
+
+        $this->actingAs($owner)
+            ->post(route('employer.interviews.store'), [
+                'application_id' => $application->id,
+                'stage' => 'user',
+                'mode' => 'online',
+                'title' => 'Nested',
+                'scheduled_at' => now()->addDays(3)->setTime(10, 15)->toIso8601String(),
+                'duration_minutes' => 30,
+            ])
+            ->assertSessionHasErrors(['scheduled_at']);
+
+        expect(Interview::query()->count())->toBe(1);
+    });
 });

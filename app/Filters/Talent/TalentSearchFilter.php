@@ -3,6 +3,7 @@
 namespace App\Filters\Talent;
 
 use App\Models\EmployeeProfile;
+use App\Services\Sanitizer\LikeEscaper;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
 /**
@@ -74,12 +75,12 @@ class TalentSearchFilter
             return;
         }
 
-        $needle = '%'.trim($keyword).'%';
+        $needle = LikeEscaper::contains(trim($keyword));
         $query->where(function (Builder $q) use ($needle): void {
-            $q->where('headline', 'like', $needle)
-                ->orWhere('current_position', 'like', $needle)
-                ->orWhere('about', 'like', $needle)
-                ->orWhereHas('user', fn (Builder $u) => $u->where('name', 'like', $needle));
+            $q->whereRaw(LikeEscaper::sql('headline'), [$needle])
+                ->orWhereRaw(LikeEscaper::sql('current_position'), [$needle])
+                ->orWhereRaw(LikeEscaper::sql('about'), [$needle])
+                ->orWhereHas('user', fn (Builder $u) => $u->whereRaw(LikeEscaper::sql('name'), [$needle]));
         });
     }
 
@@ -142,6 +143,11 @@ class TalentSearchFilter
         $query->where('is_open_to_work', $openToWork);
     }
 
+    /**
+     * Every branch ends with a unique tiebreaker -- see JobBrowseFilter for why.
+     * profile_completion is a tinyint, so ties are dense here: without this a
+     * paginated talent search drops candidates and repeats others.
+     */
     private function applySort(Builder $query, ?string $sort): void
     {
         match ($sort) {
@@ -149,5 +155,7 @@ class TalentSearchFilter
             'completion' => $query->orderByDesc('profile_completion'),
             default => $query->orderByDesc('is_open_to_work')->latest('updated_at'),
         };
+
+        $query->orderByDesc('id');
     }
 }
