@@ -9,6 +9,7 @@ use App\Http\Requests\Employee\ProfileUpdateRequest;
 use App\Models\City;
 use App\Models\EmployeeProfile;
 use App\Models\Province;
+use App\Services\Employee\EmployeeProfileService;
 use App\Services\Files\FileUploadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,10 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function __construct(private readonly FileUploadService $files) {}
+    public function __construct(
+        private readonly FileUploadService $files,
+        private readonly EmployeeProfileService $profiles,
+    ) {}
 
     public function show(Request $request): Response
     {
@@ -106,8 +110,17 @@ class ProfileController extends Controller
         }
 
         $profile->fill($validated);
-        $profile->profile_completion = $this->calculateProfileCompletion($profile);
         $profile->save();
+
+        // Completion is computed by EmployeeProfileService, not locally. This
+        // controller used to run its own flat count over 11 scalar fields,
+        // which ignored educations, work experiences, skills and CVs -- worth
+        // 50 of the 100 points in the service. The two disagreed on the same
+        // profile (55 vs 95), and because SubmitApplicationAction gates
+        // applying at >= 60, a candidate with a full history could be told
+        // their profile was incomplete depending only on which surface saved
+        // last. One algorithm, one answer.
+        $this->profiles->recomputeCompletion($profile);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Profil berhasil diperbarui.']);
 
@@ -123,26 +136,5 @@ class ProfileController extends Controller
                 'is_open_to_work' => true,
                 'profile_completion' => 0,
             ]);
-    }
-
-    private function calculateProfileCompletion(EmployeeProfile $profile): int
-    {
-        $fields = [
-            $profile->headline,
-            $profile->about,
-            $profile->date_of_birth,
-            $profile->gender,
-            $profile->province_id,
-            $profile->city_id,
-            $profile->current_position,
-            $profile->experience_level,
-            $profile->portfolio_url,
-            $profile->linkedin_url,
-            $profile->github_url,
-        ];
-
-        $filled = collect($fields)->filter(fn (mixed $value): bool => ! blank($value))->count();
-
-        return (int) round(($filled / count($fields)) * 100);
     }
 }

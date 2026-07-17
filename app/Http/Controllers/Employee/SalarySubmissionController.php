@@ -81,7 +81,13 @@ class SalarySubmissionController extends Controller
             'province_id' => $request->filled('province_id') ? (int) $request->input('province_id') : null,
             'experience_years' => $request->filled('experience_years') ? (int) $request->input('experience_years') : null,
             'salary_idr' => $this->normalizeRupiah($request->input('salary_idr')),
-            'bonus_idr' => $this->normalizeRupiah($request->input('bonus_idr')),
+
+            // Coerced to 0, never null: salary_submissions.bonus_idr is NOT
+            // NULL with a default of 0, and a column default does not apply to
+            // an explicit null. Leaving the bonus field blank used to insert
+            // null and fail the constraint, 500-ing the form.
+            'bonus_idr' => $this->normalizeRupiah($request->input('bonus_idr')) ?? 0,
+
             'is_anonymous' => $request->boolean('is_anonymous'),
         ]);
 

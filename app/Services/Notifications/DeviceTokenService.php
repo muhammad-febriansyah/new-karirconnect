@@ -28,6 +28,29 @@ class DeviceTokenService
         );
     }
 
+    /**
+     * Revoke a token belonging to a specific user.
+     *
+     * Callers handling a request must use this rather than revoke(): the token
+     * arrives in the request body, and deleting purely by token value lets any
+     * authenticated caller unregister someone else's device -- silently killing
+     * that person's push notifications -- if they ever learn the token string.
+     */
+    public function revokeFor(User $user, string $token): void
+    {
+        UserDeviceToken::query()
+            ->where('user_id', $user->id)
+            ->where('token', $token)
+            ->delete();
+    }
+
+    /**
+     * Revoke a token regardless of owner.
+     *
+     * Only for trusted server-side callers, e.g. pruning a token FCM has
+     * reported as permanently unregistered. Never call this with a token that
+     * came from a request body.
+     */
     public function revoke(string $token): void
     {
         UserDeviceToken::query()->where('token', $token)->delete();

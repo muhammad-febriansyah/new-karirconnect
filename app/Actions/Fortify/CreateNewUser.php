@@ -10,7 +10,6 @@ use App\Services\Company\CompanyService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -18,6 +17,25 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules, ProfileValidationRules;
 
     public function __construct(private readonly CompanyService $companies) {}
+
+    /**
+     * Roles a visitor is allowed to request for themselves.
+     *
+     * Registration is public and unauthenticated, so the role cannot be
+     * validated against the whole UserRole enum -- that would accept
+     * role=admin and let anyone mint an administrator. Admins are promoted by
+     * an existing admin through Admin\UserController::update, which is behind
+     * the role:admin middleware.
+     *
+     * @return array<int, string>
+     */
+    public static function selfRegisterableRoles(): array
+    {
+        return [
+            UserRole::Employee->value,
+            UserRole::Employer->value,
+        ];
+    }
 
     /**
      * Validate and create a newly registered user. When the requested role is
@@ -31,7 +49,7 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
-            'role' => ['required', new Enum(UserRole::class)],
+            'role' => ['required', Rule::in(self::selfRegisterableRoles())],
             'company_name' => [
                 Rule::requiredIf(fn () => ($input['role'] ?? null) === UserRole::Employer->value),
                 'nullable',

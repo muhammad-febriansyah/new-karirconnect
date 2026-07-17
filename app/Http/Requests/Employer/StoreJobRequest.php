@@ -42,7 +42,13 @@ class StoreJobRequest extends FormRequest
             'status' => ['required', Rule::in(JobStatus::values())],
             'application_deadline' => ['nullable', 'date'],
             'is_anonymous' => ['required', 'boolean'],
-            'is_featured' => ['required', 'boolean'],
+
+            // is_featured is deliberately absent. Featured placement is sold as
+            // a JobBoost order and granted by BillingService::applyJobBoost,
+            // which also sets featured_until. Accepting it here let an employer
+            // feature their own listing for free -- and because JobBrowseFilter
+            // treats a null featured_until as "no expiry", it would stay
+            // featured forever.
             'ai_match_threshold' => ['nullable', 'integer', 'between:0,100'],
             'auto_invite_ai_interview' => ['required', 'boolean'],
             'skill_ids' => ['nullable', 'array'],
@@ -56,7 +62,6 @@ class StoreJobRequest extends FormRequest
             'slug' => $this->filled('slug') ? str($this->input('slug'))->slug()->value() : null,
             'is_salary_visible' => $this->boolean('is_salary_visible'),
             'is_anonymous' => $this->boolean('is_anonymous'),
-            'is_featured' => $this->boolean('is_featured'),
             'auto_invite_ai_interview' => $this->boolean('auto_invite_ai_interview'),
             'job_category_id' => $this->filled('job_category_id') ? (int) $this->input('job_category_id') : null,
             'province_id' => $this->filled('province_id') ? (int) $this->input('province_id') : null,

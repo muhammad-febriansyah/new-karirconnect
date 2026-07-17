@@ -4,6 +4,7 @@ namespace App\Http\Requests\Applications;
 
 use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SubmitApplicationRequest extends FormRequest
 {
@@ -20,7 +21,20 @@ class SubmitApplicationRequest extends FormRequest
         return [
             'cover_letter' => ['nullable', 'string', 'max:16000'],
             'expected_salary' => ['nullable', 'integer', 'min:0'],
-            'candidate_cv_id' => ['nullable', 'integer', 'exists:candidate_cvs,id'],
+
+            // The CV must belong to the applicant. A bare exists rule would let
+            // any candidate attach another candidate's resume to their own
+            // application just by guessing an id -- SubmitApplicationAction
+            // writes candidate_cv_id straight through without an owner check.
+            // A user with no profile matches nothing, which is the right answer.
+            'candidate_cv_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('candidate_cvs', 'id')->where(
+                    fn ($query) => $query->where('employee_profile_id', $this->user()?->employeeProfile?->id)
+                ),
+            ],
+
             'answers' => ['nullable', 'array'],
             'answers.*.question_id' => ['required_with:answers', 'integer', 'exists:job_screening_questions,id'],
             'answers.*.answer' => ['nullable'],

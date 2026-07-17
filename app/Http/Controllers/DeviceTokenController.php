@@ -41,7 +41,9 @@ class DeviceTokenController extends Controller
             'token' => ['required', 'string', 'max:512'],
         ]);
 
-        $this->tokens->revoke($data['token']);
+        // Scoped to the caller: the token comes from the request body, so an
+        // unscoped delete would let anyone unregister another user's device.
+        $this->tokens->revokeFor($request->user(), $data['token']);
 
         return response()->json(['ok' => true]);
     }
