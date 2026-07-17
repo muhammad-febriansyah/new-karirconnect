@@ -25,6 +25,16 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 class TalentSearchFilter
 {
     /**
+     * Profile visibility values a recruiter is allowed to see.
+     *
+     * 'recruiter_only' is what the profile form writes today; 'employers' is
+     * the legacy value still present on older rows. 'private' is never here.
+     *
+     * @var array<int, string>
+     */
+    public const RECRUITER_VISIBLE = ['public', 'employers', 'recruiter_only'];
+
+    /**
      * @param  array<string, mixed>  $filters
      */
     public function apply(array $filters = []): Builder
@@ -36,7 +46,15 @@ class TalentSearchFilter
                 'city:id,name,province_id',
                 'skills:id,name,slug',
             ])
-            ->whereIn('visibility', ['public', 'employers'])
+            /*
+             * Both vocabularies are accepted on purpose. The profile form
+             * writes 'recruiter_only' (ProfileUpdateRequest), while older rows
+             * carry 'employers'; this filter only knew the latter, so every
+             * candidate who chose "Recruiter Only" -- meaning "recruiters may
+             * find me" -- became invisible to recruiters, which is the exact
+             * opposite of the option they picked.
+             */
+            ->whereIn('visibility', self::RECRUITER_VISIBLE)
             ->whereHas('user', fn ($q) => $q->where('is_active', true));
 
         $this->applyKeyword($query, $filters['keyword'] ?? null);

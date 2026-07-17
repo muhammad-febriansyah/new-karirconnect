@@ -9,17 +9,16 @@ use App\Models\AssessmentQuestion;
 use App\Models\EmployeeProfile;
 use App\Models\Skill;
 use App\Models\SkillAssessment;
-use App\Models\SkillAssessmentAnswer;
+use App\Services\Employee\SkillAssessmentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SkillAssessmentController extends Controller
 {
+    public function __construct(private readonly SkillAssessmentService $assessments) {}
+
     public function index(Request $request): Response
     {
         $profile = $this->employeeProfile($request);
@@ -58,43 +57,12 @@ class SkillAssessmentController extends Controller
 
     public function store(StartSkillAssessmentRequest $request): RedirectResponse
     {
-        $skill = Skill::query()->findOrFail($request->integer('skill_id'));
-        $profile = $this->employeeProfile($request);
-
-        $questionCount = AssessmentQuestion::query()
-            ->where('skill_id', $skill->id)
-            ->where('is_active', true)
-            ->count();
-
-        if ($questionCount === 0) {
-            throw ValidationException::withMessages([
-                'skill_id' => 'Belum ada soal aktif untuk skill ini.',
-            ]);
-        }
-
-        $activeAssessment = SkillAssessment::query()
-            ->where('employee_profile_id', $profile->id)
-            ->where('skill_id', $skill->id)
-            ->where('status', 'in_progress')
-            ->where(function ($query): void {
-                $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->latest('id')
-            ->first();
-
-        if ($activeAssessment) {
-            return to_route('employee.skill-assessments.show', $activeAssessment);
-        }
-
-        $assessment = SkillAssessment::query()->create([
-            'employee_profile_id' => $profile->id,
-            'skill_id' => $skill->id,
-            'status' => 'in_progress',
-            'total_questions' => min(5, $questionCount),
-            'correct_answers' => 0,
-            'started_at' => now(),
-            'expires_at' => now()->addHour(),
-        ]);
+        // Shared with the mobile API via SkillAssessmentService, so both score
+        // and resume assessments identically.
+        $assessment = $this->assessments->start(
+            $this->employeeProfile($request),
+            Skill::query()->findOrFail($request->integer('skill_id')),
+        );
 
         return to_route('employee.skill-assessments.show', $assessment);
     }
@@ -103,7 +71,7 @@ class SkillAssessmentController extends Controller
     {
         $this->ensureOwnership($request, $skillAssessment);
 
-        $questions = $this->questionsForAssessment($skillAssessment);
+        $questions = $this->assessments->questionsFor($skillAssessment);
         $answers = $skillAssessment->answers()->get()->keyBy('question_id');
         $isCompleted = $skillAssessment->status === 'completed';
 
@@ -123,7 +91,7 @@ class SkillAssessmentController extends Controller
                     : null,
                 'questions' => $questions->map(function (AssessmentQuestion $question) use ($answers, $isCompleted): array {
                     $answer = $answers->get($question->id);
-                    $expected = $this->expectedAnswerValues($question);
+                    $expected = $this->assessments->expectedValues($question);
 
                     return [
                         'id' => $question->id,
@@ -146,53 +114,7 @@ class SkillAssessmentController extends Controller
     {
         $this->ensureOwnership($request, $skillAssessment);
 
-        if ($skillAssessment->status === 'completed') {
-            return to_route('employee.skill-assessments.show', $skillAssessment);
-        }
-
-        if ($skillAssessment->expires_at instanceof Carbon && $skillAssessment->expires_at->isPast()) {
-            throw ValidationException::withMessages([
-                'answers' => 'Waktu assessment ini sudah habis.',
-            ]);
-        }
-
-        $questions = $this->questionsForAssessment($skillAssessment);
-        $answerPayloads = collect($request->validated('answers'));
-
-        $correctAnswers = 0;
-
-        foreach ($questions as $question) {
-            $payload = $answerPayloads->get((string) $question->id, []);
-            $normalizedAnswer = ['value' => trim((string) data_get($payload, 'value', ''))];
-            $isCorrect = $this->answersMatch($question, $normalizedAnswer);
-
-            SkillAssessmentAnswer::query()->updateOrCreate(
-                [
-                    'assessment_id' => $skillAssessment->id,
-                    'question_id' => $question->id,
-                ],
-                [
-                    'answer' => $normalizedAnswer,
-                    'is_correct' => $isCorrect,
-                    'time_spent_seconds' => data_get($payload, 'time_spent_seconds'),
-                    'created_at' => now(),
-                ],
-            );
-
-            if ($isCorrect) {
-                $correctAnswers++;
-            }
-        }
-
-        $totalQuestions = max($questions->count(), 1);
-
-        $skillAssessment->update([
-            'status' => 'completed',
-            'correct_answers' => $correctAnswers,
-            'total_questions' => $questions->count(),
-            'score' => (int) round(($correctAnswers / $totalQuestions) * 100),
-            'completed_at' => now(),
-        ]);
+        $this->assessments->submit($skillAssessment, $request->validated('answers'));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Assessment berhasil dikirim.']);
 
@@ -212,68 +134,5 @@ class SkillAssessmentController extends Controller
         $profile = $this->employeeProfile($request);
 
         abort_unless($skillAssessment->employee_profile_id === $profile->id, 403);
-    }
-
-    /**
-     * @return Collection<int, AssessmentQuestion>
-     */
-    private function questionsForAssessment(SkillAssessment $skillAssessment)
-    {
-        return AssessmentQuestion::query()
-            ->where('skill_id', $skillAssessment->skill_id)
-            ->where('is_active', true)
-            ->orderBy('id')
-            ->limit($skillAssessment->total_questions)
-            ->get();
-    }
-
-    private function answersMatch(AssessmentQuestion $question, array $answer): bool
-    {
-        $actual = str(trim((string) data_get($answer, 'value', '')))->lower()->value();
-
-        if ($actual === '') {
-            return false;
-        }
-
-        foreach ($this->expectedAnswerValues($question) as $expected) {
-            $normalized = str(trim((string) $expected))->lower()->value();
-            if ($normalized !== '' && $normalized === $actual) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Normalize various stored shapes of correct_answer into a flat list of
-     * accepted strings. Supports legacy ["A. Pilihan A"] arrays and the
-     * newer {"value": "..."} object form.
-     *
-     * @return list<string>
-     */
-    private function expectedAnswerValues(AssessmentQuestion $question): array
-    {
-        $raw = $question->correct_answer;
-
-        if ($raw === null) {
-            return [];
-        }
-
-        if (is_string($raw)) {
-            return [$raw];
-        }
-
-        if (is_array($raw)) {
-            if (array_key_exists('value', $raw)) {
-                $value = $raw['value'];
-
-                return is_array($value) ? array_map('strval', $value) : [(string) $value];
-            }
-
-            return array_values(array_map('strval', $raw));
-        }
-
-        return [];
     }
 }

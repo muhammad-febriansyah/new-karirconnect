@@ -49,7 +49,16 @@ class JobRecommendationService
         $excludedIds = array_unique(array_merge($appliedJobIds, $dismissedJobIds));
 
         $candidates = Job::query()
-            ->with(['company:id,name,slug,logo_path', 'category:id,name', 'city:id,name', 'skills:id'])
+            // verification_status and skill names are here for the callers that
+            // serialize these jobs. The models run in strict mode, so a column
+            // left out of the select is a MissingAttributeException at render
+            // time rather than a silent null.
+            ->with([
+                'company:id,name,slug,logo_path,verification_status',
+                'category:id,name',
+                'city:id,name',
+                'skills:id,name',
+            ])
             ->where('status', JobStatus::Published)
             ->whereNotNull('published_at')
             ->when($excludedIds, fn ($q) => $q->whereNotIn('id', $excludedIds))

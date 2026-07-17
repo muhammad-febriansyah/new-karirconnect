@@ -51,7 +51,6 @@ type JobRecord = {
     status: string | null;
     application_deadline: string | null;
     is_anonymous: boolean;
-    is_featured: boolean;
     ai_match_threshold: number | null;
     auto_invite_ai_interview: boolean;
     skill_ids: number[];
@@ -101,7 +100,6 @@ export function EmployerJobForm({ headTitle, title, description, submitLabel, ac
         status: job?.status ?? 'draft',
         application_deadline: job?.application_deadline ?? '',
         is_anonymous: job?.is_anonymous ?? false,
-        is_featured: job?.is_featured ?? false,
         ai_match_threshold: job?.ai_match_threshold ? String(job.ai_match_threshold) : '',
         auto_invite_ai_interview: job?.auto_invite_ai_interview ?? false,
         skill_ids: job?.skill_ids.map(String) ?? [],
@@ -296,15 +294,12 @@ export function EmployerJobForm({ headTitle, title, description, submitLabel, ac
                                 />
                                 Sembunyikan identitas perusahaan
                             </label>
-                            <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={form.data.is_featured}
-                                    onChange={(event) => form.setData('is_featured', event.target.checked)}
-                                    className="size-4 rounded border-input"
-                                />
-                                Tandai sebagai featured
-                            </label>
+                            {/*
+                                No "featured" toggle here: featured placement is
+                                sold as a JobBoost order and granted by
+                                BillingService. Employers boost a job from the
+                                job detail page ("Boost Lowongan").
+                            */}
                             <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
                                 <input
                                     type="checkbox"

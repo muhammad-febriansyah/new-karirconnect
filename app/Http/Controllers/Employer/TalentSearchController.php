@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Employer;
 
+use App\Filters\Talent\TalentSearchFilter;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\EmployeeProfile;
@@ -63,7 +64,9 @@ class TalentSearchController extends Controller
     {
         $company = $this->resolveCompany($request);
         abort_unless($company !== null, 404);
-        abort_unless(in_array($profile->visibility, ['public', 'employers'], true), 403);
+        // Same visibility vocabulary as the listing, or a candidate could show
+        // up in search results and then 403 when opened.
+        abort_unless(in_array($profile->visibility, TalentSearchFilter::RECRUITER_VISIBLE, true), 403);
 
         $this->audit->record('talent_search.profile_viewed', $profile, after: [
             'company_id' => $company->id,

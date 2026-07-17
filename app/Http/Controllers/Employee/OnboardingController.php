@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Employee;
 
+use App\Actions\Employee\CompleteOnboardingAction;
 use App\Enums\ExperienceLevel;
 use App\Enums\Gender;
 use App\Http\Controllers\Controller;
@@ -11,11 +12,11 @@ use App\Models\Province;
 use App\Models\Skill;
 use App\Services\Ai\CvParserService;
 use App\Services\Employee\EmployeeProfileService;
+use App\Services\Employee\SkillResolver;
 use App\Services\Files\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,6 +27,8 @@ class OnboardingController extends Controller
         private readonly EmployeeProfileService $profiles,
         private readonly FileUploadService $files,
         private readonly CvParserService $parser,
+        private readonly CompleteOnboardingAction $completeOnboarding,
+        private readonly SkillResolver $skills,
     ) {}
 
     public function edit(Request $request): Response
@@ -91,81 +94,12 @@ class OnboardingController extends Controller
 
     public function store(OnboardingStoreRequest $request): RedirectResponse
     {
-        $user = $request->user();
-        $profile = $this->profiles->ensureProfile($user);
-        $data = $request->validated();
-
-        DB::transaction(function () use ($request, $user, $profile, $data): void {
-            if ($request->hasFile('avatar')) {
-                $newPath = $this->files->storeImage($request->file('avatar'), 'avatars', 640);
-                $this->files->delete($user->avatar_path);
-                $user->avatar_path = $newPath;
-            }
-
-            if (! empty($data['phone'])) {
-                $user->phone = $data['phone'];
-            }
-
-            $profile->fill([
-                'headline' => $data['headline'] ?? null,
-                'about' => $data['about'] ?? null,
-                'date_of_birth' => $data['date_of_birth'] ?? null,
-                'gender' => $data['gender'] ?? null,
-                'province_id' => $data['province_id'] ?? null,
-                'city_id' => $data['city_id'] ?? null,
-                'current_position' => $data['current_position'] ?? null,
-                'experience_level' => $data['experience_level'] ?? null,
-                'linkedin_url' => $data['linkedin_url'] ?? null,
-                'portfolio_url' => $data['portfolio_url'] ?? null,
-                'github_url' => $data['github_url'] ?? null,
-            ])->save();
-
-            $skillIds = $this->resolveSkillIds($data['skills'] ?? []);
-
-            if ($skillIds !== []) {
-                $profile->skills()->syncWithoutDetaching(
-                    collect($skillIds)->mapWithKeys(fn (int $id): array => [
-                        $id => ['level' => 'intermediate'],
-                    ])->all()
-                );
-            }
-
-            foreach ($data['work_experiences'] ?? [] as $exp) {
-                if (blank($exp['company_name'] ?? null)) {
-                    continue;
-                }
-
-                $profile->workExperiences()->create([
-                    'company_name' => $exp['company_name'],
-                    'position' => $exp['position'] ?? 'Tidak diketahui',
-                    'employment_type' => $exp['employment_type'] ?? null,
-                    'start_date' => $exp['start_date'] ?? now()->toDateString(),
-                    'end_date' => ($exp['is_current'] ?? false) ? null : ($exp['end_date'] ?? null),
-                    'is_current' => (bool) ($exp['is_current'] ?? false),
-                    'description' => $exp['description'] ?? null,
-                ]);
-            }
-
-            foreach ($data['educations'] ?? [] as $edu) {
-                if (blank($edu['institution'] ?? null)) {
-                    continue;
-                }
-
-                $profile->educations()->create([
-                    'institution' => $edu['institution'],
-                    'level' => $edu['level'] ?? null,
-                    'major' => $edu['major'] ?? null,
-                    'gpa' => $edu['gpa'] ?? null,
-                    'start_year' => $edu['start_year'] ?? null,
-                    'end_year' => $edu['end_year'] ?? null,
-                ]);
-            }
-
-            $user->onboarding_completed_at = now();
-            $user->save();
-        });
-
-        $this->profiles->recomputeCompletion($profile->fresh());
+        // Shared with the mobile API via CompleteOnboardingAction.
+        $this->completeOnboarding->execute(
+            $request->user(),
+            $request->validated(),
+            $request->file('avatar'),
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',
@@ -207,7 +141,7 @@ class OnboardingController extends Controller
             'is_active' => false,
         ]);
 
-        $matchedSkillIds = $this->resolveSkillIds($parsed['skills'] ?? []);
+        $matchedSkillIds = $this->skills->resolve($parsed['skills'] ?? []);
 
         $cityId = null;
         $provinceId = null;
@@ -265,45 +199,4 @@ class OnboardingController extends Controller
      * @param  array<int, mixed>  $names
      * @return array<int, int>
      */
-    private function resolveSkillIds(array $names): array
-    {
-        $clean = collect($names)
-            ->filter(fn ($n): bool => is_string($n) || is_numeric($n))
-            ->map(fn ($n): string => trim((string) $n))
-            ->filter(fn (string $n): bool => $n !== '')
-            ->unique()
-            ->values();
-
-        if ($clean->isEmpty()) {
-            return [];
-        }
-
-        $numericIds = $clean->filter(fn ($n) => ctype_digit((string) $n))->map(fn ($n) => (int) $n)->all();
-
-        $existing = Skill::query()
-            ->where(function ($q) use ($clean): void {
-                $q->whereIn(DB::raw('LOWER(name)'), $clean->map(fn (string $n) => Str::lower($n))->all());
-                $numericIds = $clean->filter(fn ($n) => ctype_digit((string) $n))->map(fn ($n) => (int) $n)->all();
-                if ($numericIds !== []) {
-                    $q->orWhereIn('id', $numericIds);
-                }
-            })
-            ->pluck('id', DB::raw('LOWER(name)'));
-
-        $resolvedIds = $existing->values()->all();
-
-        $missing = $clean
-            ->filter(fn (string $n) => ! ctype_digit($n) && ! $existing->has(Str::lower($n)))
-            ->take(10);
-
-        foreach ($missing as $name) {
-            $skill = Skill::query()->firstOrCreate(
-                ['slug' => Str::slug($name)],
-                ['name' => Str::title($name), 'is_active' => true],
-            );
-            $resolvedIds[] = $skill->id;
-        }
-
-        return array_values(array_unique(array_merge($resolvedIds, $numericIds)));
-    }
 }

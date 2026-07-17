@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 #[Fillable([
     'name',
@@ -29,10 +30,37 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
     'onboarding_completed_at',
 ])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    /**
+     * Subject claim ("sub") for the mobile API access token.
+     */
+    public function getJWTIdentifier(): mixed
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Claims embedded in the access token.
+     *
+     * These are a snapshot taken at issue time, so a role change or a
+     * suspension does not reach a client until its access token expires.
+     * EnsureUserHasRole still reads the live database row, so authorization
+     * is never decided from these claims -- they exist so the app can render
+     * the right shell without an extra round trip.
+     *
+     * @return array<string, string|bool>
+     */
+    public function getJWTCustomClaims(): array
+    {
+        return [
+            'role' => $this->role->value,
+            'is_active' => (bool) $this->is_active,
+        ];
+    }
 
     /**
      * @return array<string, string>
@@ -119,5 +147,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function savedJobs(): HasMany
     {
         return $this->hasMany(SavedJob::class);
+    }
+
+    /**
+     * @return HasMany<JobAlert, $this>
+     */
+    public function jobAlerts(): HasMany
+    {
+        return $this->hasMany(JobAlert::class);
     }
 }

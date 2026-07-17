@@ -46,7 +46,7 @@ function jobPayload(): array
     ];
 }
 
-function employerWithCompany(): array
+function approvedEmployerWithCompany(): array
 {
     $employer = User::factory()->employer()->create();
     $company = Company::factory()->for($employer, 'owner')->approved()->create();
@@ -55,7 +55,7 @@ function employerWithCompany(): array
 }
 
 test('employer without an active subscription cannot post a job', function () {
-    [$employer, $company] = employerWithCompany();
+    [$employer, $company] = approvedEmployerWithCompany();
 
     $this->actingAs($employer)
         ->post(route('employer.jobs.store'), jobPayload())
@@ -65,7 +65,7 @@ test('employer without an active subscription cannot post a job', function () {
 });
 
 test('employer on an active plan can post and the quota counter increments', function () {
-    [$employer, $company] = employerWithCompany();
+    [$employer, $company] = approvedEmployerWithCompany();
     $subscription = CompanySubscription::factory()->create([
         'company_id' => $company->id,
         'plan_id' => SubscriptionPlan::factory()->create(['job_post_quota' => 2])->id,
@@ -81,7 +81,7 @@ test('employer on an active plan can post and the quota counter increments', fun
 });
 
 test('employer cannot post once the plan quota is exhausted', function () {
-    [$employer, $company] = employerWithCompany();
+    [$employer, $company] = approvedEmployerWithCompany();
     CompanySubscription::factory()->create([
         'company_id' => $company->id,
         'plan_id' => SubscriptionPlan::factory()->create(['job_post_quota' => 2])->id,
@@ -96,7 +96,7 @@ test('employer cannot post once the plan quota is exhausted', function () {
 });
 
 test('the trial plan cannot be purchased through the checkout route', function () {
-    [$employer, $company] = employerWithCompany();
+    [$employer, $company] = approvedEmployerWithCompany();
     $this->seed(SubscriptionPlanSeeder::class);
 
     $this->actingAs($employer)
@@ -107,7 +107,7 @@ test('the trial plan cannot be purchased through the checkout route', function (
 });
 
 test('employer without an active subscription cannot start outreach to a candidate', function () {
-    [$employer] = employerWithCompany();
+    [$employer] = approvedEmployerWithCompany();
     $candidate = User::factory()->create();
 
     $this->actingAs($employer)
@@ -116,7 +116,7 @@ test('employer without an active subscription cannot start outreach to a candida
 });
 
 test('employer with an active subscription can start outreach to a candidate', function () {
-    [$employer, $company] = employerWithCompany();
+    [$employer, $company] = approvedEmployerWithCompany();
     CompanySubscription::factory()->create([
         'company_id' => $company->id,
         'plan_id' => SubscriptionPlan::factory()->create()->id,

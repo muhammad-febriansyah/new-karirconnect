@@ -20,6 +20,7 @@
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "mews/purifier": "^3.4",
+        "php-open-source-saver/jwt-auth": "^2.9",
         "smalot/pdfparser": "^2.12"
     },
     "require-dev": {

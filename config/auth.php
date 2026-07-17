@@ -33,13 +33,23 @@ return [
     | users are actually retrieved out of your database or other storage
     | system used by the application. Typically, Eloquent is utilized.
     |
-    | Supported: "session"
+    | Supported: "session", "jwt"
     |
     */
 
     'guards' => [
         'web' => [
             'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        /*
+         * Stateless guard for the mobile API (Flutter). Access tokens are
+         * short-lived because a JWT stays valid until it expires; revocation
+         * is handled on the refresh-token side, not here.
+         */
+        'api' => [
+            'driver' => 'jwt',
             'provider' => 'users',
         ],
     ],
@@ -113,5 +123,28 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Refresh Tokens (mobile API)
+    |--------------------------------------------------------------------------
+    |
+    | Refresh tokens rotate: redeeming one revokes it and issues a successor.
+    | Access tokens are JWTs and cannot be revoked before they expire, so these
+    | rows are the only place a session can actually be killed.
+    |
+    | "grace_seconds" exists for a race, not for convenience. A client that
+    | fires several requests at once can legitimately redeem the same refresh
+    | token twice before the first response lands. Within this window a replay
+    | returns the successor that was already issued instead of being treated as
+    | theft. Outside it, a replay revokes the whole chain. Widening this widens
+    | the window in which a stolen token still works.
+    |
+    */
+
+    'refresh_tokens' => [
+        'days' => (int) env('JWT_REFRESH_DAYS', 30),
+        'grace_seconds' => (int) env('JWT_REFRESH_GRACE_SECONDS', 30),
+    ],
 
 ];

@@ -17,10 +17,48 @@
             $metaSchema = $meta['schema'] ?? null;
             $metaLocale = $sharedApp['locale'] ?? app()->getLocale();
             $faviconPath = $sharedBranding['favicon_path'] ?? null;
+
+            // Analytics is opt-in by configuration: with no Measurement ID set
+            // in admin settings, nothing below renders and the browser makes no
+            // request to Google at all.
+            $gaMeasurementId = $sharedSeo['google_analytics_id'] ?? null;
+            $gtmContainerId = $sharedSeo['google_tag_manager_id'] ?? null;
         @endphp
 
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        @if ($gaMeasurementId)
+            {{--
+                Google Analytics 4.
+
+                send_page_view is off here on purpose. This is an Inertia SPA, so
+                only the very first load is a real document load -- every later
+                navigation swaps components without a page load. Letting gtag
+                send its own automatic pageview would record exactly one view per
+                session and make every visitor look like they bounced. The app
+                sends page_view itself on each navigation instead; see
+                resources/js/lib/analytics.ts.
+            --}}
+            <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaMeasurementId }}"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag() { dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', @json($gaMeasurementId), { send_page_view: false });
+            </script>
+        @endif
+
+        @if ($gtmContainerId)
+            <script>
+                (function (w, d, s, l, i) {
+                    w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+                    var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+                    j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+                    f.parentNode.insertBefore(j, f);
+                })(window, document, 'script', 'dataLayer', @json($gtmContainerId));
+            </script>
+        @endif
         {{-- App is light-only; opt out of Android Chrome "Auto Dark Theme" which
              otherwise lightens text inside portaled popovers (e.g. select dropdowns)
              while leaving the white background, making options invisible. --}}
