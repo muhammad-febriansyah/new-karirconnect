@@ -56,10 +56,18 @@ function scheduledInterview(): array
         'employee_profile_id' => $profile->id,
     ]);
 
+    // ends_at must be set alongside scheduled_at. The factory derives ends_at
+    // from its own random start, so overriding only scheduled_at would leave
+    // the two unrelated -- a row that cannot occur in production, where every
+    // writer sets ends_at to start + duration. Conflict detection keys on that
+    // relationship.
+    $start = now()->addWeek();
     $interview = Interview::factory()->create([
         'application_id' => $application->id,
         'scheduled_by_user_id' => $employer->id,
-        'scheduled_at' => now()->addWeek(),
+        'scheduled_at' => $start,
+        'ends_at' => $start->copy()->addMinutes(60),
+        'duration_minutes' => 60,
         'status' => InterviewStatus::Scheduled,
     ]);
 
@@ -273,4 +281,43 @@ describe('employer interviews', function (): void {
 
         expect($interview->fresh()->status)->toBe(InterviewStatus::Scheduled);
     });
+});
+
+it('lists interviews across several jobs without lazy loading the company', function (): void {
+    // Regression: InterviewResource renders job.company->name, but the employer
+    // list only eager-loaded as far as application.job -- so the company was
+    // fetched once per row. The candidate-side controller loaded it correctly,
+    // which is what marked this as an oversight rather than a choice.
+    //
+    // preventLazyLoading is on outside production, so the old code raises
+    // LazyLoadingViolationException here and this test fails. In production the
+    // same code silently issued one extra query per interview instead.
+    ['employer' => $employer] = scheduledInterview();
+    $company = Company::query()->where('owner_id', $employer->id)->first();
+
+    foreach (range(1, 3) as $i) {
+        $job = Job::factory()->published()->create([
+            'company_id' => $company->id,
+            'posted_by_user_id' => $employer->id,
+            'job_category_id' => JobCategory::query()->value('id'),
+        ]);
+        $profile = EmployeeProfile::factory()->create([
+            'user_id' => User::factory()->employee()->create()->id,
+        ]);
+        Interview::factory()->create([
+            'application_id' => Application::factory()->create([
+                'job_id' => $job->id,
+                'employee_profile_id' => $profile->id,
+            ])->id,
+            'scheduled_by_user_id' => $employer->id,
+            'scheduled_at' => now()->addWeeks(1 + $i),
+            'status' => InterviewStatus::Scheduled,
+        ]);
+    }
+
+    $this->withHeaders(ivToken($employer))
+        ->getJson('/api/v1/employer/interviews')
+        ->assertOk()
+        ->assertJsonCount(4, 'data')
+        ->assertJsonPath('data.0.job.company', $company->name);
 });

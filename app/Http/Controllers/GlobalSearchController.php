@@ -8,6 +8,7 @@ use App\Models\Application;
 use App\Models\Company;
 use App\Models\Job;
 use App\Models\User;
+use App\Services\Sanitizer\LikeEscaper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -50,7 +51,7 @@ class GlobalSearchController extends Controller
     {
         $jobs = Job::query()
             ->with('company:id,name')
-            ->where('title', 'like', $this->like($term))
+            ->whereRaw(LikeEscaper::sql('title'), [$this->like($term)])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
             ->map(fn (Job $job): array => [
@@ -61,7 +62,7 @@ class GlobalSearchController extends Controller
             ->all();
 
         $companies = Company::query()
-            ->where('name', 'like', $this->like($term))
+            ->whereRaw(LikeEscaper::sql('name'), [$this->like($term)])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
             ->map(fn (Company $company): array => [
@@ -73,8 +74,8 @@ class GlobalSearchController extends Controller
 
         $users = User::query()
             ->where(fn ($query) => $query
-                ->where('name', 'like', $this->like($term))
-                ->orWhere('email', 'like', $this->like($term)))
+                ->whereRaw(LikeEscaper::sql('name'), [$this->like($term)])
+                ->orWhereRaw(LikeEscaper::sql('email'), [$this->like($term)]))
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
             ->map(fn (User $user): array => [
@@ -103,7 +104,7 @@ class GlobalSearchController extends Controller
         }
 
         $jobs = $company->jobs()
-            ->where('title', 'like', $this->like($term))
+            ->whereRaw(LikeEscaper::sql('title'), [$this->like($term)])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
             ->map(fn (Job $job): array => [
@@ -115,7 +116,7 @@ class GlobalSearchController extends Controller
 
         $applicants = Application::query()
             ->whereHas('job', fn ($query) => $query->where('company_id', $company->id))
-            ->whereHas('employeeProfile.user', fn ($query) => $query->where('name', 'like', $this->like($term)))
+            ->whereHas('employeeProfile.user', fn ($query) => $query->whereRaw(LikeEscaper::sql('name'), [$this->like($term)]))
             ->with(['employeeProfile.user:id,name', 'job:id,title'])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
@@ -140,7 +141,7 @@ class GlobalSearchController extends Controller
         $jobs = Job::query()
             ->with('company:id,name')
             ->where('status', JobStatus::Published)
-            ->where('title', 'like', $this->like($term))
+            ->whereRaw(LikeEscaper::sql('title'), [$this->like($term)])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
             ->map(fn (Job $job): array => [
@@ -152,7 +153,7 @@ class GlobalSearchController extends Controller
 
         $companies = Company::query()
             ->recruiterActive()
-            ->where('name', 'like', $this->like($term))
+            ->whereRaw(LikeEscaper::sql('name'), [$this->like($term)])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
             ->map(fn (Company $company): array => [
@@ -173,6 +174,6 @@ class GlobalSearchController extends Controller
      */
     private function like(string $term): string
     {
-        return '%'.addcslashes($term, '%_\\').'%';
+        return LikeEscaper::contains($term);
     }
 }

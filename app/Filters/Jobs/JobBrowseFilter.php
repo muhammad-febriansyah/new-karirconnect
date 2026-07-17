@@ -4,6 +4,7 @@ namespace App\Filters\Jobs;
 
 use App\Enums\JobStatus;
 use App\Models\Job;
+use App\Services\Sanitizer\LikeEscaper;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
 /**
@@ -78,10 +79,10 @@ class JobBrowseFilter
             return;
         }
 
-        $like = "%{$term}%";
+        $like = LikeEscaper::contains($term);
         $query->where(function (Builder $q) use ($like): void {
-            $q->where('title', 'like', $like)
-                ->orWhereHas('company', fn (Builder $sub) => $sub->where('name', 'like', $like));
+            $q->whereRaw(LikeEscaper::sql('title'), [$like])
+                ->orWhereHas('company', fn (Builder $sub) => $sub->whereRaw(LikeEscaper::sql('name'), [$like]));
         });
     }
 
@@ -154,6 +155,15 @@ class JobBrowseFilter
         }
     }
 
+    /**
+     * Every branch ends with a unique tiebreaker.
+     *
+     * Without one the sort is non-deterministic across pages: salary_max has
+     * far fewer distinct values than there are jobs, and each page is a
+     * separate LIMIT/OFFSET execution whose filesort MySQL is free to order
+     * differently. A tied row could then appear on both page 1 and page 2 while
+     * another never appeared at all -- a listing that silently hides jobs.
+     */
     private function applySort(Builder $query, ?string $sort): void
     {
         match ($sort) {
@@ -162,5 +172,7 @@ class JobBrowseFilter
             'oldest' => $query->orderBy('published_at'),
             default => $query->orderByDesc('is_featured')->orderByDesc('published_at'),
         };
+
+        $query->orderByDesc('id');
     }
 }

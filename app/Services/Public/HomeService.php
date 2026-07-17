@@ -122,7 +122,15 @@ class HomeService
      */
     private function jobHighlight(Job $j): ?string
     {
-        if ($j->application_deadline !== null && $j->application_deadline->isBetween(now(), now()->addDays(7))) {
+        /*
+         * Compare whole days, not instants. application_deadline is cast to
+         * 'date', so it hydrates at 00:00 -- against a bare now() a job closing
+         * today already looks past, and the most urgent job on the board is the
+         * one that never gets the badge. Widening to the end of day on the far
+         * side keeps the window a full seven days rather than six-and-a-bit.
+         */
+        if ($j->application_deadline !== null
+            && $j->application_deadline->isBetween(now()->startOfDay(), now()->addDays(7)->endOfDay())) {
             return 'urgent';
         }
 

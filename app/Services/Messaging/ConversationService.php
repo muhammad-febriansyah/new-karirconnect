@@ -144,8 +144,20 @@ class ConversationService
         return ConversationParticipant::query()
             ->where('user_id', $user->id)
             ->whereHas('conversation', function (Builder $q) {
-                $q->whereColumn('conversations.last_message_at', '>', 'conversation_participants.last_read_at')
-                    ->orWhereNull('conversation_participants.last_read_at');
+                /*
+                 * A conversation with no messages is not unread.
+                 *
+                 * Participants are inserted without last_read_at, and a
+                 * conversation can be created before anyone writes to it, so
+                 * last_message_at is NULL too. The old condition saw the null
+                 * last_read_at alone and reported an empty thread as unread to
+                 * both people -- a badge neither of them could ever clear.
+                 */
+                $q->whereNotNull('conversations.last_message_at')
+                    ->where(function (Builder $unread) {
+                        $unread->whereColumn('conversations.last_message_at', '>', 'conversation_participants.last_read_at')
+                            ->orWhereNull('conversation_participants.last_read_at');
+                    });
             })
             ->count();
     }

@@ -12,9 +12,28 @@ use Illuminate\Validation\Rule;
 
 class BulkScheduleInterviewRequest extends FormRequest
 {
+    private ?Company $actingCompany = null;
+
+    private bool $companyResolved = false;
+
     public function authorize(): bool
     {
         return $this->user()?->role === UserRole::Employer;
+    }
+
+    /**
+     * The company the caller owns. Memoised because both the interviewer_ids
+     * rule and the ai_template_id check need it, and rules() runs before
+     * withValidator on every request.
+     */
+    private function actingCompany(): ?Company
+    {
+        if (! $this->companyResolved) {
+            $this->actingCompany = Company::query()->where('owner_id', $this->user()?->id)->first();
+            $this->companyResolved = true;
+        }
+
+        return $this->actingCompany;
     }
 
     /**
@@ -50,7 +69,16 @@ class BulkScheduleInterviewRequest extends FormRequest
             'location_map_url' => ['nullable', 'url', 'max:500'],
 
             'interviewer_ids' => ['nullable', 'array'],
-            'interviewer_ids.*' => ['integer', 'exists:users,id'],
+            /*
+             * Scoped to the acting company -- see ScheduleInterviewRequest for
+             * why a bare exists:users,id leaks every user's interview calendar
+             * through the conflict check.
+             */
+            'interviewer_ids.*' => [
+                'integer',
+                Rule::exists('company_members', 'user_id')
+                    ->where('company_id', $this->actingCompany()?->id ?? 0),
+            ],
 
             'ai_template_id' => [
                 Rule::requiredIf($mode === 'ai'),
@@ -73,7 +101,7 @@ class BulkScheduleInterviewRequest extends FormRequest
                 return;
             }
 
-            $company = Company::query()->where('owner_id', $this->user()->id)->first();
+            $company = $this->actingCompany();
             $template = AiInterviewTemplate::query()
                 ->withCount('questions')
                 ->where('id', $templateId)

@@ -194,7 +194,7 @@ class ModerationController extends Controller
             'data' => collect($reports->items())->map(fn (Report $report) => [
                 'id' => $report->id,
                 'reason' => $report->reason,
-                'details' => $report->details,
+                'description' => $report->description,
                 'status' => $report->status,
                 'reporter' => $report->reporter?->name,
                 'reviewer' => $report->reviewer?->name,
@@ -208,11 +208,11 @@ class ModerationController extends Controller
 
     public function reviewReport(ReportReviewRequest $request, Report $report): JsonResponse
     {
-        $report->forceFill([
+        $report->update([
             'status' => $request->validated('status'),
-            'reviewed_by_user_id' => $request->user()->id,
+            'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
-        ])->save();
+        ]);
 
         return response()->json(['message' => 'Laporan diperbarui.', 'data' => ['status' => $report->status]]);
     }
@@ -227,7 +227,10 @@ class ModerationController extends Controller
                 'companies_pending' => Company::query()->where('status', CompanyStatus::Pending)->count(),
                 'verifications_pending' => CompanyVerification::query()->where('status', 'pending')->count(),
                 'reviews_pending' => CompanyReview::query()->where('status', ReviewStatus::Pending)->count(),
-                'reports_open' => Report::query()->where('status', 'open')->count(),
+                // 'pending' is the migration default and the only state an
+                // unreviewed report is ever in; ReportReviewRequest allows just
+                // 'reviewed' and 'dismissed'. There is no 'open'.
+                'reports_pending' => Report::query()->where('status', 'pending')->count(),
                 'companies_unverified' => Company::query()
                     ->where('verification_status', CompanyVerificationStatus::Pending)
                     ->count(),

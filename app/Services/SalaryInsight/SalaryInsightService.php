@@ -38,13 +38,31 @@ class SalaryInsightService
      */
     public function aggregate(array $filters): array
     {
-        $postingPoints = $this->postingPoints($filters);
-        $submissionPoints = $this->submissionPoints($filters);
+        /*
+         * Two queries, not fourteen.
+         *
+         * by_experience deliberately ignores an incoming experience_level and
+         * always reports all six levels, so the rows it needs are a superset of
+         * the rows the headline stats need. Fetching once without the level
+         * filter and slicing in PHP serves both. Previously groupByExperience
+         * looped the six levels and re-ran postingPoints + submissionPoints
+         * inside the loop -- twelve extra unbounded scans of the same two
+         * tables, on an uncached public page.
+         */
+        $levelFilter = $filters['experience_level'] ?? null;
+        $baseFilters = $filters;
+        unset($baseFilters['experience_level']);
+
+        $postingRows = $this->postingRows($baseFilters);
+        $submissionRows = $this->submissionRows($baseFilters);
+
+        $postingPoints = $this->pointsForLevel($postingRows, $levelFilter);
+        $submissionPoints = $this->pointsForLevel($submissionRows, $levelFilter);
 
         $points = array_merge($postingPoints, $submissionPoints);
         sort($points);
 
-        $byLevel = $this->groupByExperience($filters);
+        $byLevel = $this->groupByExperience($postingRows, $submissionRows);
 
         return [
             'sample_size' => count($points),
@@ -75,7 +93,32 @@ class SalaryInsightService
 
         $this->applyFilters($query, $filters);
 
-        return $query->with('company:id,name,slug')
+        /*
+         * Pick the winning companies in SQL first, then load only their jobs.
+         *
+         * This used to ->get() every published job with a salary, group it in
+         * PHP, and only then take($limit) -- so the whole table was hydrated
+         * into models to produce ten rows. p50 still needs the raw points per
+         * company, which is why the second query fetches rows rather than
+         * aggregating outright; but it is now bounded by $limit companies
+         * instead of by the size of the jobs table.
+         */
+        $topCompanyIds = (clone $query)
+            ->select('company_id')
+            ->selectRaw('count(*) as job_count')
+            ->groupBy('company_id')
+            ->orderByDesc('job_count')
+            ->orderBy('company_id')
+            ->limit($limit)
+            ->pluck('company_id')
+            ->all();
+
+        if ($topCompanyIds === []) {
+            return [];
+        }
+
+        return $query->whereIn('company_id', $topCompanyIds)
+            ->with('company:id,name,slug')
             ->get()
             ->groupBy('company_id')
             ->map(function ($jobs) {
@@ -211,10 +254,13 @@ class SalaryInsightService
     }
 
     /**
+     * Salary midpoints of published postings, each tagged with its experience
+     * level so callers can slice by level without re-querying.
+     *
      * @param  array<string, mixed>  $filters
-     * @return array<int, int>
+     * @return array<int, array{point:int, level:string|null}>
      */
-    private function postingPoints(array $filters): array
+    private function postingRows(array $filters): array
     {
         $query = Job::query()
             ->where('status', JobStatus::Published)
@@ -222,21 +268,29 @@ class SalaryInsightService
 
         $this->applyFilters($query, $filters);
 
-        return $query->get(['salary_min', 'salary_max'])
-            ->map(fn (Job $j) => $this->midpoint($j->salary_min, $j->salary_max))
-            ->filter(fn ($v) => $v > 0)
+        return $query->get(['salary_min', 'salary_max', 'experience_level'])
+            ->map(fn (Job $j): array => [
+                'point' => $this->midpoint($j->salary_min, $j->salary_max),
+                'level' => $j->experience_level?->value,
+            ])
+            // A midpoint of 0 means no usable salary; kept out of the sample so
+            // it cannot drag the percentiles toward zero.
+            ->filter(fn (array $row): bool => $row['point'] > 0)
             ->values()
             ->all();
     }
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return array<int, int>
+     * @return array<int, array{point:int, level:string|null}>
      */
-    private function submissionPoints(array $filters): array
+    private function submissionRows(array $filters): array
     {
         $query = SalarySubmission::query()->where('status', 'approved');
 
+        // Note: no province_id here. Submissions carry a city but not a
+        // province, so a province filter cannot narrow them -- matching the
+        // behaviour this replaced.
         if (! empty($filters['job_category_id'])) {
             $query->where('job_category_id', (int) $filters['job_category_id']);
         }
@@ -250,22 +304,48 @@ class SalaryInsightService
             $query->where('employment_type', $filters['employment_type']);
         }
 
-        return $query->pluck('salary_idr')->map(fn ($v) => (int) $v)->all();
+        return $query->get(['salary_idr', 'experience_level'])
+            ->map(fn (SalarySubmission $s): array => [
+                'point' => (int) $s->salary_idr,
+                'level' => $s->experience_level?->value,
+            ])
+            ->values()
+            ->all();
     }
 
     /**
-     * @param  array<string, mixed>  $filters
+     * Slice pre-fetched rows to one experience level, or all of them when the
+     * level is null.
+     *
+     * @param  array<int, array{point:int, level:string|null}>  $rows
+     * @return array<int, int>
+     */
+    private function pointsForLevel(array $rows, ?string $level): array
+    {
+        if ($level === null || $level === '') {
+            return array_column($rows, 'point');
+        }
+
+        return array_column(
+            array_filter($rows, fn (array $row): bool => $row['level'] === $level),
+            'point',
+        );
+    }
+
+    /**
+     * @param  array<int, array{point:int, level:string|null}>  $postingRows
+     * @param  array<int, array{point:int, level:string|null}>  $submissionRows
      * @return array<string, array{count:int, p50:int|null}>
      */
-    private function groupByExperience(array $filters): array
+    private function groupByExperience(array $postingRows, array $submissionRows): array
     {
         $levels = ['entry', 'junior', 'mid', 'senior', 'lead', 'executive'];
         $out = [];
 
         foreach ($levels as $level) {
             $merged = array_merge(
-                $this->postingPoints(array_merge($filters, ['experience_level' => $level])),
-                $this->submissionPoints(array_merge($filters, ['experience_level' => $level])),
+                $this->pointsForLevel($postingRows, $level),
+                $this->pointsForLevel($submissionRows, $level),
             );
             sort($merged);
 

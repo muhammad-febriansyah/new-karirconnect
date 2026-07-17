@@ -188,3 +188,34 @@ describe('models wiring', function () {
         expect($loaded->messages)->toHaveCount(1);
     });
 });
+
+describe('unread badge edge cases', function () {
+    it('does not count an empty conversation as unread', function () {
+        // Regression: participants are created without last_read_at, and a
+        // conversation exists before anyone writes to it. The old condition
+        // treated the null last_read_at as unread on its own, so both people
+        // saw a badge of 1 for a thread with nothing in it -- and no way to
+        // clear it, since there was no message to read.
+        $alice = User::factory()->create();
+        $bob = User::factory()->create();
+        $service = app(ConversationService::class);
+
+        $service->findOrCreateDirect([$alice->id, $bob->id]);
+
+        expect($service->unreadCount($alice->fresh()))->toBe(0)
+            ->and($service->unreadCount($bob->fresh()))->toBe(0);
+    });
+
+    it('still counts a conversation the recipient has never opened', function () {
+        // The guard must not swing the other way: a real unsent-read message is
+        // exactly what the badge exists for.
+        $alice = User::factory()->create();
+        $bob = User::factory()->create();
+        $service = app(ConversationService::class);
+
+        $conversation = $service->findOrCreateDirect([$alice->id, $bob->id]);
+        app(MessageService::class)->send($conversation, $bob, 'Halo Alice');
+
+        expect($service->unreadCount($alice->fresh()))->toBe(1);
+    });
+});

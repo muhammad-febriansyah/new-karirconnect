@@ -14,6 +14,7 @@ use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
 use Database\Seeders\SettingSeeder;
 use Database\Seeders\SubscriptionPlanSeeder;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function (): void {
     $this->seed([
@@ -220,4 +221,30 @@ test('admin can view order detail with transactions', function () {
 test('non-admin cannot access admin orders', function () {
     $employee = User::factory()->employee()->create();
     $this->actingAs($employee)->get('/admin/orders')->assertForbidden();
+});
+
+test('salary insight page stays within its query budget', function () {
+    // Regression: groupByExperience looped the six experience levels and re-ran
+    // both point queries inside the loop -- twelve extra scans of the same two
+    // tables on every load of an uncached public page. That waste was constant
+    // rather than per-row, so it never showed up as an N+1 slope; only the
+    // absolute count exposes it. This page cost 23 queries before and 12 after,
+    // so the budget below fails loudly if the loop ever comes back while
+    // leaving room for ordinary additions.
+    $cat = JobCategory::query()->first() ?? JobCategory::factory()->create();
+    $company = Company::factory()->approved()->create();
+    Job::factory()->published()->count(20)->create([
+        'company_id' => $company->id,
+        'job_category_id' => $cat->id,
+        'salary_min' => 5_000_000,
+        'salary_max' => 9_000_000,
+    ]);
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $this->get('/salary-insight')->assertOk();
+    $queries = count(DB::getQueryLog());
+    DB::disableQueryLog();
+
+    expect($queries)->toBeLessThanOrEqual(16);
 });
