@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\RecommendationController;
 use App\Http\Controllers\Api\V1\SalaryController;
 use App\Http\Controllers\Api\V1\SavedJobController;
+use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\SkillAssessmentController;
 use App\Http\Controllers\Api\V1\WorkExperienceController;
 use App\Http\Controllers\GlobalSearchController;
@@ -103,6 +104,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function (): void {
      * and the match score, so the token is honoured when present.
      */
     Route::get('meta', [MetaController::class, 'index'])->name('meta');
+    Route::get('settings', [SettingController::class, 'index'])->name('settings');
 
     Route::get('jobs', [JobController::class, 'index'])->name('jobs.index');
     Route::get('jobs/{job:slug}', [JobController::class, 'show'])->name('jobs.show');
