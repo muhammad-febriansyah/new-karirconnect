@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\JobIndexRequest;
 use App\Http\Resources\Api\V1\JobDetailResource;
 use App\Http\Resources\Api\V1\JobResource;
+use App\Models\Application;
 use App\Models\Job;
 use App\Models\JobView;
 use App\Models\User;
@@ -151,6 +152,13 @@ class JobController extends Controller
 
             $context['match_score'] = $breakdown['score'];
             $context['match_breakdown'] = $breakdown['breakdown'];
+
+            // Lets the client show an already-applied state instead of offering
+            // a button that the submit guard would only reject as a duplicate.
+            $context['has_applied'] = Application::query()
+                ->where('job_id', $job->id)
+                ->where('employee_profile_id', $profile->id)
+                ->exists();
         }
 
         return $context;
