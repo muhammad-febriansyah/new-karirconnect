@@ -35,6 +35,10 @@ class JobDetailResource extends JobResource
                     'question' => $question->question,
                     'type' => $question->type?->value,
                     'is_required' => (bool) $question->is_required,
+                    // The choice types (single_choice, multi_choice) are
+                    // unanswerable without their options; a text/number/yes_no
+                    // question has none, so this is null there.
+                    'options' => $question->options,
                 ])->values()->all()
             ),
 

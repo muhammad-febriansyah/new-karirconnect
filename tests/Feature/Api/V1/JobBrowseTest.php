@@ -1,10 +1,13 @@
 <?php
 
 use App\Enums\CompanyStatus;
+use App\Enums\ScreeningQuestionType;
+use App\Models\Application;
 use App\Models\Company;
 use App\Models\EmployeeProfile;
 use App\Models\Job;
 use App\Models\JobCategory;
+use App\Models\JobScreeningQuestion;
 use App\Models\User;
 use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
@@ -307,5 +310,56 @@ describe('meta', function (): void {
         $names = collect($this->getJson('/api/v1/meta')->assertOk()->json('data.job_categories'))->pluck('name');
 
         expect($names)->not->toContain('Retired Category');
+    });
+});
+
+describe('job detail screening + viewer context', function (): void {
+    it('exposes options for a choice screening question', function (): void {
+        // The choice types are unanswerable on the client without their options;
+        // text/number/yes_no questions have none.
+        $job = apiJob(['title' => 'With Screening']);
+        JobScreeningQuestion::factory()->create([
+            'job_id' => $job->id,
+            'question' => 'Level React Anda?',
+            'type' => ScreeningQuestionType::SingleChoice,
+            'options' => ['Pemula', 'Menengah', 'Mahir'],
+        ]);
+
+        $this->getJson('/api/v1/jobs/'.$job->slug)
+            ->assertOk()
+            ->assertJsonPath('data.screening_questions.0.type', 'single_choice')
+            ->assertJsonPath('data.screening_questions.0.options', ['Pemula', 'Menengah', 'Mahir']);
+    });
+
+    it('reports has_applied for the authenticated viewer', function (): void {
+        $user = User::factory()->employee()->create(['password' => 'password']);
+        $profile = EmployeeProfile::factory()->create([
+            'user_id' => $user->id,
+            'profile_completion' => 80,
+        ]);
+        $job = apiJob(['title' => 'Applied Job']);
+
+        $token = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->json('data.tokens.access_token');
+        $headers = ['Authorization' => 'Bearer '.$token];
+
+        // Before applying.
+        $this->withHeaders($headers)
+            ->getJson('/api/v1/jobs/'.$job->slug)
+            ->assertOk()
+            ->assertJsonPath('meta.has_applied', false);
+
+        Application::factory()->create([
+            'job_id' => $job->id,
+            'employee_profile_id' => $profile->id,
+        ]);
+
+        // After applying.
+        $this->withHeaders($headers)
+            ->getJson('/api/v1/jobs/'.$job->slug)
+            ->assertOk()
+            ->assertJsonPath('meta.has_applied', true);
     });
 });
