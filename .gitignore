@@ -33,3 +33,7 @@ yarn-error.log
 .playwright-mcp/
 # Root-level screenshots (Playwright browser_take_screenshot writes to cwd)
 /*.png
+
+# Local .env backups (contain secrets — never commit)
+.env.firebase.bak
+.env.bak-firebase-*
