@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { sanitizeHtml } from '@/lib/sanitize-html';
+import { decodeEntities, sanitizeHtml } from '@/lib/sanitize-html';
 import { cn } from '@/lib/utils';
 
 type SafeHtmlProps = {
@@ -96,7 +96,7 @@ export function SafeHtml({ html, className }: SafeHtmlProps) {
     if (value.trim() !== '' && !HTML_TAG.test(value)) {
         return (
             <div className={classes}>
-                {toBlocks(value).map((block, index) =>
+                {toBlocks(decodeEntities(value)).map((block, index) =>
                     block.kind === 'list' ? (
                         <ul key={index}>
                             {block.items.map((item, itemIndex) => (

@@ -21,6 +21,46 @@ export function sanitizeHtml(html: string | null | undefined): string {
     });
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    apos: "'",
+    nbsp: ' ',
+};
+
+/** Reject what `String.fromCodePoint` throws on, plus lone surrogates. */
+function isDecodableCodePoint(codePoint: number): boolean {
+    return Number.isInteger(codePoint)
+        && codePoint >= 0
+        && codePoint <= 0x10ffff
+        && !(codePoint >= 0xd800 && codePoint <= 0xdfff);
+}
+
+/**
+ * Decode the entities the server-side purifier writes when it normalises plain
+ * text for HTML output — a typed `&` is stored as `&amp;`. Callers must render
+ * the result as a React text node, which escapes it again, so this never widens
+ * the XSS surface. Kept free of DOM APIs so it also runs under SSR.
+ *
+ * Content is author-supplied, so an out-of-range numeric entity must be left
+ * alone rather than reach `String.fromCodePoint` and throw mid-render.
+ */
+export function decodeEntities(text: string): string {
+    return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, entity: string) => {
+        if (entity[0] === '#') {
+            const codePoint = entity[1]?.toLowerCase() === 'x'
+                ? Number.parseInt(entity.slice(2), 16)
+                : Number.parseInt(entity.slice(1), 10);
+
+            return isDecodableCodePoint(codePoint) ? String.fromCodePoint(codePoint) : match;
+        }
+
+        return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
+    });
+}
+
 /**
  * Strip all HTML tags and decode common entities to plain text. Use for
  * truncated previews (e.g. line-clamped cards) where rich markup would leak
@@ -32,15 +72,7 @@ export function stripHtml(html: string | null | undefined): string {
         return '';
     }
 
-    return html
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#0*39;/g, "'")
-        .replace(/&#x27;/gi, "'")
+    return decodeEntities(html.replace(/<[^>]+>/g, ' '))
         .replace(/\s+/g, ' ')
         .trim();
 }

@@ -198,10 +198,7 @@ export default function PublicJobShow({
             [
                 job.is_anonymous ? 'Perusahaan konfidensial' : job.company.name,
                 job.city ?? undefined,
-                job.description
-                    ?.replace(/<[^>]+>/g, ' ')
-                    .replace(/\s+/g, ' ')
-                    .trim() ?? undefined,
+                job.description ? stripHtml(job.description) : undefined,
             ]
                 .filter(Boolean)
                 .join(' · ')
