@@ -31,31 +31,36 @@ class MetaController extends Controller
 
     public function index(): JsonResponse
     {
+        // Every query result is cast to a plain array before caching. Caching
+        // Eloquent Collections instead makes serializing cache drivers (file,
+        // database, redis) hand back __PHP_Incomplete_Class objects on retrieval,
+        // which then serialize to JSON objects rather than arrays and break every
+        // client that expects a list. Same guard as SettingService.
         $data = Cache::remember(self::CACHE_KEY, self::CACHE_TTL_SECONDS, fn () => [
             'job_categories' => JobCategory::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')->orderBy('name')
-                ->get(['id', 'name', 'slug']),
+                ->get(['id', 'name', 'slug'])->toArray(),
 
             'industries' => Industry::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')->orderBy('name')
-                ->get(['id', 'name', 'slug']),
+                ->get(['id', 'name', 'slug'])->toArray(),
 
             'company_sizes' => CompanySize::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
-                ->get(['id', 'name', 'slug', 'employee_range']),
+                ->get(['id', 'name', 'slug', 'employee_range'])->toArray(),
 
             'provinces' => Province::query()
                 ->orderBy('name')
-                ->get(['id', 'name', 'code']),
+                ->get(['id', 'name', 'code'])->toArray(),
 
             // Sent whole: the picker filters cities by province offline, and
             // the full Indonesian city list is small enough to ship once.
             'cities' => City::query()
                 ->orderBy('name')
-                ->get(['id', 'name', 'province_id']),
+                ->get(['id', 'name', 'province_id'])->toArray(),
 
             // The web listing caps this at 200. Kept identical here so the two
             // filter sheets cannot offer different skills.
@@ -63,7 +68,7 @@ class MetaController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->limit(200)
-                ->get(['id', 'name', 'slug', 'type']),
+                ->get(['id', 'name', 'slug', 'type'])->toArray(),
 
             'employment_types' => EmploymentType::selectItems(),
             'work_arrangements' => WorkArrangement::selectItems(),

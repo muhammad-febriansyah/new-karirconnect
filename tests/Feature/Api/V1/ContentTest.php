@@ -8,6 +8,7 @@ use App\Models\LegalPage;
 use App\Models\Skill;
 use App\Models\SkillAssessment;
 use App\Models\User;
+use App\Services\Settings\SettingService;
 use Database\Seeders\LookupSeeder;
 use Database\Seeders\ProvinceCitySeeder;
 use Database\Seeders\SettingSeeder;
@@ -239,5 +240,37 @@ describe('skill assessments', function (): void {
         $this->withHeaders(contentToken($mine))
             ->getJson('/api/v1/skill-assessments/'.$assessment->id)
             ->assertStatus(403);
+    });
+});
+
+describe('app settings endpoint', function (): void {
+    it('exposes public branding and identity to guests', function (): void {
+        $this->getJson('/api/v1/settings')
+            ->assertOk()
+            ->assertJsonPath('data.app.name', 'KarirConnect')
+            ->assertJsonPath('data.app.tagline', 'Temukan karir impianmu')
+            ->assertJsonStructure([
+                'data' => [
+                    'app' => ['name', 'tagline', 'contact_email', 'contact_phone'],
+                    'branding' => ['logo_url', 'favicon_url', 'primary_color'],
+                    'features',
+                    'social',
+                ],
+            ]);
+    });
+
+    it('never leaks private settings such as smtp credentials', function (): void {
+        $body = json_encode($this->getJson('/api/v1/settings')->assertOk()->json());
+
+        expect($body)->not->toContain('smtp');
+    });
+
+    it('resolves an uploaded logo path to an absolute url', function (): void {
+        app(SettingService::class)
+            ->set('branding', 'logo_path', 'settings/branding/test-logo.png');
+
+        $this->getJson('/api/v1/settings')
+            ->assertOk()
+            ->assertJsonPath('data.branding.logo_url', asset('storage/settings/branding/test-logo.png'));
     });
 });

@@ -52,6 +52,13 @@ const NAV_ITEMS: NavItem[] = [
     { href: '/career-resources', label: 'Tips Karier' },
 ];
 
+/**
+ * Batas horizontal antara ikon dan teks pada logo brand, dihitung dari sisi kiri gambar.
+ * Dipakai untuk memutihkan hanya bagian teks saat header transparan di atas hero.
+ * Sesuaikan bila logo diganti dengan proporsi ikon yang berbeda.
+ */
+const LOGO_WORDMARK_OFFSET = '34%';
+
 function isActive(currentPath: string, href: string): boolean {
     if (href === '/') {
 return currentPath === '/';
@@ -132,11 +139,20 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                     {/* Brand */}
                     <Link href="/" className="group flex items-center" prefetch aria-label={appName}>
                         {logoPath ? (
-                            <img
-                                src={logoPath}
-                                alt={appName}
-                                className="h-9 w-auto transition-transform group-hover:scale-[1.02]"
-                            />
+                            <span className="relative inline-flex h-9 transition-transform group-hover:scale-[1.02]">
+                                <img src={logoPath} alt={appName} className="h-9 w-auto" />
+                                {/* Teks logo berwarna navy dan tenggelam di hero biru. Timpa dengan salinan putih
+                                    yang dipotong dari LOGO_WORDMARK_OFFSET ke kanan, supaya ikon tetap berwarna. */}
+                                {onHero && (
+                                    <img
+                                        src={logoPath}
+                                        alt=""
+                                        aria-hidden
+                                        className="absolute inset-0 h-9 w-auto brightness-0 invert"
+                                        style={{ clipPath: `inset(0 0 0 ${LOGO_WORDMARK_OFFSET})` }}
+                                    />
+                                )}
+                            </span>
                         ) : (
                             <div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-md shadow-brand-blue/25 transition-transform group-hover:scale-[1.04]">
                                 <AppLogoIcon className="size-5 fill-current text-white" />
