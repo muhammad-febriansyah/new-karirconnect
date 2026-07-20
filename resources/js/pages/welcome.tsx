@@ -658,7 +658,7 @@ export default function Welcome({ home }: Props) {
                     </form>
 
                     {/* Quick-filter pills — satu baris */}
-                    <div className="mt-6 flex w-full max-w-5xl flex-nowrap items-center justify-center gap-2 overflow-x-auto px-1 sm:gap-2.5">
+                    <div className="-mx-4 mt-6 flex w-[calc(100%+2rem)] max-w-5xl flex-nowrap items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:w-full sm:justify-center sm:gap-2.5 sm:px-1">
                         {QUICK_FILTERS.map((f) => (
                             <button
                                 key={f.label}
