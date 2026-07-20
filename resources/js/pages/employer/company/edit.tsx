@@ -13,6 +13,7 @@ import { Section } from '@/components/layout/section';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { decodeEntities } from '@/lib/sanitize-html';
 import { slugify } from '@/lib/slugify';
 import { store as companyStore, update as companyUpdate } from '@/routes/employer/company';
 
@@ -202,9 +203,9 @@ function EditCompanyForm({ company, options }: { company: CompanyPayload; option
         province_id: company.province_id ? String(company.province_id) : '',
         city_id: company.city_id ? String(company.city_id) : '',
         address: company.address ?? '',
-        about: company.about ?? '',
-        culture: company.culture ?? '',
-        benefits: company.benefits ?? '',
+        about: company.about ? decodeEntities(company.about) : '',
+        culture: company.culture ? decodeEntities(company.culture) : '',
+        benefits: company.benefits ? decodeEntities(company.benefits) : '',
         offices: initialOffices,
         logo: null as File | null,
         cover: null as File | null,

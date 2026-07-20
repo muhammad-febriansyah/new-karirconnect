@@ -9,12 +9,53 @@ type SafeHtmlProps = {
 
 const HTML_TAG = /<[a-z][\s\S]*>/i;
 const BULLET_PREFIX = /^[-–—•*]\s+/;
-/** Matches the separator when a bulleted block was authored on a single line. */
-const INLINE_BULLET = /\s+[-–—•*]\s+/;
+/**
+ * Matches the separator when a bulleted block was authored on a single line.
+ * The capturing group keeps the separator so a dash used as a range — not as a
+ * bullet — can be put back.
+ */
+const INLINE_BULLET = /(\s+[-–—•*]\s+)/;
+const DASH_SEPARATOR = /[-–—]/;
+/** A quantity ending the left side of a dash, e.g. "5", "10jt", "5.000.000". */
+const RANGE_START = /\d[\w.,]*$/;
+/** A quantity opening the right side of a dash, e.g. "10 juta", "Rp10.000". */
+const RANGE_END = /^(?:rp\s*)?\d/i;
 
 type Block =
     | { kind: 'list'; items: string[] }
     | { kind: 'paragraph'; text: string };
+
+/**
+ * A dash between two quantities is a range ("Gaji 5 - 10 juta"), not a bullet
+ * separator. Bullet markers that never appear mid-sentence always separate.
+ */
+function isRangeDash(separator: string, before: string, after: string): boolean {
+    return DASH_SEPARATOR.test(separator) && RANGE_START.test(before) && RANGE_END.test(after);
+}
+
+/**
+ * Split a single authored line on its inline bullet separators, rejoining the
+ * dashes that turn out to be ranges.
+ */
+function splitInlineBullets(line: string): string[] {
+    const parts = line.split(INLINE_BULLET);
+    const items = [parts[0]];
+
+    for (let index = 1; index < parts.length; index += 2) {
+        const separator = parts[index];
+        const segment = parts[index + 1] ?? '';
+        const current = items[items.length - 1];
+
+        if (isRangeDash(separator, current, segment)) {
+            items[items.length - 1] = current + separator + segment;
+            continue;
+        }
+
+        items.push(segment);
+    }
+
+    return items.map((item) => item.trim()).filter(Boolean);
+}
 
 /**
  * Split plain text into lines, recovering bullets that were authored on one
@@ -30,12 +71,11 @@ function toLines(text: string): Array<{ text: string; isBullet: boolean }> {
         lines.length === 1 && BULLET_PREFIX.test(lines[0]) && INLINE_BULLET.test(lines[0]);
 
     if (authoredOnOneLine) {
-        return lines[0]
-            .replace(BULLET_PREFIX, '')
-            .split(INLINE_BULLET)
-            .map((item) => item.trim())
-            .filter(Boolean)
-            .map((text) => ({ text, isBullet: true }));
+        const items = splitInlineBullets(lines[0].replace(BULLET_PREFIX, ''));
+
+        if (items.length > 1) {
+            return items.map((text) => ({ text, isBullet: true }));
+        }
     }
 
     return lines.map((line) => ({

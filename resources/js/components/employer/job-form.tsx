@@ -10,6 +10,7 @@ import { Section } from '@/components/layout/section';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { decodeEntities } from '@/lib/sanitize-html';
 import { slugify } from '@/lib/slugify';
 import type { RouteDefinition } from '@/wayfinder';
 
@@ -78,16 +79,25 @@ type Props = {
     job?: JobRecord | null;
 };
 
+/**
+ * Stored copy is HTML-escaped by the server purifier, so an authored "&" comes
+ * back as "&amp;". Decode it for the textareas; saving re-escapes it, which the
+ * purifier does idempotently, so the round trip is stable.
+ */
+function toEditableText(value: string | null | undefined): string {
+    return value ? decodeEntities(value) : '';
+}
+
 export function EmployerJobForm({ headTitle, title, description, submitLabel, action, options, job = null }: Props) {
     const [slugTouched, setSlugTouched] = useState(Boolean(job));
     const form = useForm({
         job_category_id: job?.job_category_id ? String(job.job_category_id) : '',
         title: job?.title ?? '',
         slug: job?.slug ?? '',
-        description: job?.description ?? '',
-        responsibilities: job?.responsibilities ?? '',
-        requirements: job?.requirements ?? '',
-        benefits: job?.benefits ?? '',
+        description: toEditableText(job?.description),
+        responsibilities: toEditableText(job?.responsibilities),
+        requirements: toEditableText(job?.requirements),
+        benefits: toEditableText(job?.benefits),
         employment_type: job?.employment_type ?? 'full_time',
         work_arrangement: job?.work_arrangement ?? 'hybrid',
         experience_level: job?.experience_level ?? 'mid',
