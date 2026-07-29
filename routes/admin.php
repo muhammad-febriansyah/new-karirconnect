@@ -102,7 +102,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->only(['index', 'store', 'update', 'destroy']);
 
         Route::resource('jobs', JobController::class)
-            ->only(['index', 'show', 'update']);
+            ->only(['index', 'show', 'update', 'destroy']);
 
         Route::prefix('companies')
             ->name('companies.')
@@ -113,6 +113,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
                 Route::get('{company}', [CompanyController::class, 'show'])->name('show');
                 Route::post('{company}/approve', [CompanyController::class, 'approve'])->name('approve');
                 Route::post('{company}/suspend', [CompanyController::class, 'suspend'])->name('suspend');
+                Route::delete('{company}', [CompanyController::class, 'destroy'])->name('destroy');
             });
 
         Route::prefix('company-verifications')
