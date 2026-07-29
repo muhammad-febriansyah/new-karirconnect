@@ -8,15 +8,20 @@ use App\Http\Requests\Admin\StoreCompanyAccountRequest;
 use App\Models\Company;
 use App\Models\CompanySize;
 use App\Models\Industry;
+use App\Services\Audit\AuditLogService;
 use App\Services\Company\CompanyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CompanyController extends Controller
 {
-    public function __construct(private readonly CompanyService $companies) {}
+    public function __construct(
+        private readonly CompanyService $companies,
+        private readonly AuditLogService $audit,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -129,5 +134,22 @@ class CompanyController extends Controller
         $this->companies->suspend($company);
 
         return back()->with('success', "{$company->name} telah di-nonaktifkan.");
+    }
+
+    /**
+     * Soft delete the company. Jobs, members, and subscriptions stay in the
+     * database so the record can be restored if the deletion was a mistake.
+     */
+    public function destroy(Company $company, Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $snapshot = Arr::only($company->getAttributes(), ['name', 'slug', 'status', 'verification_status', 'owner_id']);
+        $name = $company->name;
+
+        $company->delete();
+        $this->audit->record('company.delete', null, $snapshot, null, $request->user());
+
+        return to_route('admin.companies.index')->with('success', "Perusahaan {$name} dihapus.");
     }
 }

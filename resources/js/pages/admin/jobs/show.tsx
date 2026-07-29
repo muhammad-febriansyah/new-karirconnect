@@ -1,9 +1,13 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import JobController from '@/actions/App/Http/Controllers/Admin/JobController';
-import { StatusBadge } from '@/components/feedback/status-badge';
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { EmptyState } from '@/components/feedback/empty-state';
+import { StatusBadge } from '@/components/feedback/status-badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
+import { ActionButton } from '@/components/ui/action-button';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/format-date';
 import { formatSalaryRange } from '@/lib/format-rupiah';
@@ -41,6 +45,19 @@ type Props = {
 };
 
 export default function AdminJobShow({ job, statusOptions }: Props) {
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = () => {
+        setDeleting(true);
+        router.delete(JobController.destroy(job.slug).url, {
+            onFinish: () => {
+                setDeleting(false);
+                setConfirmingDelete(false);
+            },
+        });
+    };
+
     return (
         <>
             <Head title={job.title} />
@@ -50,11 +67,14 @@ export default function AdminJobShow({ job, statusOptions }: Props) {
                     title={job.title}
                     description={`${job.company?.name ?? '-'} • ${job.category?.name ?? '-'}`}
                     actions={
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge tone={job.status === 'published' ? 'success' : job.status === 'closed' ? 'warning' : 'secondary'}>
                                 {formatStatus(job.status)}
                             </StatusBadge>
                             {job.is_featured && <StatusBadge tone="primary">Featured</StatusBadge>}
+                            <ActionButton intent="delete" onClick={() => setConfirmingDelete(true)}>
+                                <Trash2 className="size-4" /> Hapus Lowongan
+                            </ActionButton>
                         </div>
                     }
                 />
@@ -137,6 +157,18 @@ export default function AdminJobShow({ job, statusOptions }: Props) {
                     )}
                 </Section>
             </div>
+
+            <ConfirmDialog
+                open={confirmingDelete}
+                onOpenChange={setConfirmingDelete}
+                title="Hapus lowongan?"
+                description={`Lowongan "${job.title}" tidak lagi tampil di platform dan pelamar tidak dapat mengaksesnya. Data lamaran tetap tersimpan sebagai arsip.`}
+                confirmLabel="Hapus lowongan"
+                variant="destructive"
+                confirmIcon={Trash2}
+                loading={deleting}
+                onConfirm={handleDelete}
+            />
         </>
     );
 }

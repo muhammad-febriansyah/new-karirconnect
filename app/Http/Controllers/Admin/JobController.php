@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Job;
+use App\Services\Audit\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class JobController extends Controller
 {
+    public function __construct(private readonly AuditLogService $audit) {}
+
     public function index(Request $request): Response
     {
         $statusFilter = $request->string('status')->toString();
@@ -100,5 +104,20 @@ class JobController extends Controller
         ])->save();
 
         return back()->with('success', 'Lowongan berhasil diperbarui.');
+    }
+
+    /**
+     * Soft delete the job so applications and analytics rows keep their
+     * relation intact and the listing can be restored if needed.
+     */
+    public function destroy(Job $job, Request $request): RedirectResponse
+    {
+        $snapshot = Arr::only($job->getAttributes(), ['title', 'slug', 'status', 'company_id']);
+        $title = $job->title;
+
+        $job->delete();
+        $this->audit->record('job.delete', null, $snapshot, null, $request->user());
+
+        return to_route('admin.jobs.index')->with('success', "Lowongan {$title} dihapus.");
     }
 }

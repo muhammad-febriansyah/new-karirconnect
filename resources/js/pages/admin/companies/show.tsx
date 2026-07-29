@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     Building2,
     Calendar,
@@ -9,18 +9,23 @@ import {
     Phone,
     ShieldCheck,
     Ticket,
+    Trash2,
     UserRound,
     Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState  } from 'react';
+import type {ReactNode} from 'react';
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { SafeHtml } from '@/components/shared/safe-html';
+import { ActionButton } from '@/components/ui/action-button';
 import { formatDateTime } from '@/lib/format-date';
 import { formatStatus } from '@/lib/format-status';
+import { destroy as companyDestroy } from '@/routes/admin/companies';
 
 type Props = {
     company: {
@@ -104,6 +109,18 @@ export default function AdminCompanyShow({ company, logoUrl, subscription }: Pro
     const location = company.city ? `${company.city.name}, ${company.city.province?.name ?? '-'}` : null;
     const quota = subscription?.job_post_quota ?? 0;
     const usedPct = quota > 0 ? Math.min(100, Math.round(((subscription?.jobs_posted_count ?? 0) / quota) * 100)) : 0;
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = () => {
+        setDeleting(true);
+        router.delete(companyDestroy(company.id).url, {
+            onFinish: () => {
+                setDeleting(false);
+                setConfirmingDelete(false);
+            },
+        });
+    };
 
     return (
         <>
@@ -113,6 +130,11 @@ export default function AdminCompanyShow({ company, logoUrl, subscription }: Pro
                 <PageHeader
                     title="Detail Perusahaan"
                     description="Ringkasan profil, akun owner, dan status langganan perusahaan."
+                    actions={
+                        <ActionButton intent="delete" onClick={() => setConfirmingDelete(true)}>
+                            <Trash2 className="size-4" /> Hapus Perusahaan
+                        </ActionButton>
+                    }
                 />
 
                 {/* Hero */}
@@ -382,6 +404,18 @@ export default function AdminCompanyShow({ company, logoUrl, subscription }: Pro
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={confirmingDelete}
+                onOpenChange={setConfirmingDelete}
+                title="Hapus perusahaan?"
+                description={`${company.name} beserta lowongan dan tim-nya tidak lagi tampil di platform. Data disimpan sebagai arsip dan hanya bisa dipulihkan lewat database.`}
+                confirmLabel="Hapus perusahaan"
+                variant="destructive"
+                confirmIcon={Trash2}
+                loading={deleting}
+                onConfirm={handleDelete}
+            />
         </>
     );
 }

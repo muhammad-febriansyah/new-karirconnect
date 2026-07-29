@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { CheckCircle2, ChevronDown, ChevronsUpDown, Eye, Plus, ShieldOff } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronsUpDown, Eye, Plus, ShieldOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { StatusBadge } from '@/components/feedback/status-badge';
@@ -13,7 +13,14 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatStatus } from '@/lib/format-status';
-import { approve as companyApprove, create as companyCreate, index as adminCompaniesIndex, show as companyShow, suspend as companySuspend } from '@/routes/admin/companies';
+import {
+    approve as companyApprove,
+    create as companyCreate,
+    destroy as companyDestroy,
+    index as adminCompaniesIndex,
+    show as companyShow,
+    suspend as companySuspend,
+} from '@/routes/admin/companies';
 
 type Owner = { id: number; name: string; email: string };
 type Company = {
@@ -30,16 +37,56 @@ type Company = {
 type Props = { companies: { data: Company[] } };
 
 export default function AdminCompaniesIndex({ companies }: Props) {
-    const [pendingAction, setPendingAction] = useState<{ type: 'approve' | 'suspend'; company: Company } | null>(null);
+    const [pendingAction, setPendingAction] = useState<{ type: 'approve' | 'suspend' | 'delete'; company: Company } | null>(null);
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
     const handleConfirm = () => {
-        if (!pendingAction) return;
+        if (!pendingAction) {
+return;
+}
+
+        if (pendingAction.type === 'delete') {
+            router.delete(companyDestroy(pendingAction.company.id).url, {
+                preserveScroll: true,
+                onFinish: () => setPendingAction(null),
+            });
+
+            return;
+        }
+
         const url = pendingAction.type === 'approve' ? companyApprove(pendingAction.company.id).url : companySuspend(pendingAction.company.id).url;
         router.post(url, {}, { preserveScroll: true, onFinish: () => setPendingAction(null) });
     };
+
+    const confirmCopy = {
+        approve: {
+            title: 'Setujui perusahaan?',
+            description: pendingAction ? `${pendingAction.company.name} akan dapat memposting lowongan.` : '',
+            confirmLabel: 'Setujui',
+            variant: 'default' as const,
+            icon: CheckCircle2,
+        },
+        suspend: {
+            title: 'Nonaktifkan perusahaan?',
+            description: pendingAction ? `${pendingAction.company.name} tidak dapat memposting lowongan.` : '',
+            confirmLabel: 'Nonaktifkan',
+            variant: 'destructive' as const,
+            icon: ShieldOff,
+        },
+        delete: {
+            title: 'Hapus perusahaan?',
+            description: pendingAction
+                ? `${pendingAction.company.name} beserta lowongan dan tim-nya tidak lagi tampil di platform. Data disimpan sebagai arsip dan hanya bisa dipulihkan lewat database.`
+                : '',
+            confirmLabel: 'Hapus perusahaan',
+            variant: 'destructive' as const,
+            icon: Trash2,
+        },
+    };
+
+    const activeCopy = pendingAction ? confirmCopy[pendingAction.type] : null;
 
     const columns: ColumnDef<Company>[] = [
         {
@@ -105,6 +152,9 @@ export default function AdminCompaniesIndex({ companies }: Props) {
                             <ShieldOff className="size-4" /> Suspend
                         </ActionButton>
                     )}
+                    <ActionButton intent="delete" onClick={() => setPendingAction({ type: 'delete', company: row.original })}>
+                        <Trash2 className="size-4" /> Hapus
+                    </ActionButton>
                 </ActionGroup>
             ),
         },
@@ -119,7 +169,11 @@ export default function AdminCompaniesIndex({ companies }: Props) {
         onColumnVisibilityChange: setColumnVisibility,
         globalFilterFn: (row, _columnId, filterValue) => {
             const keyword = String(filterValue).toLowerCase().trim();
-            if (keyword === '') return true;
+
+            if (keyword === '') {
+return true;
+}
+
             return [row.original.name, row.original.status, row.original.verification_status, row.original.owner?.name ?? '', row.original.owner?.email ?? '']
                 .join(' ')
                 .toLowerCase()
@@ -195,11 +249,11 @@ export default function AdminCompaniesIndex({ companies }: Props) {
             <ConfirmDialog
                 open={pendingAction !== null}
                 onOpenChange={(open) => !open && setPendingAction(null)}
-                title={pendingAction?.type === 'approve' ? 'Setujui perusahaan?' : 'Nonaktifkan perusahaan?'}
-                description={pendingAction ? `${pendingAction.company.name} akan ${pendingAction.type === 'approve' ? 'dapat' : 'tidak dapat'} memposting lowongan.` : ''}
-                confirmLabel={pendingAction?.type === 'approve' ? 'Setujui' : 'Nonaktifkan'}
-                variant={pendingAction?.type === 'suspend' ? 'destructive' : 'default'}
-                confirmIcon={pendingAction?.type === 'approve' ? CheckCircle2 : ShieldOff}
+                title={activeCopy?.title ?? ''}
+                description={activeCopy?.description ?? ''}
+                confirmLabel={activeCopy?.confirmLabel}
+                variant={activeCopy?.variant ?? 'default'}
+                confirmIcon={activeCopy?.icon}
                 onConfirm={handleConfirm}
             />
         </>

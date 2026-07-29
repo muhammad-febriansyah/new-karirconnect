@@ -1,14 +1,15 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table';
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { ChevronDown, ChevronsUpDown, Eye } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, Eye, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import JobController from '@/actions/App/Http/Controllers/Admin/JobController';
+import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
-import { ActionButton } from '@/components/ui/action-button';
+import { ActionButton, ActionGroup } from '@/components/ui/action-button';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,18 @@ export default function AdminJobsIndex({ jobs }: Props) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+    const [pendingDelete, setPendingDelete] = useState<JobRow | null>(null);
+
+    const handleDelete = () => {
+        if (!pendingDelete) {
+return;
+}
+
+        router.delete(JobController.destroy(pendingDelete.slug).url, {
+            preserveScroll: true,
+            onFinish: () => setPendingDelete(null),
+        });
+    };
 
     const columns: ColumnDef<JobRow>[] = [
         {
@@ -72,13 +85,16 @@ export default function AdminJobsIndex({ jobs }: Props) {
             enableHiding: false,
             header: () => <div className="text-right">Aksi</div>,
             cell: ({ row }) => (
-                <div className="text-right">
+                <ActionGroup className="justify-end">
                     <ActionButton asChild intent="detail">
                         <Link href={JobController.show(row.original.slug).url}>
                             <Eye className="size-4" /> Detail
                         </Link>
                     </ActionButton>
-                </div>
+                    <ActionButton intent="delete" onClick={() => setPendingDelete(row.original)}>
+                        <Trash2 className="size-4" /> Hapus
+                    </ActionButton>
+                </ActionGroup>
             ),
         },
     ];
@@ -92,7 +108,11 @@ export default function AdminJobsIndex({ jobs }: Props) {
         onColumnVisibilityChange: setColumnVisibility,
         globalFilterFn: (row, _columnId, filterValue) => {
             const keyword = String(filterValue).toLowerCase().trim();
-            if (keyword === '') return true;
+
+            if (keyword === '') {
+return true;
+}
+
             return [row.original.title, row.original.slug, row.original.status, row.original.company?.name ?? '', row.original.category?.name ?? '']
                 .join(' ')
                 .toLowerCase()
@@ -175,6 +195,21 @@ export default function AdminJobsIndex({ jobs }: Props) {
                     )}
                 </Section>
             </div>
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                onOpenChange={(open) => !open && setPendingDelete(null)}
+                title="Hapus lowongan?"
+                description={
+                    pendingDelete
+                        ? `Lowongan "${pendingDelete.title}" tidak lagi tampil di platform dan pelamar tidak dapat mengaksesnya. Data lamaran tetap tersimpan sebagai arsip.`
+                        : ''
+                }
+                confirmLabel="Hapus lowongan"
+                variant="destructive"
+                confirmIcon={Trash2}
+                onConfirm={handleDelete}
+            />
         </>
     );
 }
