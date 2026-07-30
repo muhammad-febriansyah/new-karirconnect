@@ -100,18 +100,62 @@ test('admin sees the preview with the exact blast radius', function (): void {
     seededEmployer('tokopedia.com');
     seededCandidate(1);
 
+    // The preview is deferred, so it arrives on the partial reload the client
+    // sends straight after the page paints -- not in the first response.
     $this->actingAs($admin)
         ->get(route('admin.showcase-data.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('admin/showcase-data/index')
-            ->where('preview.employers', 2)
-            ->where('preview.candidates', 1)
-            ->where('preview.companies', 2)
-            ->where('preview.jobs', 2)
             ->has('confirmationPhrase')
             ->has('recentPurges')
+            ->missing('preview')
+            ->loadDeferredProps(fn ($deferred) => $deferred
+                ->where('preview.employers', 2)
+                ->where('preview.candidates', 1)
+                ->where('preview.companies', 2)
+                ->where('preview.jobs', 2)
+            )
         );
+});
+
+test('a candidate is purged on its address alone, whatever its password', function (): void {
+    // Deliberate: `.test` is a reserved TLD, so kandidat<N>@karirkonek.test
+    // cannot be a real person's address and a bcrypt check there would buy
+    // nothing but page-load time. Employers are checked; candidates are not.
+    $admin = User::factory()->admin()->create();
+    $candidate = seededCandidate(1, password: 'diganti-orang');
+
+    $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->delete(route('admin.showcase-data.destroy'), ['confirmation' => 'HAPUS DATA DUMMY'])
+        ->assertSessionHas('success');
+
+    expect(User::query()->whereKey($candidate['user']->id)->exists())->toBeFalse();
+});
+
+test('the preview is cached between visits but never reused for a purge', function (): void {
+    $admin = User::factory()->admin()->create();
+    seededEmployer('gojek.com');
+
+    $this->actingAs($admin)
+        ->get(route('admin.showcase-data.index'))
+        ->assertInertia(fn ($page) => $page
+            ->loadDeferredProps(fn ($deferred) => $deferred->where('preview.employers', 1)));
+
+    // Data changes underneath a cached preview; the purge must still see it.
+    seededEmployer('tokopedia.com');
+
+    $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->delete(route('admin.showcase-data.destroy'), ['confirmation' => 'HAPUS DATA DUMMY'])
+        ->assertSessionHas('success');
+
+    expect(User::query()->where('email', 'hr@tokopedia.com')->exists())->toBeFalse();
+
+    $log = AuditLog::query()->where('action', 'showcase.purge')->sole();
+
+    expect($log->after_values['employers'])->toBe(2);
 });
 
 test('purge removes showcase rows and leaves real data untouched', function (): void {
@@ -161,9 +205,11 @@ test('an account matching the dummy pattern but with a changed password is spare
         ->get(route('admin.showcase-data.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('preview.employers', 0)
-            ->has('preview.suspects', 1)
-            ->where('preview.suspects.0.email', 'hr@gojek.com')
+            ->loadDeferredProps(fn ($deferred) => $deferred
+                ->where('preview.employers', 0)
+                ->has('preview.suspects', 1)
+                ->where('preview.suspects.0.email', 'hr@gojek.com')
+            )
         );
 
     $this->actingAs($admin)
@@ -214,8 +260,10 @@ test('the preview counts applications real candidates filed against dummy jobs',
         ->get(route('admin.showcase-data.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('preview.applications', 2)
-            ->where('preview.applications_from_real_candidates', 1)
+            ->loadDeferredProps(fn ($deferred) => $deferred
+                ->where('preview.applications', 2)
+                ->where('preview.applications_from_real_candidates', 1)
+            )
         );
 });
 
