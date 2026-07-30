@@ -62,7 +62,7 @@ class ContentController extends Controller
     public function careerResources(Request $request): JsonResponse
     {
         $resources = CareerResource::query()
-            ->where('is_published', true)
+            ->live()
             ->when($request->filled('category'), fn ($query) => $query->where('category', $request->string('category')->toString()))
             ->when($request->filled('search'), fn ($query) => $query->where('title', 'like', '%'.$request->string('search')->toString().'%'))
             ->latest('id')

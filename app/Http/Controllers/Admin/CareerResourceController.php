@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CareerResourceRequest;
 use App\Models\CareerResource;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -19,7 +21,19 @@ class CareerResourceController extends Controller
                 ->with('author:id,name')
                 ->latest('published_at')
                 ->latest('id')
-                ->get(),
+                ->get()
+                ->map(function (CareerResource $resource): array {
+                    // The three states are not derivable from is_published alone,
+                    // so the status is resolved here rather than re-implemented
+                    // against the clock in the browser.
+                    return array_merge($resource->toArray(), [
+                        'status' => match (true) {
+                            ! $resource->is_published => 'draft',
+                            $resource->isScheduled() => 'scheduled',
+                            default => 'live',
+                        },
+                    ]);
+                }),
         ]);
     }
 
@@ -37,7 +51,7 @@ class CareerResourceController extends Controller
         unset($data['thumbnail']);
         $data['slug'] ??= str($data['title'])->slug()->value();
         $data['author_id'] = $request->user()->id;
-        $data['published_at'] = $data['is_published'] ? now() : null;
+        $data['published_at'] = $this->resolvePublishedAt($data, null);
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail_path'] = $request->file('thumbnail')?->store('career-resources', 'public');
@@ -68,6 +82,9 @@ class CareerResourceController extends Controller
                 'tags' => $careerResource->tags ?? [],
                 'reading_minutes' => $careerResource->reading_minutes,
                 'is_published' => $careerResource->is_published,
+                // datetime-local wants "Y-m-d\TH:i" and no timezone suffix.
+                'published_at' => $careerResource->published_at?->format('Y-m-d\TH:i'),
+                'is_scheduled' => $careerResource->isScheduled(),
             ],
         ]);
     }
@@ -77,9 +94,7 @@ class CareerResourceController extends Controller
         $data = $request->validated();
         unset($data['thumbnail']);
         $data['slug'] ??= str($data['title'])->slug()->value();
-        $data['published_at'] = $data['is_published']
-            ? ($careerResource->published_at ?? now())
-            : null;
+        $data['published_at'] = $this->resolvePublishedAt($data, $careerResource->published_at);
 
         if ($request->hasFile('thumbnail')) {
             if ($careerResource->thumbnail_path) {
@@ -94,6 +109,29 @@ class CareerResourceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Resource karier berhasil diperbarui.']);
 
         return to_route('admin.career-resources.index');
+    }
+
+    /**
+     * Decides the publish moment for a save.
+     *
+     * A future date is what makes an article scheduled -- nothing is queued and
+     * no job runs, the article simply starts matching the `live` scope once the
+     * clock passes it. Unpublishing clears the date so a draft never carries a
+     * stale schedule that would fire the moment it is republished.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function resolvePublishedAt(array $data, ?CarbonInterface $existing): ?CarbonInterface
+    {
+        if (! $data['is_published']) {
+            return null;
+        }
+
+        if (! empty($data['published_at'])) {
+            return Carbon::parse($data['published_at']);
+        }
+
+        return $existing ?? now();
     }
 
     public function destroy(CareerResource $careerResource): RedirectResponse

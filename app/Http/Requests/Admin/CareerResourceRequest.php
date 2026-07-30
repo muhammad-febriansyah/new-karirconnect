@@ -37,6 +37,9 @@ class CareerResourceRequest extends FormRequest
             'tags.*' => ['nullable', 'string', 'max:60'],
             'reading_minutes' => ['required', 'integer', 'between:1,120'],
             'is_published' => ['required', 'boolean'],
+            // Past dates are allowed on purpose: backdating an imported article
+            // is as legitimate as scheduling a future one.
+            'published_at' => ['nullable', 'date'],
         ];
     }
 
@@ -51,6 +54,7 @@ class CareerResourceRequest extends FormRequest
         $this->merge([
             'slug' => $this->filled('slug') ? str($this->input('slug'))->slug()->value() : null,
             'is_published' => $this->boolean('is_published'),
+            'published_at' => $this->filled('published_at') ? $this->input('published_at') : null,
             'reading_minutes' => (int) $this->input('reading_minutes', 1),
             'tags' => collect($tags)
                 ->map(static fn (mixed $value): string => trim((string) $value))

@@ -15,7 +15,7 @@ class CareerResourceController extends Controller
         $category = $request->string('category')->toString();
 
         $query = CareerResource::query()
-            ->where('is_published', true)
+            ->live()
             ->orderByDesc('published_at')
             ->orderByDesc('id');
 
@@ -28,7 +28,7 @@ class CareerResourceController extends Controller
                 'category' => $category,
             ],
             'categories' => CareerResource::query()
-                ->where('is_published', true)
+                ->live()
                 ->whereNotNull('category')
                 ->distinct()
                 ->orderBy('category')
@@ -51,7 +51,9 @@ class CareerResourceController extends Controller
 
     public function show(CareerResource $careerResource): Response
     {
-        abort_unless($careerResource->is_published, 404);
+        // A scheduled article must 404 like any unpublished one, or its URL
+        // leaks the piece early to anyone who guesses the slug.
+        abort_unless($careerResource->isLive(), 404);
 
         $careerResource->increment('views_count');
 
@@ -70,7 +72,7 @@ class CareerResourceController extends Controller
                 'thumbnail' => $careerResource->thumbnail_path ? asset('storage/'.$careerResource->thumbnail_path) : null,
             ],
             'related' => CareerResource::query()
-                ->where('is_published', true)
+                ->live()
                 ->whereKeyNot($careerResource->id)
                 ->when($careerResource->category, fn ($query) => $query->where('category', $careerResource->category))
                 ->latest('published_at')
