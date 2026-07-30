@@ -110,7 +110,7 @@ class JobController extends Controller
             'user_id' => $viewer?->id,
             'ip_address' => $request->ip(),
             'user_agent' => substr((string) $request->userAgent(), 0, 255),
-            'source' => $request->headers->get('referer'),
+            'source' => substr((string) $request->headers->get('referer'), 0, 512) ?: null,
         ]);
     }
 

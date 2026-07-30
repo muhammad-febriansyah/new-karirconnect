@@ -9,9 +9,11 @@ use App\Models\AuditLog;
 use App\Models\Job;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -20,6 +22,26 @@ use Inertia\Response;
 
 class UserController extends Controller
 {
+    /**
+     * Tables holding an `ON DELETE RESTRICT` foreign key to `users`. The model
+     * has no SoftDeletes trait, so destroy() issues a real DELETE and MySQL
+     * rejects it with SQLSTATE 23000 whenever any of these still reference the
+     * row. They are counted up front so the admin gets a readable reason
+     * instead of a 500 page.
+     *
+     * @var array<string, array{column: string, label: string}>
+     */
+    private const RESTRICTING_REFERENCES = [
+        'companies' => ['column' => 'owner_id', 'label' => 'perusahaan'],
+        'jobs' => ['column' => 'posted_by_user_id', 'label' => 'lowongan'],
+        'orders' => ['column' => 'user_id', 'label' => 'pesanan'],
+        'messages' => ['column' => 'sender_user_id', 'label' => 'pesan'],
+        'message_templates' => ['column' => 'created_by_user_id', 'label' => 'template pesan'],
+        'interviews' => ['column' => 'scheduled_by_user_id', 'label' => 'jadwal interview'],
+        'interview_scorecards' => ['column' => 'reviewer_id', 'label' => 'penilaian interview'],
+        'company_verifications' => ['column' => 'uploaded_by_user_id', 'label' => 'dokumen verifikasi'],
+    ];
+
     public function __construct(private readonly AuditLogService $audit) {}
 
     public function index(Request $request): Response
@@ -318,17 +340,58 @@ class UserController extends Controller
     public function destroy(User $user, Request $request): RedirectResponse
     {
         if ($user->id === $request->user()->id) {
-            return back()->withErrors(['delete' => 'Anda tidak dapat menghapus akun Anda sendiri.']);
+            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
         if ($user->isAdmin()) {
-            return back()->withErrors(['delete' => 'Akun administrator tidak dapat dihapus melalui panel ini.']);
+            return back()->with('error', 'Akun administrator tidak dapat dihapus melalui panel ini.');
+        }
+
+        $blockers = $this->deletionBlockers($user);
+
+        if ($blockers !== []) {
+            return back()->with('error', sprintf(
+                'Pengguna %s tidak dapat dihapus karena masih memiliki %s. Alihkan atau hapus data tersebut lebih dulu, atau nonaktifkan akunnya saja.',
+                $user->name,
+                Arr::join($blockers, ', ', ' dan '),
+            ));
         }
 
         $snapshot = Arr::only($user->getAttributes(), ['name', 'email', 'role', 'is_active']);
         $name = $user->name;
-        $user->delete();
+
+        try {
+            $user->delete();
+        } catch (QueryException $e) {
+            report($e);
+
+            return back()->with('error', "Pengguna {$name} masih terhubung dengan data lain sehingga tidak dapat dihapus. Nonaktifkan akunnya sebagai gantinya.");
+        }
+
         $this->audit->record('user.delete', null, $snapshot, null, $request->user());
 
         return to_route('admin.users.index')->with('success', "Pengguna {$name} dihapus.");
+    }
+
+    /**
+     * Human-readable counts of the rows that would trip a restricting foreign
+     * key. Counted through the query builder rather than Eloquent so that
+     * soft-deleted companies and jobs are included: `deleted_at` leaves the
+     * row in place, and the database constraint still sees it.
+     *
+     * @return list<string>
+     */
+    private function deletionBlockers(User $user): array
+    {
+        $blockers = [];
+
+        foreach (self::RESTRICTING_REFERENCES as $table => $reference) {
+            $count = DB::table($table)->where($reference['column'], $user->id)->count();
+
+            if ($count > 0) {
+                $blockers[] = "{$count} {$reference['label']}";
+            }
+        }
+
+        return $blockers;
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Enums\UserRole;
 use App\Models\AuditLog;
+use App\Models\Company;
 use App\Models\User;
 
 test('non admin cannot access user management', function (): void {
@@ -156,7 +157,7 @@ test('admin cannot delete an admin user', function (): void {
 
     $this->actingAs($admin)
         ->delete(route('admin.users.destroy', $other))
-        ->assertSessionHasErrors('delete');
+        ->assertSessionHas('error');
 
     expect(User::query()->find($other->id))->not->toBeNull();
 });
@@ -166,9 +167,35 @@ test('admin cannot delete own account', function (): void {
 
     $this->actingAs($admin)
         ->delete(route('admin.users.destroy', $admin))
-        ->assertSessionHasErrors('delete');
+        ->assertSessionHas('error');
 
     expect(User::query()->find($admin->id))->not->toBeNull();
+});
+
+test('deleting a user who owns a company is refused with a readable reason', function (): void {
+    $admin = User::factory()->admin()->create();
+    $owner = User::factory()->employer()->create();
+    Company::factory()->for($owner, 'owner')->create();
+
+    $this->actingAs($admin)
+        ->delete(route('admin.users.destroy', $owner))
+        ->assertSessionHas('error', fn (string $message) => str_contains($message, '1 perusahaan'));
+
+    expect(User::query()->find($owner->id))->not->toBeNull();
+    expect(AuditLog::query()->where('action', 'user.delete')->exists())->toBeFalse();
+});
+
+test('a soft deleted company still blocks its owner from being deleted', function (): void {
+    $admin = User::factory()->admin()->create();
+    $owner = User::factory()->employer()->create();
+    $company = Company::factory()->for($owner, 'owner')->create();
+    $company->delete();
+
+    $this->actingAs($admin)
+        ->delete(route('admin.users.destroy', $owner))
+        ->assertSessionHas('error');
+
+    expect(User::query()->find($owner->id))->not->toBeNull();
 });
 
 test('admin can request password reset link for user', function (): void {

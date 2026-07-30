@@ -227,8 +227,9 @@ export default function AdminUsersIndex({ users, filters, roleOptions, totals }:
             title: 'Hapus akun pengguna?',
             description: (
                 <span>
-                    Akun <strong>{user.name}</strong> dan data terkait akan dihapus permanen. Aksi ini tidak dapat
-                    dibatalkan.
+                    Akun <strong>{user.name}</strong> akan dihapus permanen dan tidak dapat dikembalikan. Jika akun ini
+                    masih memiliki perusahaan, lowongan, pesanan, atau riwayat lain, penghapusan akan ditolak — gunakan
+                    Nonaktifkan.
                 </span>
             ),
             confirmLabel: 'Hapus permanen',
