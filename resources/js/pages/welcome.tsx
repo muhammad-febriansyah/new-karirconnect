@@ -398,16 +398,12 @@ function JobCard({ job }: { job: FeaturedJob }) {
                 </ul>
             </Link>
 
-            <div className="flex items-center justify-between gap-2 border-t bg-muted/20 px-4 py-2.5 text-xs text-muted-foreground">
+            {/* Skills stay off the card here too -- same card, same reasoning. */}
+            <div className="flex items-center gap-2 border-t bg-muted/20 px-4 py-2.5 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
                     <Clock className="size-3.5" />
                     {job.published_at ? `Diposting ${formatRelative(job.published_at)}` : 'Baru saja'}
                 </span>
-                {job.skills.length > 0 && (
-                    <span className="hidden truncate font-medium text-foreground/70 sm:inline">
-                        {job.skills.slice(0, 2).join(' · ')}
-                    </span>
-                )}
             </div>
         </article>
     );

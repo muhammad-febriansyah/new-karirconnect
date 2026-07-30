@@ -290,7 +290,7 @@ class HomeService
     private function articles(): array
     {
         return CareerResource::query()
-            ->where('is_published', true)
+            ->live()
             ->whereNotNull('published_at')
             ->latest('published_at')
             ->limit(3)

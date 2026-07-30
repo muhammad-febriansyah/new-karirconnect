@@ -13,10 +13,12 @@ import {
     Megaphone,
     Search,
     TrendingUp,
-    Wallet,
-    type LucideIcon,
+    Wallet
+    
 } from 'lucide-react';
-import { type FormEvent, useMemo, useState } from 'react';
+import type {LucideIcon} from 'lucide-react';
+import {  useMemo, useState } from 'react';
+import type {FormEvent} from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { SelectControl } from '@/components/form/select-control';
 import { SeoHead } from '@/components/seo-head';
@@ -106,22 +108,49 @@ type Props = {
 };
 
 const formatRupiahShort = (value: number | null): string => {
-    if (!value) return '';
-    if (value >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)} jt`;
-    if (value >= 1_000) return `Rp ${(value / 1_000).toFixed(0)}rb`;
+    if (!value) {
+return '';
+}
+
+    if (value >= 1_000_000) {
+return `Rp ${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)} jt`;
+}
+
+    if (value >= 1_000) {
+return `Rp ${(value / 1_000).toFixed(0)}rb`;
+}
+
     return `Rp ${value}`;
 };
 
 const formatRelative = (iso: string | null): string => {
-    if (!iso) return '';
+    if (!iso) {
+return '';
+}
+
     const ms = Date.now() - new Date(iso).getTime();
     const min = Math.floor(ms / 60000);
-    if (min < 1) return 'Baru saja';
-    if (min < 60) return `${min} menit lalu`;
+
+    if (min < 1) {
+return 'Baru saja';
+}
+
+    if (min < 60) {
+return `${min} menit lalu`;
+}
+
     const hr = Math.floor(min / 60);
-    if (hr < 24) return `${hr}j lalu`;
+
+    if (hr < 24) {
+return `${hr}j lalu`;
+}
+
     const day = Math.floor(hr / 24);
-    if (day < 30) return `${day}h lalu`;
+
+    if (day < 30) {
+return `${day}h lalu`;
+}
+
     return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
 };
 
@@ -317,6 +346,7 @@ export default function PublicJobsIndex({ jobs, filters, options }: Props) {
                 <div className="-mx-1 flex flex-wrap gap-2 px-1">
                     {QUICK_PICKS.map((q) => {
                         const active = q.isActive(filters);
+
                         return (
                             <button
                                 key={q.key}
@@ -686,16 +716,16 @@ function JobCard({ job }: { job: JobRow }) {
                 </ul>
             </Link>
 
-            <div className="flex items-center justify-between gap-2 border-t bg-muted/20 px-4 py-2.5 text-xs text-muted-foreground">
+            {/*
+                No skill chips here. Read out of context they look like a
+                requirement the seeker fails, and two truncated skills say less
+                than nothing -- the full list belongs on the job detail page.
+            */}
+            <div className="flex items-center gap-2 border-t bg-muted/20 px-4 py-2.5 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
                     <Clock className="size-3.5" />
                     {job.published_at ? `Diposting ${formatRelative(job.published_at)}` : 'Baru saja'}
                 </span>
-                {job.skills.length > 0 && (
-                    <span className="hidden truncate font-medium text-foreground/70 sm:inline">
-                        {job.skills.slice(0, 2).join(' · ')}
-                    </span>
-                )}
             </div>
         </article>
     );
