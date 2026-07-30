@@ -32,6 +32,7 @@ import {
 import { type ReactNode, useState } from 'react';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
 import { EmptyState } from '@/components/feedback/empty-state';
+import { StatusBadge } from '@/components/feedback/status-badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { ActionButton } from '@/components/ui/action-button';
@@ -144,16 +145,24 @@ type Props = {
     roleOptions: Option[];
 };
 
-const ROLE_GRADIENT: Record<string, string> = {
-    admin: 'from-violet-500 via-fuchsia-500 to-pink-500',
-    employer: 'from-sky-500 via-cyan-500 to-blue-500',
-    employee: 'from-emerald-500 via-teal-500 to-cyan-500',
-};
-
-const ROLE_RING: Record<string, string> = {
-    admin: 'ring-violet-200 dark:ring-violet-900/60',
-    employer: 'ring-sky-200 dark:ring-sky-900/60',
-    employee: 'ring-emerald-200 dark:ring-emerald-900/60',
+/**
+ * The role colour is carried by the avatar tile alone. A full-width tinted
+ * banner behind the header pushed the muted meta text onto a saturated
+ * background, where it failed to stay readable.
+ */
+const ROLE_ACCENT: Record<string, { tile: string; ring: string }> = {
+    admin: {
+        tile: 'bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-200',
+        ring: 'ring-violet-200 dark:ring-violet-900/60',
+    },
+    employer: {
+        tile: 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-200',
+        ring: 'ring-sky-200 dark:ring-sky-900/60',
+    },
+    employee: {
+        tile: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200',
+        ring: 'ring-emerald-200 dark:ring-emerald-900/60',
+    },
 };
 
 function initialsOf(name: string): string {
@@ -179,8 +188,17 @@ export default function AdminUserShow({ user, stats, applications, postedJobs, a
     const [actionLoading, setActionLoading] = useState(false);
 
     const role = user.role ?? 'employee';
-    const heroGradient = ROLE_GRADIENT[role] ?? ROLE_GRADIENT.employee;
-    const heroRing = ROLE_RING[role] ?? ROLE_RING.employee;
+    const accent = ROLE_ACCENT[role] ?? ROLE_ACCENT.employee;
+
+    /**
+     * Companies and jobs hold a restricting foreign key to the user, so the
+     * server refuses the deletion while either exists. Naming them next to the
+     * button saves the admin from discovering it only after confirming.
+     */
+    const deletionBlockers = [
+        stats.owned_companies_count > 0 ? `${stats.owned_companies_count} perusahaan` : null,
+        stats.posted_jobs_count > 0 ? `${stats.posted_jobs_count} lowongan` : null,
+    ].filter((entry): entry is string => entry !== null);
 
     const performAction = () => {
         if (!pending) return;
@@ -250,7 +268,9 @@ export default function AdminUserShow({ user, stats, applications, postedJobs, a
             title: 'Hapus akun pengguna?',
             description: (
                 <span>
-                    Akun <strong>{user.name}</strong> akan dihapus permanen. Aksi ini tidak dapat dibatalkan.
+                    Akun <strong>{user.name}</strong> akan dihapus permanen dan tidak dapat dikembalikan. Jika akun ini
+                    masih memiliki perusahaan, lowongan, pesanan, atau riwayat lain, penghapusan akan ditolak — gunakan
+                    Nonaktifkan.
                 </span>
             ),
             confirmLabel: 'Hapus permanen',
@@ -272,81 +292,73 @@ export default function AdminUserShow({ user, stats, applications, postedJobs, a
                     </Button>
                 </div>
 
-                {/* Hero */}
-                <div className={cn('relative overflow-hidden rounded-2xl border bg-card p-5 shadow-xs sm:p-6', heroRing, 'ring-1')}>
-                    <div className={cn('absolute inset-x-0 top-0 h-32 bg-gradient-to-r', heroGradient, 'opacity-90')} />
-                    <div
-                        aria-hidden
-                        className="absolute inset-0 opacity-20"
-                        style={{
-                            backgroundImage:
-                                'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.5) 0px, transparent 200px), radial-gradient(circle at 80% 60%, rgba(255,255,255,0.4) 0px, transparent 250px)',
-                        }}
-                    />
-                    <div className="relative">
-                        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-6">
-                            <Avatar className="size-24 shrink-0 ring-4 ring-background shadow-xl sm:size-28">
-                                <AvatarImage src={user.avatar_url ?? undefined} alt={user.name} />
-                                <AvatarFallback className={cn('bg-gradient-to-br text-2xl font-semibold text-white sm:text-3xl', heroGradient)}>
-                                    {initialsOf(user.name)}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 space-y-1">
-                                <div className="flex flex-wrap items-center gap-2 pt-12 sm:pt-0">
-                                    <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{user.name}</h1>
-                                    {user.is_active ? (
-                                        <Badge className="bg-emerald-100 text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-900/60">
-                                            <span className="mr-1 size-1.5 rounded-full bg-emerald-500" /> Aktif
-                                        </Badge>
-                                    ) : (
-                                        <Badge className="bg-rose-100 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-200 dark:ring-rose-900/60">
-                                            <span className="mr-1 size-1.5 rounded-full bg-rose-500" /> Suspended
-                                        </Badge>
-                                    )}
-                                    {user.two_factor_enabled && (
-                                        <Badge variant="outline" className="border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200">
-                                            <Shield className="mr-1 size-3" /> 2FA aktif
-                                        </Badge>
-                                    )}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <UserCog className="size-3.5" />
-                                        {user.role_label ?? user.role}
-                                    </span>
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <Mail className="size-3.5" />
-                                        {user.email}
-                                    </span>
-                                    {user.phone && (
-                                        <span className="inline-flex items-center gap-1.5">
-                                            <Phone className="size-3.5" />
-                                            {user.phone}
-                                        </span>
-                                    )}
-                                    <span className="inline-flex items-center gap-1.5">
-                                        <Calendar className="size-3.5" />
-                                        Bergabung {user.created_at ? formatDate(user.created_at) : '-'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                <Button onClick={() => setEditOpen(true)}>
-                                    <UserCog className="size-4" /> Ubah profil
+                <PageHeader
+                    title="Detail Pengguna"
+                    description="Profil, aktivitas, dan riwayat audit akun."
+                    actions={
+                        <>
+                            <Button onClick={() => setEditOpen(true)}>
+                                <UserCog className="size-4" /> Ubah profil
+                            </Button>
+                            {user.is_active ? (
+                                <Button variant="outline" onClick={() => setPending('suspend')} disabled={isSelf}>
+                                    <PowerOff className="size-4" /> Nonaktifkan
                                 </Button>
-                                {user.is_active ? (
-                                    <Button variant="outline" onClick={() => setPending('suspend')} disabled={isSelf}>
-                                        <PowerOff className="size-4" /> Nonaktifkan
-                                    </Button>
-                                ) : (
-                                    <Button variant="outline" onClick={() => setPending('activate')}>
-                                        <PowerSquare className="size-4" /> Aktifkan
-                                    </Button>
+                            ) : (
+                                <Button variant="outline" onClick={() => setPending('activate')}>
+                                    <PowerSquare className="size-4" /> Aktifkan
+                                </Button>
+                            )}
+                        </>
+                    }
+                />
+
+                {/* Identity */}
+                <Section className="!p-0">
+                    <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
+                        <Avatar className={cn('size-20 shrink-0 rounded-xl ring-1', accent.ring)}>
+                            <AvatarImage src={user.avatar_url ?? undefined} alt={user.name} className="object-cover" />
+                            <AvatarFallback className={cn('rounded-xl text-xl font-semibold', accent.tile)}>
+                                {initialsOf(user.name)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">{user.name}</h2>
+                                <StatusBadge tone={user.is_active ? 'success' : 'destructive'}>
+                                    {user.is_active ? 'Aktif' : 'Dinonaktifkan'}
+                                </StatusBadge>
+                                <StatusBadge tone="muted">
+                                    <UserCog className="size-3.5" /> {user.role_label ?? user.role}
+                                </StatusBadge>
+                                {user.two_factor_enabled && (
+                                    <StatusBadge tone="info">
+                                        <Shield className="size-3.5" /> 2FA aktif
+                                    </StatusBadge>
                                 )}
+                            </div>
+                            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
+                                <a
+                                    href={`mailto:${user.email}`}
+                                    className="inline-flex items-center gap-1.5 underline-offset-4 hover:text-foreground hover:underline"
+                                >
+                                    <Mail className="size-3.5 shrink-0" />
+                                    {user.email}
+                                </a>
+                                {user.phone && (
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <Phone className="size-3.5 shrink-0" />
+                                        {user.phone}
+                                    </span>
+                                )}
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Calendar className="size-3.5 shrink-0" />
+                                    Bergabung {user.created_at ? formatDate(user.created_at) : '-'}
+                                </span>
                             </div>
                         </div>
                     </div>
-                </div>
+                </Section>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -677,11 +689,8 @@ export default function AdminUserShow({ user, stats, applications, postedJobs, a
 
                     {/* Sidebar */}
                     <aside className="space-y-4">
-                        <Section title="Aksi cepat">
+                        <Section title="Aksi cepat" description="Ubah profil dan status aktif ada di bagian atas halaman.">
                             <div className="flex flex-col gap-2">
-                                <Button onClick={() => setEditOpen(true)} className="justify-start">
-                                    <UserCog className="size-4" /> Ubah data pengguna
-                                </Button>
                                 <Button
                                     variant="outline"
                                     onClick={() => setPending('reset')}
@@ -689,24 +698,6 @@ export default function AdminUserShow({ user, stats, applications, postedJobs, a
                                 >
                                     <KeyRound className="size-4" /> Kirim reset password
                                 </Button>
-                                {user.is_active ? (
-                                    <ActionButton
-                                        intent="suspend"
-                                        onClick={() => setPending('suspend')}
-                                        disabled={isSelf}
-                                        className="w-full justify-start"
-                                    >
-                                        <PowerOff className="size-4" /> Nonaktifkan akun
-                                    </ActionButton>
-                                ) : (
-                                    <ActionButton
-                                        intent="approve"
-                                        onClick={() => setPending('activate')}
-                                        className="w-full justify-start"
-                                    >
-                                        <PowerSquare className="size-4" /> Aktifkan akun
-                                    </ActionButton>
-                                )}
                                 {user.role !== 'admin' && !isSelf && (
                                     <ActionButton
                                         intent="delete"
@@ -717,6 +708,12 @@ export default function AdminUserShow({ user, stats, applications, postedJobs, a
                                     </ActionButton>
                                 )}
                             </div>
+                            {user.role !== 'admin' && !isSelf && deletionBlockers.length > 0 && (
+                                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                                    Akun ini masih memiliki {deletionBlockers.join(' dan ')}. Penghapusan akan ditolak
+                                    sampai data tersebut dialihkan — nonaktifkan akun sebagai gantinya.
+                                </p>
+                            )}
                         </Section>
 
                         <Section title="Status keamanan">
