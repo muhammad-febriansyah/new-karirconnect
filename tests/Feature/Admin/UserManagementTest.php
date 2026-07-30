@@ -1,9 +1,12 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Http\Controllers\Admin\UserController;
 use App\Models\AuditLog;
 use App\Models\Company;
+use App\Models\Job;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 test('non admin cannot access user management', function (): void {
     $employer = User::factory()->employer()->create();
@@ -183,6 +186,33 @@ test('deleting a user who owns a company is refused with a readable reason', fun
 
     expect(User::query()->find($owner->id))->not->toBeNull();
     expect(AuditLog::query()->where('action', 'user.delete')->exists())->toBeFalse();
+});
+
+test('deleting a user who posted a job is refused with a readable reason', function (): void {
+    $admin = User::factory()->admin()->create();
+    $poster = User::factory()->employer()->create();
+    Job::factory()->create(['posted_by_user_id' => $poster->id]);
+
+    $this->actingAs($admin)
+        ->delete(route('admin.users.destroy', $poster))
+        ->assertSessionHas('error', fn (string $message) => str_contains($message, '1 lowongan'));
+
+    expect(User::query()->find($poster->id))->not->toBeNull();
+});
+
+/**
+ * SQLite reads an unknown double-quoted identifier as a string literal, so a
+ * misspelled column silently counts zero rows instead of raising an error and
+ * the behavioural tests above still pass. Only a schema check catches drift —
+ * Job, for one, lives in `job_posts` while `jobs` is Laravel's queue table.
+ */
+test('every restricting reference names a column that exists', function (): void {
+    foreach (UserController::RESTRICTING_REFERENCES as [$model, $column]) {
+        $table = (new $model)->getTable();
+
+        expect(Schema::hasTable($table))->toBeTrue("Tabel {$table} tidak ada.");
+        expect(Schema::hasColumn($table, $column))->toBeTrue("Kolom {$table}.{$column} tidak ada.");
+    }
 });
 
 test('a soft deleted company still blocks its owner from being deleted', function (): void {

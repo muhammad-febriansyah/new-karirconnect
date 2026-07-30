@@ -6,14 +6,21 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\AuditLog;
+use App\Models\Company;
+use App\Models\CompanyVerification;
+use App\Models\Interview;
+use App\Models\InterviewScorecard;
 use App\Models\Job;
+use App\Models\Message;
+use App\Models\MessageTemplate;
+use App\Models\Order;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -23,23 +30,27 @@ use Inertia\Response;
 class UserController extends Controller
 {
     /**
-     * Tables holding an `ON DELETE RESTRICT` foreign key to `users`. The model
-     * has no SoftDeletes trait, so destroy() issues a real DELETE and MySQL
-     * rejects it with SQLSTATE 23000 whenever any of these still reference the
-     * row. They are counted up front so the admin gets a readable reason
-     * instead of a 500 page.
+     * Models holding an `ON DELETE RESTRICT` foreign key to `users`. The User
+     * model has no SoftDeletes trait, so destroy() issues a real DELETE and
+     * MySQL rejects it with SQLSTATE 23000 whenever any of these still
+     * reference the row. They are counted up front so the admin gets a
+     * readable reason instead of a 500 page.
      *
-     * @var array<string, array{column: string, label: string}>
+     * Keyed by model rather than table name: Job maps to `job_posts`, and
+     * `jobs` is Laravel's queue table. Asking the model for its own table
+     * keeps that from being guessed wrong.
+     *
+     * @var list<array{class-string<Model>, string, string}>
      */
-    private const RESTRICTING_REFERENCES = [
-        'companies' => ['column' => 'owner_id', 'label' => 'perusahaan'],
-        'jobs' => ['column' => 'posted_by_user_id', 'label' => 'lowongan'],
-        'orders' => ['column' => 'user_id', 'label' => 'pesanan'],
-        'messages' => ['column' => 'sender_user_id', 'label' => 'pesan'],
-        'message_templates' => ['column' => 'created_by_user_id', 'label' => 'template pesan'],
-        'interviews' => ['column' => 'scheduled_by_user_id', 'label' => 'jadwal interview'],
-        'interview_scorecards' => ['column' => 'reviewer_id', 'label' => 'penilaian interview'],
-        'company_verifications' => ['column' => 'uploaded_by_user_id', 'label' => 'dokumen verifikasi'],
+    public const RESTRICTING_REFERENCES = [
+        [Company::class, 'owner_id', 'perusahaan'],
+        [Job::class, 'posted_by_user_id', 'lowongan'],
+        [Order::class, 'user_id', 'pesanan'],
+        [Message::class, 'sender_user_id', 'pesan'],
+        [MessageTemplate::class, 'created_by_user_id', 'template pesan'],
+        [Interview::class, 'scheduled_by_user_id', 'jadwal interview'],
+        [InterviewScorecard::class, 'reviewer_id', 'penilaian interview'],
+        [CompanyVerification::class, 'uploaded_by_user_id', 'dokumen verifikasi'],
     ];
 
     public function __construct(private readonly AuditLogService $audit) {}
@@ -374,9 +385,9 @@ class UserController extends Controller
 
     /**
      * Human-readable counts of the rows that would trip a restricting foreign
-     * key. Counted through the query builder rather than Eloquent so that
-     * soft-deleted companies and jobs are included: `deleted_at` leaves the
-     * row in place, and the database constraint still sees it.
+     * key. Global scopes are dropped so soft-deleted companies and jobs still
+     * count: `deleted_at` leaves the row in place and the database constraint
+     * has no idea the record is considered deleted.
      *
      * @return list<string>
      */
@@ -384,11 +395,11 @@ class UserController extends Controller
     {
         $blockers = [];
 
-        foreach (self::RESTRICTING_REFERENCES as $table => $reference) {
-            $count = DB::table($table)->where($reference['column'], $user->id)->count();
+        foreach (self::RESTRICTING_REFERENCES as [$model, $column, $label]) {
+            $count = $model::query()->withoutGlobalScopes()->where($column, $user->id)->count();
 
             if ($count > 0) {
-                $blockers[] = "{$count} {$reference['label']}";
+                $blockers[] = "{$count} {$label}";
             }
         }
 
