@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,6 +31,8 @@ class ShowcaseDataController extends Controller implements HasMiddleware
      */
     private const CONFIRMATION_PHRASE = 'HAPUS DATA DUMMY';
 
+    private const PREVIEW_CACHE_KEY = 'showcase-data.preview';
+
     public function __construct(
         private readonly ShowcaseDataPurger $purger,
         private readonly AuditLogService $auditLog,
@@ -48,13 +51,28 @@ class ShowcaseDataController extends Controller implements HasMiddleware
         ];
     }
 
+    /**
+     * The preview arrives as a deferred prop. Building it costs one bcrypt
+     * comparison per seeded employer -- around five seconds of wall clock that
+     * would otherwise sit in front of a blank page. Deferring lets the page
+     * paint at once and fill the numbers in, and the cache keeps a second visit
+     * from paying the cost again.
+     */
     public function index(): Response
     {
         return Inertia::render('admin/showcase-data/index', [
-            'preview' => $this->purger->preview(),
+            'preview' => Inertia::defer(fn (): array => $this->cachedPreview()),
             'confirmationPhrase' => self::CONFIRMATION_PHRASE,
             'recentPurges' => $this->auditLog->recentByAction('showcase.purge', 10),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function cachedPreview(): array
+    {
+        return Cache::remember(self::PREVIEW_CACHE_KEY, now()->addMinutes(10), fn (): array => $this->purger->preview());
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -65,8 +83,9 @@ class ShowcaseDataController extends Controller implements HasMiddleware
             'confirmation.in' => 'Ketik "'.self::CONFIRMATION_PHRASE.'" persis untuk melanjutkan.',
         ]);
 
-        // Re-read rather than trusting the counts the page was rendered with:
-        // the tab may have sat open while the data underneath it changed.
+        // Re-read live, never from cache: the tab may have sat open while the
+        // data underneath it changed, and a purge must act on what is there now.
+        Cache::forget(self::PREVIEW_CACHE_KEY);
         $preview = $this->purger->preview();
 
         if ($preview['employers'] === 0 && $preview['candidates'] === 0) {
@@ -74,6 +93,9 @@ class ShowcaseDataController extends Controller implements HasMiddleware
         }
 
         $deleted = $this->purger->purge();
+
+        // The rows are gone; a cached preview promising them would be a lie.
+        Cache::forget(self::PREVIEW_CACHE_KEY);
 
         // Recorded after the fact on purpose: the deletion runs in a transaction,
         // so a failure leaves nothing behind and would make a pre-written entry

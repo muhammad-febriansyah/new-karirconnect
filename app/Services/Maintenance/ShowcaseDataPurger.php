@@ -23,10 +23,10 @@ use Illuminate\Support\Facades\Storage;
  *   so no human can own one)
  * - companies are the ones owned by those employer accounts
  *
- * A matched account must also still carry the seeder's default password hash.
+ * A matched *employer* must also still carry the seeder's default password hash.
  * An address like `hr@gojek.com` is one a real recruiter could plausibly hold,
  * so anything with a changed password is set aside as a suspect and reported
- * rather than deleted.
+ * rather than deleted. Candidates skip that check -- see resolve() for why.
  */
 class ShowcaseDataPurger
 {
@@ -165,7 +165,13 @@ class ShowcaseDataPurger
             ->filter(fn (User $user): bool => (bool) preg_match('/^kandidat\d+@karirkonek\.test$/', $user->email));
 
         [$employers, $employerSuspects] = $this->splitByPassword($employerMatches, $skipPasswordCheck);
-        [$candidates, $candidateSuspects] = $this->splitByPassword($candidateMatches, $skipPasswordCheck);
+
+        // Candidates are not password-checked. `.test` is a reserved TLD: nobody
+        // can register the domain or receive mail there, so a kandidat<N>@
+        // karirkonek.test account cannot belong to a real person no matter what
+        // its password is. Verifying them would only buy 30 bcrypt comparisons
+        // at roughly 170ms each -- five seconds of page load for no information.
+        $candidates = $candidateMatches->values();
 
         return [
             'employers' => $employers,
@@ -173,7 +179,7 @@ class ShowcaseDataPurger
             // withTrashed: a showcase company an admin already soft-deleted still
             // pins its owner via the restrict FK, so it has to be purged too.
             'companies' => Company::withTrashed()->whereIn('owner_id', $employers->pluck('id'))->get(),
-            'suspects' => $employerSuspects->merge($candidateSuspects),
+            'suspects' => $employerSuspects,
         ];
     }
 

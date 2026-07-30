@@ -49,7 +49,8 @@ type RecentPurge = {
 };
 
 type Props = {
-    preview: Preview;
+    /** Deferred: undefined until the counts arrive. */
+    preview?: Preview;
     confirmationPhrase: string;
     recentPurges: RecentPurge[];
 };
@@ -74,22 +75,33 @@ export default function AdminShowcaseDataIndex({
 
     const form = useForm({ confirmation: '' });
 
-    const hasData = preview.employers > 0 || preview.candidates > 0;
-    const collateral = preview.applications_from_real_candidates;
+    const hasData = Boolean(
+        preview && (preview.employers > 0 || preview.candidates > 0),
+    );
+    const collateral = preview?.applications_from_real_candidates ?? 0;
     const isPhraseCorrect = form.data.confirmation === confirmationPhrase;
 
-    const rows: Array<{ label: string; value: number; danger?: boolean }> = [
-        { label: 'Akun employer dummy', value: preview.employers },
-        { label: 'Akun kandidat dummy', value: preview.candidates },
-        { label: 'Perusahaan dummy', value: preview.companies },
-        { label: 'Lowongan dummy (ikut terhapus)', value: preview.jobs },
-        { label: 'Lamaran pada lowongan dummy', value: preview.applications },
-        {
-            label: 'Lamaran dari kandidat asli',
-            value: collateral,
-            danger: collateral > 0,
-        },
-    ];
+    const rows: Array<{ label: string; value: number; danger?: boolean }> =
+        preview
+            ? [
+                  { label: 'Akun employer dummy', value: preview.employers },
+                  { label: 'Akun kandidat dummy', value: preview.candidates },
+                  { label: 'Perusahaan dummy', value: preview.companies },
+                  {
+                      label: 'Lowongan dummy (ikut terhapus)',
+                      value: preview.jobs,
+                  },
+                  {
+                      label: 'Lamaran pada lowongan dummy',
+                      value: preview.applications,
+                  },
+                  {
+                      label: 'Lamaran dari kandidat asli',
+                      value: collateral,
+                      danger: collateral > 0,
+                  },
+              ]
+            : [];
 
     function submit() {
         form.delete(purgeShowcaseData().url, {
@@ -163,7 +175,22 @@ export default function AdminShowcaseDataIndex({
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {!hasData ? (
+                        {!preview ? (
+                            <div className="space-y-2">
+                                {Array.from({ length: 6 }).map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center justify-between gap-4 border-b py-2 last:border-0"
+                                    >
+                                        <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+                                        <div className="h-4 w-8 animate-pulse rounded bg-muted" />
+                                    </div>
+                                ))}
+                                <p className="pt-1 text-xs text-muted-foreground">
+                                    Menghitung data yang akan dihapus...
+                                </p>
+                            </div>
+                        ) : !hasData ? (
                             <div className="flex items-center gap-3 rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm">
                                 <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
                                 <p className="text-muted-foreground">
@@ -250,7 +277,7 @@ export default function AdminShowcaseDataIndex({
                     </CardContent>
                 </Card>
 
-                {preview.suspects.length > 0 && (
+                {preview && preview.suspects.length > 0 && (
                     <Card className="border-amber-500/40">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -368,10 +395,11 @@ export default function AdminShowcaseDataIndex({
                     <DialogHeader>
                         <DialogTitle>Hapus data showcase?</DialogTitle>
                         <DialogDescription>
-                            {preview.companies} perusahaan, {preview.jobs}{' '}
-                            lowongan, dan{' '}
-                            {preview.employers + preview.candidates} akun akan
-                            dihapus permanen
+                            {preview?.companies ?? 0} perusahaan,{' '}
+                            {preview?.jobs ?? 0} lowongan, dan{' '}
+                            {(preview?.employers ?? 0) +
+                                (preview?.candidates ?? 0)}{' '}
+                            akun akan dihapus permanen
                             {collateral > 0
                                 ? `, termasuk ${collateral} lamaran milik kandidat asli`
                                 : ''}
