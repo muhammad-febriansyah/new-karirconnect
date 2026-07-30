@@ -144,9 +144,28 @@ test('the admin listing separates scheduled from live', function (): void {
     $this->actingAs($admin)
         ->get(route('admin.career-resources.index'))
         ->assertOk()
-        ->assertInertia(function ($page) {
-            $statuses = collect($page->toArray()['props']['items'])->pluck('status')->sort()->values()->all();
+        ->assertInertia(fn ($page) => $page
+            ->where('statusCounts.live', 1)
+            ->where('statusCounts.scheduled', 1)
+            ->where('statusCounts.draft', 1)
+            ->where('statusCounts.all', 3));
+});
 
-            expect($statuses)->toBe(['draft', 'live', 'scheduled']);
-        });
+test('the admin listing can be filtered down to scheduled articles', function (): void {
+    $admin = User::factory()->admin()->create();
+
+    CareerResource::factory()->create(['is_published' => true, 'published_at' => now()->subDay()]);
+    $scheduled = CareerResource::factory()->create([
+        'is_published' => true,
+        'published_at' => now()->addDay(),
+    ]);
+    CareerResource::factory()->create(['is_published' => false, 'published_at' => null]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.career-resources.index', ['status' => 'scheduled']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('items.total', 1)
+            ->where('items.data.0.id', $scheduled->id)
+            ->where('items.data.0.status', 'scheduled'));
 });
