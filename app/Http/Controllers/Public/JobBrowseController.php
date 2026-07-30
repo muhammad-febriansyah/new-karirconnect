@@ -70,7 +70,7 @@ class JobBrowseController extends Controller
             'user_id' => $request->user()?->id,
             'ip_address' => $request->ip(),
             'user_agent' => substr((string) $request->userAgent(), 0, 255),
-            'source' => $request->headers->get('referer'),
+            'source' => substr((string) $request->headers->get('referer'), 0, 512) ?: null,
         ]);
 
         $matchScore = null;
