@@ -8,6 +8,7 @@ use App\Services\Exports\DatabaseSqlExporter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -79,8 +80,18 @@ class DatabaseBackupController extends Controller implements HasMiddleware
 
         // Recorded before streaming starts. If it were written afterwards, a
         // client that disconnects mid-download would take the evidence with it.
-        $this->auditLog->record('database.export');
+        // The outcome is filled in once the dump ends, so a failed export stops
+        // sitting in the history looking exactly like a good backup.
+        $log = $this->auditLog->record('database.export', after: ['status' => 'started']);
 
-        return $this->exporter->stream();
+        return $this->exporter->stream(function (bool $successful, int $bytes, string $error) use ($log): void {
+            $log->forceFill([
+                'after_values' => [
+                    'status' => $successful ? 'completed' : 'failed',
+                    'bytes' => $bytes,
+                    'error' => $successful ? null : Str::limit($error, 500),
+                ],
+            ])->save();
+        });
     }
 }

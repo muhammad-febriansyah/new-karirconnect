@@ -8,6 +8,7 @@ import {
     ClipboardList,
     CreditCard,
     DatabaseBackup,
+    Eraser,
     Factory,
     HelpCircle,
     LayoutGrid,
@@ -29,8 +30,8 @@ import {
 import AboutPageController from '@/actions/App/Http/Controllers/Admin/AboutPageController';
 import AiAuditLogController from '@/actions/App/Http/Controllers/Admin/AiAuditLogController';
 import AnnouncementController from '@/actions/App/Http/Controllers/Admin/AnnouncementController';
-import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 import AssessmentQuestionController from '@/actions/App/Http/Controllers/Admin/AssessmentQuestionController';
+import AuditLogController from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 import CareerResourceController from '@/actions/App/Http/Controllers/Admin/CareerResourceController';
 import CompanyController from '@/actions/App/Http/Controllers/Admin/CompanyController';
 import CompanyVerificationController from '@/actions/App/Http/Controllers/Admin/CompanyVerificationController';
@@ -43,14 +44,15 @@ import PaymentController from '@/actions/App/Http/Controllers/Admin/PaymentContr
 import ReportController from '@/actions/App/Http/Controllers/Admin/ReportController';
 import ReviewModerationController from '@/actions/App/Http/Controllers/Admin/ReviewModerationController';
 import SalaryInsightController from '@/actions/App/Http/Controllers/Admin/SalaryInsightController';
+import ShowcaseDataController from '@/actions/App/Http/Controllers/Admin/ShowcaseDataController';
 import SubscriptionController from '@/actions/App/Http/Controllers/Admin/SubscriptionController';
 import SubscriptionPlanController from '@/actions/App/Http/Controllers/Admin/SubscriptionPlanController';
 import TalentSearchLogController from '@/actions/App/Http/Controllers/Admin/TalentSearchLogController';
 import UserController from '@/actions/App/Http/Controllers/Admin/UserController';
 import { dashboard } from '@/routes';
-import { edit as adminSettingsEdit } from '@/routes/admin/settings';
 import { index as industriesIndex } from '@/routes/admin/industries';
 import { index as jobCategoriesIndex } from '@/routes/admin/job-categories';
+import { edit as adminSettingsEdit } from '@/routes/admin/settings';
 import { index as skillsIndex } from '@/routes/admin/skills';
 import { edit as profileEdit } from '@/routes/profile';
 import type { NavSection } from '@/types';
@@ -233,6 +235,11 @@ export const adminMainNavSections: NavSection[] = [
                 title: 'Export Database',
                 href: DatabaseBackupController.index().url,
                 icon: DatabaseBackup,
+            },
+            {
+                title: 'Data Showcase',
+                href: ShowcaseDataController.index().url,
+                icon: Eraser,
             },
         ],
     },

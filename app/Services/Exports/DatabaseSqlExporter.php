@@ -48,9 +48,14 @@ class DatabaseSqlExporter
     }
 
     /**
+     * @param  (callable(bool $successful, int $bytes, string $error): void)|null  $onFinish
+     *                                                                                        Invoked once the dump has finished streaming. Headers are long gone by
+     *                                                                                        then, so this is the only way a caller learns whether the file the user
+     *                                                                                        is holding is a real backup or one that died halfway.
+     *
      * @throws RuntimeException when mysqldump is missing or unusable
      */
-    public function stream(): StreamedResponse
+    public function stream(?callable $onFinish = null): StreamedResponse
     {
         $this->assertAvailable();
 
@@ -65,8 +70,9 @@ class DatabaseSqlExporter
             'X-Accel-Buffering' => 'no',
         ];
 
-        return response()->streamDownload(function () use ($config): void {
+        return response()->streamDownload(function () use ($config, $onFinish): void {
             $defaultsFile = $this->writeDefaultsFile($config);
+            $bytes = 0;
 
             try {
                 $process = new Process($this->command($defaultsFile, $config));
@@ -74,9 +80,10 @@ class DatabaseSqlExporter
 
                 $out = fopen('php://output', 'w');
 
-                $process->run(function (string $type, string $buffer) use ($out): void {
+                $process->run(function (string $type, string $buffer) use ($out, &$bytes): void {
                     if ($type === Process::OUT) {
                         fwrite($out, $buffer);
+                        $bytes += strlen($buffer);
                         flush();
                     }
                 });
@@ -86,6 +93,10 @@ class DatabaseSqlExporter
                 // visible error beats one that ends early and looks complete.
                 if (! $process->isSuccessful()) {
                     fwrite($out, PHP_EOL.'-- DUMP GAGAL: '.trim($process->getErrorOutput()).PHP_EOL);
+                }
+
+                if ($onFinish !== null) {
+                    $onFinish($process->isSuccessful(), $bytes, trim($process->getErrorOutput()));
                 }
             } finally {
                 @unlink($defaultsFile);

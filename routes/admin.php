@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReviewModerationController;
 use App\Http\Controllers\Admin\SalaryInsightController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ShowcaseDataController;
 use App\Http\Controllers\Admin\SkillController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
@@ -54,6 +55,17 @@ Route::middleware(['auth', 'verified', 'role:admin'])
             ->group(function (): void {
                 Route::get('/', [DatabaseBackupController::class, 'index'])->name('index');
                 Route::post('export', [DatabaseBackupController::class, 'download'])->name('export');
+            });
+
+        /*
+         * Purge is DELETE, never GET, for the same reason: a link or a prefetch
+         * must not be able to wipe the demo data as a side effect.
+         */
+        Route::prefix('showcase-data')
+            ->as('showcase-data.')
+            ->group(function (): void {
+                Route::get('/', [ShowcaseDataController::class, 'index'])->name('index');
+                Route::delete('/', [ShowcaseDataController::class, 'destroy'])->name('destroy');
             });
 
         Route::prefix('about-page')

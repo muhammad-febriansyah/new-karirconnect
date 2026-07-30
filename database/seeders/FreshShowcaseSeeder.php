@@ -73,6 +73,12 @@ class FreshShowcaseSeeder extends Seeder
 
     public function run(): void
     {
+        if (app()->isProduction()) {
+            $this->command?->error('FreshShowcaseSeeder truncates every domain table and refuses to run in production.');
+
+            return;
+        }
+
         $admin = User::query()->where('role', UserRole::Admin)->orderBy('id')->first();
 
         if (! $admin) {

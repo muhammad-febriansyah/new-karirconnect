@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\CompanyStatus;
+use App\Enums\CompanyVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCompanyAccountRequest;
 use App\Models\Company;
@@ -23,27 +24,64 @@ class CompanyController extends Controller
         private readonly AuditLogService $audit,
     ) {}
 
+    /**
+     * Filtering, searching, and paging all happen here rather than in the
+     * browser. The page only ever holds one page of rows, so a client-side
+     * filter would silently search that slice instead of the table.
+     */
     public function index(Request $request): Response
     {
-        $statusFilter = $request->string('status')->toString();
-        $search = $request->string('search')->toString();
+        $status = CompanyStatus::tryFrom($request->string('status')->toString());
+        $verification = CompanyVerificationStatus::tryFrom($request->string('verification')->toString());
+        $search = trim($request->string('search')->toString());
 
         $companies = Company::query()
-            ->with(['owner:id,name,email'])
-            ->withCount('members')
-            ->when($statusFilter !== '', fn ($q) => $q->where('status', $statusFilter))
-            ->when($search !== '', fn ($q) => $q->where('name', 'like', "%{$search}%"))
+            ->with(['owner:id,name,email', 'industry:id,name', 'city:id,name'])
+            ->withCount(['members', 'jobs'])
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($verification, fn ($q) => $q->where('verification_status', $verification))
+            // The owner is searchable too: admins look a company up by the
+            // recruiter they just spoke to as often as by the company name.
+            ->when($search !== '', fn ($q) => $q->where(function ($inner) use ($search): void {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('owner', fn ($owner) => $owner
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%"));
+            }))
             ->orderByDesc('created_at')
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(12)
+            ->withQueryString()
+            ->through(fn (Company $company): array => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'slug' => $company->slug,
+                'tagline' => $company->tagline,
+                'status' => $company->status->value,
+                'verification_status' => $company->verification_status->value,
+                'logo_url' => $company->logo_path ? asset('storage/'.$company->logo_path) : null,
+                'industry' => $company->industry?->name,
+                'city' => $company->city?->name,
+                'members_count' => $company->members_count,
+                'jobs_count' => $company->jobs_count,
+                'created_at' => $company->created_at?->toIso8601String(),
+                'owner' => $company->owner === null ? null : [
+                    'id' => $company->owner->id,
+                    'name' => $company->owner->name,
+                    'email' => $company->owner->email,
+                ],
+            ]);
 
         return Inertia::render('admin/companies/index', [
             'companies' => $companies,
             'filters' => [
-                'status' => $statusFilter,
+                'status' => $status?->value ?? '',
+                'verification' => $verification?->value ?? '',
                 'search' => $search,
             ],
             'statusOptions' => CompanyStatus::selectItems(),
+            'verificationOptions' => CompanyVerificationStatus::selectItems(),
         ]);
     }
 
