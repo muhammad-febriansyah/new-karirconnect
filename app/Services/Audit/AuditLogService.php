@@ -37,7 +37,11 @@ class AuditLogService
      * sensitive tools so an admin sees who else has used them lately without
      * digging through the full audit log.
      *
-     * @return list<array{id: int, actor: string, ip_address: string|null, created_at: string|null}>
+     * `details` carries the entry's after_values so a tool page can show what
+     * the run actually did -- whether the dump finished, how many rows a purge
+     * removed -- instead of only that someone pressed the button.
+     *
+     * @return list<array{id: int, actor: string, ip_address: string|null, created_at: string|null, details: array<string, mixed>|null}>
      */
     public function recentByAction(string $action, int $limit = 10): array
     {
@@ -52,6 +56,7 @@ class AuditLogService
                 'actor' => $log->user?->name ?? 'Pengguna terhapus',
                 'ip_address' => $log->ip_address,
                 'created_at' => $log->created_at?->toIso8601String(),
+                'details' => $log->after_values,
             ])
             ->all();
     }
