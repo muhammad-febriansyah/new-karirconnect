@@ -8,32 +8,89 @@ use App\Models\CareerResource;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CareerResourceController extends Controller
 {
-    public function index(): Response
+    /**
+     * Filtering, searching, and paging happen here rather than in the browser.
+     * The page holds one page of rows, so a client-side filter would search
+     * that slice and quietly report "not found" for an article that exists.
+     */
+    public function index(Request $request): Response
     {
+        $status = $request->string('status')->toString();
+        $category = $request->string('category')->toString();
+        $search = trim($request->string('search')->toString());
+
+        $items = CareerResource::query()
+            ->with('author:id,name')
+            ->when($status === 'draft', fn ($query) => $query->where('is_published', false))
+            ->when($status === 'scheduled', fn ($query) => $query->scheduled())
+            ->when($status === 'live', fn ($query) => $query->live())
+            ->when($category !== '', fn ($query) => $query->where('category', $category))
+            ->when($search !== '', fn ($query) => $query->where(function ($inner) use ($search): void {
+                $inner->where('title', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('excerpt', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
+            }))
+            ->latest('published_at')
+            ->latest('id')
+            ->paginate(12)
+            ->withQueryString()
+            ->through(fn (CareerResource $resource): array => [
+                'id' => $resource->id,
+                'title' => $resource->title,
+                'slug' => $resource->slug,
+                // Falls back to the body so a card is never blank; the tags are
+                // stripped here because the card renders plain text.
+                'excerpt' => Str::limit(
+                    trim((string) ($resource->excerpt ?: strip_tags($resource->body))),
+                    160
+                ),
+                'category' => $resource->category,
+                'reading_minutes' => $resource->reading_minutes,
+                'views_count' => $resource->views_count,
+                'published_at' => optional($resource->published_at)->toIso8601String(),
+                'thumbnail_url' => $resource->thumbnail_path
+                    ? Storage::disk('public')->url($resource->thumbnail_path)
+                    : null,
+                'author' => $resource->author?->name,
+
+                // The three states are not derivable from is_published alone, so
+                // the status is resolved here rather than re-implemented against
+                // the browser clock.
+                'status' => match (true) {
+                    ! $resource->is_published => 'draft',
+                    $resource->isScheduled() => 'scheduled',
+                    default => 'live',
+                },
+            ]);
+
         return Inertia::render('admin/career-resources/index', [
-            'items' => CareerResource::query()
-                ->with('author:id,name')
-                ->latest('published_at')
-                ->latest('id')
-                ->get()
-                ->map(function (CareerResource $resource): array {
-                    // The three states are not derivable from is_published alone,
-                    // so the status is resolved here rather than re-implemented
-                    // against the clock in the browser.
-                    return array_merge($resource->toArray(), [
-                        'status' => match (true) {
-                            ! $resource->is_published => 'draft',
-                            $resource->isScheduled() => 'scheduled',
-                            default => 'live',
-                        },
-                    ]);
-                }),
+            'items' => $items,
+            'filters' => [
+                'search' => $search,
+                'status' => in_array($status, ['draft', 'scheduled', 'live'], true) ? $status : '',
+                'category' => $category,
+            ],
+            'categoryOptions' => CareerResource::query()
+                ->whereNotNull('category')
+                ->distinct()
+                ->orderBy('category')
+                ->pluck('category')
+                ->values(),
+            'statusCounts' => [
+                'all' => CareerResource::query()->count(),
+                'live' => CareerResource::query()->live()->count(),
+                'scheduled' => CareerResource::query()->scheduled()->count(),
+                'draft' => CareerResource::query()->where('is_published', false)->count(),
+            ],
         ]);
     }
 
