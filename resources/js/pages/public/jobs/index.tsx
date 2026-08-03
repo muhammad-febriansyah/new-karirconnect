@@ -59,7 +59,7 @@ type JobRow = {
     application_deadline: string | null;
     company: {
         id?: number;
-        name: string;
+        name: string | null;
         slug?: string;
         logo_url: string | null;
         verification_status: string | null;
@@ -231,16 +231,16 @@ const QUICK_PICKS: QuickPick[] = [
     },
 ];
 
-function CompanyAvatar({ name, logoUrl }: { name: string; logoUrl: string | null }) {
+function CompanyAvatar({ name, logoUrl }: { name: string | null; logoUrl: string | null }) {
     const initials = useMemo(
-        () => name.split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'PT',
+        () => (name ?? '').split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'PT',
         [name],
     );
 
     return (
         <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-background ring-1 ring-border/30">
             {logoUrl ? (
-                <img src={logoUrl} alt={name} className="size-full object-contain p-1" />
+                <img src={logoUrl} alt={name ?? ''} className="size-full object-contain p-1" />
             ) : (
                 <span className="text-sm font-semibold text-brand-navy">{initials}</span>
             )}
