@@ -155,7 +155,7 @@ class JobBrowseController extends Controller
                 ? ['name' => 'Confidential', 'logo_url' => null, 'verification_status' => null]
                 : [
                     'id' => $job->company?->id,
-                    'name' => $job->company?->name,
+                    'name' => $job->company?->name ?: 'Confidential',
                     'slug' => $job->company?->slug,
                     'logo_url' => $job->company?->logo_path ? asset('storage/'.$job->company->logo_path) : null,
                     'verification_status' => $job->company?->verification_status?->value,

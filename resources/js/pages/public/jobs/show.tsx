@@ -72,7 +72,7 @@ type Job = {
     company: {
         id?: number;
         slug?: string;
-        name: string;
+        name: string | null;
         logo_url: string | null;
         verification_status: string | null;
     };
@@ -116,7 +116,7 @@ type SimilarJob = {
     salary_max: number | null;
     is_salary_visible: boolean;
     company: {
-        name: string;
+        name: string | null;
         slug?: string;
         logo_url: string | null;
         verification_status: string | null;
@@ -208,7 +208,7 @@ export default function PublicJobShow({
 
     const initials = useMemo(
         () =>
-            job.company.name
+            (job.company.name ?? '')
                 .split(' ')
                 .map((p) => p[0])
                 .filter(Boolean)
@@ -325,7 +325,7 @@ export default function PublicJobShow({
                                     {job.company.logo_url ? (
                                         <img
                                             src={job.company.logo_url}
-                                            alt={job.company.name}
+                                            alt={job.company.name ?? ''}
                                             className="size-full object-contain p-1.5"
                                         />
                                     ) : (
@@ -844,7 +844,7 @@ export default function PublicJobShow({
                                     {job.company.logo_url ? (
                                         <img
                                             src={job.company.logo_url}
-                                            alt={job.company.name}
+                                            alt={job.company.name ?? ''}
                                             className="size-full object-contain p-1"
                                         />
                                     ) : (
@@ -1050,7 +1050,7 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                     const verified =
                         s.company.verification_status === 'verified';
                     const initials =
-                        s.company.name
+                        (s.company.name ?? '')
                             .split(' ')
                             .map((p) => p[0])
                             .filter(Boolean)
@@ -1069,7 +1069,7 @@ function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
                                         {s.company.logo_url ? (
                                             <img
                                                 src={s.company.logo_url}
-                                                alt={s.company.name}
+                                                alt={s.company.name ?? ''}
                                                 className="size-full object-contain p-1"
                                             />
                                         ) : (
