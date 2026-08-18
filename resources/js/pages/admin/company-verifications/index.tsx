@@ -28,7 +28,7 @@ import { review as adminVerifReview } from '@/routes/admin/company-verifications
 
 type Item = {
     id: number;
-    company: { id: number; name: string };
+    company: { id: number; name: string } | null;
     document_type: string;
     original_name: string | null;
     status: string;
@@ -57,7 +57,7 @@ export default function AdminVerificationsIndex({ items }: Props) {
                     <ChevronsUpDown className="ml-1 size-4" />
                 </Button>
             ),
-            cell: ({ row }) => <div className="font-medium">{row.original.company.name}</div>,
+            cell: ({ row }) => <div className="font-medium">{row.original.company?.name ?? '-'}</div>,
         },
         {
             accessorKey: 'document_type',
@@ -126,7 +126,7 @@ export default function AdminVerificationsIndex({ items }: Props) {
         globalFilterFn: (row, _columnId, filterValue) => {
             const keyword = String(filterValue).toLowerCase().trim();
             if (keyword === '') return true;
-            return [row.original.company.name, row.original.document_type, row.original.status, row.original.original_name ?? ''].join(' ').toLowerCase().includes(keyword);
+            return [row.original.company?.name ?? '', row.original.document_type, row.original.status, row.original.original_name ?? ''].join(' ').toLowerCase().includes(keyword);
         },
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),

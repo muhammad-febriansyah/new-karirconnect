@@ -28,10 +28,10 @@ class CompanyVerificationController extends Controller
             ->withQueryString()
             ->through(fn (CompanyVerification $v) => [
                 'id' => $v->id,
-                'company' => [
+                'company' => $v->company ? [
                     'id' => $v->company->id,
                     'name' => $v->company->name,
-                ],
+                ] : null,
                 'document_type' => $v->document_type,
                 'original_name' => $v->original_name,
                 'status' => $v->status?->value,
