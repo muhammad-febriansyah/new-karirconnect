@@ -150,6 +150,53 @@ test('employer can manage jobs and screening questions', function () {
     expect($job->skills()->count())->toBe(1);
 });
 
+test('employer can post two jobs with the same title without a slug collision', function () {
+    $employer = User::factory()->employer()->create([
+        'email_verified_at' => now(),
+    ]);
+
+    $company = Company::factory()->for($employer, 'owner')->approved()->create();
+    CompanyMember::factory()->owner()->create([
+        'company_id' => $company->id,
+        'user_id' => $employer->id,
+    ]);
+
+    CompanySubscription::factory()->create([
+        'company_id' => $company->id,
+        'plan_id' => SubscriptionPlan::factory()->create(['job_post_quota' => 5])->id,
+    ]);
+
+    $category = JobCategory::query()->firstOrFail();
+
+    $payload = [
+        'job_category_id' => $category->id,
+        'title' => 'Content Writer',
+        'description' => '<p>Menulis konten kampanye.</p>',
+        'responsibilities' => '<p>Menulis brief dan naskah.</p>',
+        'requirements' => '<p>Pengalaman menulis.</p>',
+        'benefits' => '<p>WFH.</p>',
+        'employment_type' => 'full_time',
+        'work_arrangement' => 'onsite',
+        'experience_level' => 'junior',
+        'min_education' => 's1',
+        'province_id' => 1,
+        'city_id' => 1,
+        'status' => 'published',
+        'application_deadline' => now()->addDays(20)->toDateString(),
+        'is_anonymous' => false,
+        'ai_match_threshold' => 75,
+        'auto_invite_ai_interview' => false,
+    ];
+
+    $this->actingAs($employer)->post(route('employer.jobs.store'), $payload)->assertRedirect();
+    $this->actingAs($employer)->post(route('employer.jobs.store'), $payload)->assertRedirect();
+
+    $jobs = Job::query()->where('title', 'Content Writer')->get();
+
+    expect($jobs)->toHaveCount(2)
+        ->and($jobs->pluck('slug')->unique())->toHaveCount(2);
+});
+
 test('employee can save and remove published jobs', function () {
     $employee = User::factory()->employee()->create([
         'email_verified_at' => now(),

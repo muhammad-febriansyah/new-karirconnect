@@ -6,6 +6,7 @@ use App\Enums\JobStatus;
 use App\Models\Job;
 use App\Models\User;
 use App\Services\Sanitizer\HtmlSanitizerService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -23,13 +24,32 @@ class JobService
     public function create(int $companyId, User $author, array $data, array $skills = []): Job
     {
         return DB::transaction(function () use ($companyId, $author, $data, $skills) {
-            $job = Job::query()->create([
-                ...$this->sanitizeRichText($data),
-                'company_id' => $companyId,
-                'posted_by_user_id' => $author->id,
-                'slug' => $this->uniqueSlug($data['title']),
-                'status' => JobStatus::Draft,
-            ]);
+            $slug = $this->uniqueSlug($data['title']);
+            $attempts = 0;
+
+            while (true) {
+                try {
+                    $job = Job::query()->create([
+                        ...$this->sanitizeRichText($data),
+                        'company_id' => $companyId,
+                        'posted_by_user_id' => $author->id,
+                        'slug' => $slug,
+                        'status' => JobStatus::Draft,
+                    ]);
+
+                    break;
+                } catch (UniqueConstraintViolationException $e) {
+                    // Two requests can race past the "is this slug free?" check at
+                    // the same time. Retry a few times with a randomised suffix
+                    // instead of the deterministic "-2", "-3", ... which would
+                    // collide again immediately.
+                    if (++$attempts >= 5 || ! str_contains($e->getMessage(), 'job_posts_slug_unique')) {
+                        throw $e;
+                    }
+
+                    $slug = Str::slug($data['title']).'-'.Str::lower(Str::random(6));
+                }
+            }
 
             $this->syncSkills($job, $skills);
 

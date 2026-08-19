@@ -56,6 +56,12 @@ class CompanyVerificationService
         ])->save();
 
         $company = $verification->company;
+        if (! $company) {
+            // Company was soft-deleted after the document was uploaded — nothing
+            // left to approve or badge.
+            return $verification;
+        }
+
         $company->forceFill([
             'verification_status' => CompanyVerificationStatus::Verified,
             'verified_at' => now(),
@@ -100,6 +106,12 @@ class CompanyVerificationService
         ])->save();
 
         $company = $verification->company;
+        if (! $company) {
+            // Company was soft-deleted after the document was uploaded — nothing
+            // left to pull back to pending.
+            return $verification;
+        }
+
         if ($company->verifications()->where('status', ReviewStatus::Approved)->doesntExist()) {
             // No approved document left to stand on — pull the company back to
             // pending so the previously granted approval no longer unblocks it.
