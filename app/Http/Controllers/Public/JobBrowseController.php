@@ -36,7 +36,10 @@ class JobBrowseController extends Controller
     public function index(Request $request): Response
     {
         $filters = $this->extractFilters($request);
-        $paginator = $this->filter->apply($filters)
+        // Expired listings stay visible here (badged as closed in the UI)
+        // instead of vanishing from the public browse page; the JSON API
+        // (Api\V1\JobController) keeps hiding them by default.
+        $paginator = $this->filter->apply($filters + ['include_expired' => true])
             ->paginate(15)
             ->withQueryString()
             ->through(fn (Job $job) => $this->browseRow($job));
@@ -151,6 +154,7 @@ class JobBrowseController extends Controller
             'is_salary_visible' => $job->is_salary_visible,
             'published_at' => optional($job->published_at)->toIso8601String(),
             'application_deadline' => optional($job->application_deadline)->toDateString(),
+            'is_expired' => $job->application_deadline !== null && $job->application_deadline->lt(now()->startOfDay()),
             'company' => $job->is_anonymous
                 ? ['name' => 'Confidential', 'logo_url' => null, 'verification_status' => null]
                 : [

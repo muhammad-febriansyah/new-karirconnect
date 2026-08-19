@@ -48,7 +48,10 @@ class JobBrowseFilter
             ->where('status', JobStatus::Published)
             ->whereNotNull('published_at');
 
-        $this->applyDeadline($query);
+        if (empty($filters['include_expired'])) {
+            $this->applyDeadline($query);
+        }
+
         $this->applySearch($query, $filters['search'] ?? null);
         $this->applyLocation($query, $filters);
         $this->applyCategory($query, $filters['category_id'] ?? null);
@@ -166,6 +169,10 @@ class JobBrowseFilter
      */
     private function applySort(Builder $query, ?string $sort): void
     {
+        // Expired listings stay visible but sink below open ones, regardless
+        // of the chosen sort.
+        $query->orderByRaw('application_deadline IS NOT NULL AND application_deadline < ? ASC', [now()->toDateString()]);
+
         match ($sort) {
             'salary_desc' => $query->orderByDesc('salary_max'),
             'salary_asc' => $query->orderBy('salary_min'),
