@@ -19,8 +19,10 @@ use App\Models\JobCategory;
 use App\Models\Province;
 use App\Models\Skill;
 use App\Services\Sanitizer\HtmlSanitizerService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -83,10 +85,7 @@ class JobController extends Controller
         $skillIds = $data['skill_ids'] ?? [];
         unset($data['skill_ids']);
 
-        $job = $company->jobs()->create([
-            ...$data,
-            'posted_by_user_id' => $request->user()->id,
-        ]);
+        $job = $this->createJobWithUniqueSlug($company, $data, $request->user()->id);
 
         $job->skills()->sync(collect($skillIds)->mapWithKeys(fn (int $skillId) => [$skillId => [
             'proficiency' => 'mid',
@@ -147,6 +146,35 @@ class JobController extends Controller
         ]])->all());
 
         return to_route('employer.jobs.show', $job)->with('success', 'Lowongan berhasil diperbarui.');
+    }
+
+    /**
+     * Create a job for the given company, retrying with a randomised slug
+     * suffix if a concurrent submission wins the "is this slug free?" race
+     * (JobObserver's check-then-insert isn't atomic).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function createJobWithUniqueSlug(Company $company, array $data, int $authorId): Job
+    {
+        $attempts = 0;
+        $slugOverride = null;
+
+        while (true) {
+            try {
+                return $company->jobs()->create([
+                    ...$data,
+                    'posted_by_user_id' => $authorId,
+                    ...($slugOverride !== null ? ['slug' => $slugOverride] : []),
+                ]);
+            } catch (UniqueConstraintViolationException $e) {
+                if (++$attempts >= 5 || ! str_contains($e->getMessage(), 'job_posts_slug_unique')) {
+                    throw $e;
+                }
+
+                $slugOverride = Str::slug($data['title']).'-'.Str::lower(Str::random(6));
+            }
+        }
     }
 
     private function resolveOwnedCompany(Request $request): Company
