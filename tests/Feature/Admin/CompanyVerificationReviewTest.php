@@ -106,3 +106,33 @@ test('rejecting the last approved document pulls the company back to pending', f
         ->and($company->approved_at)->toBeNull()
         ->and($company->verification_status)->toBe(CompanyVerificationStatus::Rejected);
 });
+
+test('approving a document for a soft-deleted company does not crash', function () {
+    Notification::fake();
+
+    $admin = User::factory()->admin()->create(['email_verified_at' => now()]);
+    [$owner, $company, $document] = pendingCompanyWithDocument();
+    $company->delete();
+
+    $this->actingAs($admin)
+        ->post(route('admin.company-verifications.review', $document), [
+            'decision' => 'approve',
+        ])
+        ->assertRedirect();
+
+    expect($document->fresh()->status)->toBe(ReviewStatus::Approved);
+});
+
+test('rejecting a document for a soft-deleted company does not crash', function () {
+    $admin = User::factory()->admin()->create(['email_verified_at' => now()]);
+    [$owner, $company, $document] = pendingCompanyWithDocument();
+    $company->delete();
+
+    $this->actingAs($admin)
+        ->post(route('admin.company-verifications.review', $document), [
+            'decision' => 'reject',
+        ])
+        ->assertRedirect();
+
+    expect($document->fresh()->status)->toBe(ReviewStatus::Rejected);
+});

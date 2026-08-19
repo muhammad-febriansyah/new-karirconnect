@@ -25,7 +25,11 @@ class JobObserver
 
     public function saving(Job $job): void
     {
-        if ($job->title && (! $job->slug || $job->isDirty('title'))) {
+        if (! $job->exists) {
+            if ($job->title && ! $job->slug) {
+                $job->slug = $this->uniqueSlug($job);
+            }
+        } elseif ($job->title && $job->isDirty('title') && ! $job->isDirty('slug')) {
             $job->slug = $this->uniqueSlug($job);
         }
 
