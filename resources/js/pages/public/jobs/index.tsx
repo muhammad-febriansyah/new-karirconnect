@@ -9,6 +9,7 @@ import {
     Flame,
     GraduationCap,
     Laptop2,
+    Lock,
     MapPin,
     Megaphone,
     Search,
@@ -57,6 +58,7 @@ type JobRow = {
     is_salary_visible: boolean;
     published_at: string | null;
     application_deadline: string | null;
+    is_expired: boolean;
     company: {
         id?: number;
         name: string | null;
@@ -645,9 +647,15 @@ function JobCard({ job }: { job: JobRow }) {
 
     const verified = job.company.verification_status === 'verified';
     const isHot = job.is_featured;
+    const isExpired = job.is_expired;
 
     return (
-        <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5">
+        <article
+            className={cn(
+                'group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-xl hover:shadow-brand-blue/5',
+                isExpired && 'opacity-70 grayscale-[0.3]',
+            )}
+        >
             {/* Top decorative gradient strip on hover */}
             <span
                 aria-hidden
@@ -655,7 +663,11 @@ function JobCard({ job }: { job: JobRow }) {
             />
 
             <div className="flex items-start justify-between gap-2 p-4 pb-3">
-                {isHot ? (
+                {isExpired ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                        <Lock className="size-3" /> Ditutup
+                    </span>
+                ) : isHot ? (
                     <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-xs">
                         <Flame className="size-3" /> Loker Butuh Cepat
                     </span>
