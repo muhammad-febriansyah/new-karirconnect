@@ -22,7 +22,10 @@ use Illuminate\Support\Facades\DB;
  */
 class CandidateCvService
 {
-    public function __construct(private readonly FileUploadService $files) {}
+    public function __construct(
+        private readonly FileUploadService $files,
+        private readonly EmployeeProfileService $profiles,
+    ) {}
 
     /**
      * Store an uploaded CV. The first CV a candidate uploads becomes their
@@ -30,7 +33,7 @@ class CandidateCvService
      */
     public function store(EmployeeProfile $profile, UploadedFile $file, string $label): CandidateCv
     {
-        return DB::transaction(function () use ($profile, $file, $label): CandidateCv {
+        $cv = DB::transaction(function () use ($profile, $file, $label): CandidateCv {
             $isFirst = ! $profile->cvs()->exists();
 
             $cv = $profile->cvs()->create([
@@ -46,6 +49,10 @@ class CandidateCvService
 
             return $cv;
         });
+
+        $this->profiles->recomputeCompletion($profile);
+
+        return $cv;
     }
 
     /**
@@ -83,5 +90,8 @@ class CandidateCvService
 
             $cv->delete();
         });
+
+        $profile->unsetRelation('cvs');
+        $this->profiles->recomputeCompletion($profile);
     }
 }
