@@ -162,6 +162,12 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                     </Badge>
                 </div>
 
+                {(form.errors.profile || form.errors.job) && (
+                    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+                        {form.errors.profile ?? form.errors.job}
+                    </div>
+                )}
+
                 <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
                     {/* ===== Main column ===== */}
                     <div className="space-y-5">
