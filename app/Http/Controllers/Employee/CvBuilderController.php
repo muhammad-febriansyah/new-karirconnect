@@ -30,39 +30,43 @@ class CvBuilderController extends Controller
         if (empty($data)) {
             $profile->loadMissing(['educations', 'workExperiences', 'certifications', 'skills', 'city']);
 
+            // Every field is cast to a string: the builder treats these as text
+            // inputs and runs string methods over them, so a null from a
+            // nullable column (an experience without a description, an
+            // education without a major) would break the page on render.
             $data = [
                 'personal' => [
-                    'full_name' => $user->name,
-                    'headline' => $profile->headline,
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'location' => $profile->city?->name,
-                    'website' => $profile->portfolio_url,
+                    'full_name' => (string) $user->name,
+                    'headline' => (string) $profile->headline,
+                    'email' => (string) $user->email,
+                    'phone' => (string) $user->phone,
+                    'location' => (string) $profile->city?->name,
+                    'website' => (string) $profile->portfolio_url,
                 ],
-                'summary' => $profile->about,
+                'summary' => (string) $profile->about,
                 'experiences' => $profile->workExperiences
                     ->map(fn ($exp) => [
-                        'company' => $exp->company_name,
-                        'position' => $exp->position,
+                        'company' => (string) $exp->company_name,
+                        'position' => (string) $exp->position,
                         'period' => trim(
                             optional($exp->start_date)->format('M Y').' – '
                             .($exp->is_current ? 'Sekarang' : optional($exp->end_date)->format('M Y'))
                         ),
-                        'description' => $exp->description,
+                        'description' => (string) $exp->description,
                     ])->values(),
                 'educations' => $profile->educations
                     ->map(fn ($edu) => [
-                        'institution' => $edu->institution,
-                        'major' => $edu->major,
+                        'institution' => (string) $edu->institution,
+                        'major' => (string) $edu->major,
                         'period' => trim($edu->start_year.' – '.($edu->end_year ?? 'Sekarang')),
-                        'gpa' => $edu->gpa,
+                        'gpa' => (string) $edu->gpa,
                     ])->values(),
-                'skills' => $profile->skills->pluck('name')->values(),
+                'skills' => $profile->skills->pluck('name')->map(fn ($name) => (string) $name)->values(),
                 'certifications' => $profile->certifications
                     ->map(fn ($cert) => [
-                        'name' => $cert->name,
-                        'issuer' => $cert->issuer,
-                        'year' => optional($cert->issued_date)->format('Y'),
+                        'name' => (string) $cert->name,
+                        'issuer' => (string) $cert->issuer,
+                        'year' => (string) optional($cert->issued_date)->format('Y'),
                     ])->values(),
             ];
         }

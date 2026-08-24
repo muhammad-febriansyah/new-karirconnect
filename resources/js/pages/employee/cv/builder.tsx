@@ -75,6 +75,41 @@ type Props = {
     data: Partial<BuilderData>;
 };
 
+/**
+ * Repeater rows come from nullable profile columns (an experience with no
+ * description, an education with no major) and from `cv_builder_json` rows
+ * saved before those fields were required. Every consumer below — the ATS
+ * scorer especially — calls String methods on them, so a single null used to
+ * throw during render and leave the page blank. Coerce on the way in.
+ */
+const text = (value: unknown): string => {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    return typeof value === 'string' ? value : String(value);
+};
+
+const toExperience = (item: Partial<ExperienceItem> | null): ExperienceItem => ({
+    company: text(item?.company),
+    position: text(item?.position),
+    period: text(item?.period),
+    description: text(item?.description),
+});
+
+const toEducation = (item: Partial<EducationItem> | null): EducationItem => ({
+    institution: text(item?.institution),
+    major: text(item?.major),
+    period: text(item?.period),
+    gpa: text(item?.gpa),
+});
+
+const toCertification = (item: Partial<CertificationItem> | null): CertificationItem => ({
+    name: text(item?.name),
+    issuer: text(item?.issuer),
+    year: text(item?.year),
+});
+
 const STEPS = [
     { key: 'personal', title: 'Data Pribadi', icon: User },
     { key: 'summary', title: 'Ringkasan', icon: Sparkles },
@@ -411,18 +446,18 @@ export default function CvBuilderPage({ data }: Props) {
     const form = useForm<BuilderData>({
         label: 'CV Builder',
         personal: {
-            full_name: data.personal?.full_name ?? '',
-            headline: data.personal?.headline ?? '',
-            email: data.personal?.email ?? '',
-            phone: data.personal?.phone ?? '',
-            location: data.personal?.location ?? '',
-            website: data.personal?.website ?? '',
+            full_name: text(data.personal?.full_name),
+            headline: text(data.personal?.headline),
+            email: text(data.personal?.email),
+            phone: text(data.personal?.phone),
+            location: text(data.personal?.location),
+            website: text(data.personal?.website),
         },
-        summary: data.summary ?? '',
-        experiences: data.experiences ?? [],
-        educations: data.educations ?? [],
-        skills: data.skills ?? [],
-        certifications: data.certifications ?? [],
+        summary: text(data.summary),
+        experiences: (data.experiences ?? []).map(toExperience),
+        educations: (data.educations ?? []).map(toEducation),
+        skills: (data.skills ?? []).map(text),
+        certifications: (data.certifications ?? []).map(toCertification),
     });
 
     const atsResult = useMemo(() => computeAts(form.data), [form.data]);
