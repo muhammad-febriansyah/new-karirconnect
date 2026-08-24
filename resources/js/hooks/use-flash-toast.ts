@@ -5,11 +5,18 @@ import type { FlashBag } from '@/types/shared';
 
 type ToastType = keyof FlashBag;
 
+/**
+ * Sonner's 4s default can expire while the destination page is still painting
+ * after a redirect, so the confirmation for an action like "Kirim Lamaran"
+ * could be gone before the user ever looked at it.
+ */
+const TOAST_DURATION = 10000;
+
 const HANDLERS: Record<ToastType, (message: string) => void> = {
-    success: (msg) => toast.success('Berhasil', { description: msg }),
-    error: (msg) => toast.error('Terjadi masalah', { description: msg }),
-    warning: (msg) => toast.warning('Perlu perhatian', { description: msg }),
-    info: (msg) => toast.info('Informasi', { description: msg }),
+    success: (msg) => toast.success('Berhasil', { description: msg, duration: TOAST_DURATION }),
+    error: (msg) => toast.error('Terjadi masalah', { description: msg, duration: TOAST_DURATION }),
+    warning: (msg) => toast.warning('Perlu perhatian', { description: msg, duration: TOAST_DURATION }),
+    info: (msg) => toast.info('Informasi', { description: msg, duration: TOAST_DURATION }),
 };
 
 type ToastShape = { type?: ToastType; message?: string };
@@ -116,6 +123,7 @@ export function useFlashToast(): void {
 
             toast.error('Formulir belum lengkap', {
                 description: 'Masih ada isian yang perlu diperbaiki. Silakan cek kolom yang ditandai.',
+                duration: TOAST_DURATION,
             });
 
             lastFiredRef.current = fingerprint;

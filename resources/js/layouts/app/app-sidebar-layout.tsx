@@ -2,6 +2,7 @@ import { AppContent } from '@/components/app-content';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
+import { FlashBanner } from '@/components/feedback/flash-banner';
 import { NotificationPermissionBanner } from '@/components/notifications/notification-permission-banner';
 import type { AppLayoutProps } from '@/types';
 
@@ -15,6 +16,7 @@ export default function AppSidebarLayout({
             <AppContent variant="sidebar" className="overflow-x-hidden">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 <NotificationPermissionBanner />
+                <FlashBanner />
                 {children}
             </AppContent>
         </AppShell>
