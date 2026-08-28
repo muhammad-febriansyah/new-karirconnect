@@ -235,7 +235,7 @@ function LocationCombobox({
             </PopoverTrigger>
             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                 <Command>
-                    <CommandInput placeholder="Cari lokasi…" />
+                    <CommandInput placeholder="Temukan lokasi…" />
                     <CommandList>
                         <CommandEmpty>Lokasi tidak ditemukan.</CommandEmpty>
                         <CommandGroup>
@@ -606,7 +606,7 @@ export default function Welcome({ home }: Props) {
                 <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-80 rounded-full bg-white/8 blur-3xl" />
                 <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pt-24 pb-10 text-center sm:px-6 sm:pt-32">
                     <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
-                        Cari Karir Impianmu
+                        Temukan Karir Impianmu
                         <br className="hidden sm:block" />{' '}
                         <span className="bg-gradient-to-b from-yellow-300 to-amber-400 bg-clip-text text-transparent">#BarengKarirConnect</span>
                     </h1>
@@ -649,7 +649,7 @@ export default function Welcome({ home }: Props) {
                             type="submit"
                             className="h-12 shrink-0 rounded-xl bg-gradient-to-r from-brand-blue to-[#1565E0] px-7 text-sm font-bold text-white shadow-md shadow-brand-blue/30 transition-all hover:shadow-lg"
                         >
-                            <Search className="size-4" /> Cari Loker
+                            <Search className="size-4" /> Temukan Loker
                         </Button>
                     </form>
 
