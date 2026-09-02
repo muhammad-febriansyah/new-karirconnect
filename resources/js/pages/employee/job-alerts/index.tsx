@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/format-date';
+import { formatStatus } from '@/lib/format-status';
 
 type Alert = {
     id: number;
@@ -261,12 +262,12 @@ export default function EmployeeJobAlertsIndex({ alerts, options, filters }: Pro
                                             </TableCell>
                                             <TableCell>
                                                 <div className="text-sm text-muted-foreground">
-                                                    {[a.keyword, a.category, a.city, a.experience_level, a.employment_type].filter(Boolean).join(' · ') || 'Semua lowongan'}
+                                                    {[a.keyword, a.category, a.city, a.experience_level ? formatStatus(a.experience_level) : null, a.employment_type ? formatStatus(a.employment_type) : null].filter(Boolean).join(' · ') || 'Semua lowongan'}
                                                 </div>
                                                 {a.salary_min && <div className="text-xs">Min gaji: {idr(a.salary_min)}</div>}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="secondary" className="capitalize">{a.frequency}</Badge>
+                                                <Badge variant="secondary">{formatStatus(a.frequency)}</Badge>
                                             </TableCell>
                                             <TableCell>
                                                 {a.is_active ? <Badge>Aktif</Badge> : <Badge variant="outline">Nonaktif</Badge>}

@@ -56,6 +56,15 @@ const STATUS_LABELS: Record<string, string> = {
     lead: 'Lead',
     executive: 'Eksekutif',
 
+    // EducationLevel
+    sma: 'SMA / SMK',
+    d3: 'Diploma 3',
+    d4: 'Diploma 4',
+    s1: 'Sarjana (S1)',
+    s2: 'Magister (S2)',
+    s3: 'Doktor (S3)',
+    other: 'Lainnya',
+
     // Assessment / question types / difficulty
     multiple_choice: 'Pilihan Ganda',
     text: 'Teks',
