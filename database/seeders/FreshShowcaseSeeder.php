@@ -343,7 +343,7 @@ class FreshShowcaseSeeder extends Seeder
                 'experience_level' => $level,
                 'profile_completion' => rand(65, 100),
                 'is_open_to_work' => fake()->boolean(80),
-                'visibility' => fake()->randomElement(['public', 'employers']),
+                'visibility' => fake()->randomElement(['public', 'recruiter_only']),
             ]);
 
             $profile->skills()->syncWithoutDetaching(
