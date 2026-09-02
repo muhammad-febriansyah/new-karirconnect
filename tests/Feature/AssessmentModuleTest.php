@@ -41,7 +41,7 @@ test('admin can manage assessment questions', function () {
         ])
         ->assertRedirect(route('admin.assessment-questions.skill', $skill));
 
-    $question = AssessmentQuestion::query()->firstOrFail();
+    $question = AssessmentQuestion::query()->where('skill_id', $skill->id)->firstOrFail();
 
     expect($question->correct_answer['value'])->toBe('Laravel');
 
@@ -190,7 +190,7 @@ test('bulk add validates each row needs question and answer', function () {
         ])
         ->assertSessionHasErrors('questions.0.question');
 
-    expect(AssessmentQuestion::query()->count())->toBe(0);
+    expect(AssessmentQuestion::query()->where('skill_id', $skill->id)->count())->toBe(0);
 });
 
 test('employee can start and submit a skill assessment', function () {
