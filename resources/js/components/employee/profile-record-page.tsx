@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { FormField } from '@/components/form/form-field';
 import { InputField } from '@/components/form/input-field';
 import { TextareaField } from '@/components/form/textarea-field';
@@ -155,12 +156,13 @@ function EditDialog({
     action: ResourceAction | ResourceAction<[number]>;
     item?: ResourceItem;
 }) {
+    const [open, setOpen] = useState(false);
     const form = item
         ? (action as ResourceAction<[number]>).form(item.id)
         : (action as ResourceAction).form();
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {item ? (
                     <Button variant="outline" size="icon-sm">
@@ -181,7 +183,7 @@ function EditDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <Form {...form} className="space-y-5">
+                <Form {...form} className="space-y-5" onSuccess={() => setOpen(false)}>
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-4 md:grid-cols-2">
@@ -217,8 +219,10 @@ function DeleteDialog({
     item: ResourceItem;
     action: ResourceAction<[number]>;
 }) {
+    const [open, setOpen] = useState(false);
+
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="destructive" size="icon-sm">
                     <Trash2 className="size-4" />
@@ -232,7 +236,7 @@ function DeleteDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <Form {...action.form(item.id)}>
+                <Form {...action.form(item.id)} onSuccess={() => setOpen(false)}>
                     {({ processing }) => (
                         <DialogFooter>
                             <Button type="submit" variant="destructive" disabled={processing}>

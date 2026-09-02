@@ -32,11 +32,11 @@ type Review = {
 
 type Props = { company: Company; review: Review | null };
 
-const StarPicker = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
+const StarPicker = ({ value, onChange }: { value: number | null; onChange: (v: number) => void }) => (
     <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
             <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} star`}>
-                <Star className={`size-5 ${n <= value ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+                <Star className={`size-5 ${value !== null && n <= value ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
             </button>
         ))}
     </div>
@@ -55,11 +55,11 @@ export default function EmployeeCompanyReviewForm({ company, review }: Props) {
     const { data, setData, post, patch, processing, errors } = useForm({
         title: review?.title ?? '',
         rating: review?.rating ?? 0,
-        rating_management: review?.rating_management ?? 0,
-        rating_culture: review?.rating_culture ?? 0,
-        rating_compensation: review?.rating_compensation ?? 0,
-        rating_growth: review?.rating_growth ?? 0,
-        rating_balance: review?.rating_balance ?? 0,
+        rating_management: review?.rating_management ?? null,
+        rating_culture: review?.rating_culture ?? null,
+        rating_compensation: review?.rating_compensation ?? null,
+        rating_growth: review?.rating_growth ?? null,
+        rating_balance: review?.rating_balance ?? null,
         pros: review?.pros ?? '',
         cons: review?.cons ?? '',
         advice_to_management: review?.advice_to_management ?? '',
@@ -107,6 +107,7 @@ export default function EmployeeCompanyReviewForm({ company, review }: Props) {
                                     <div key={key} className="space-y-2.5">
                                         <Label className="leading-none">{label}</Label>
                                         <StarPicker value={data[key]} onChange={(value) => setData(key, value)} />
+                                        {errors[key] && <div className="text-xs text-destructive">{errors[key]}</div>}
                                     </div>
                                 ))}
                             </div>
