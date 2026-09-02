@@ -127,6 +127,16 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
+        // Never let a DB-stored mail driver (e.g. a real "mailketing" API
+        // token that rode along in a production database dump/import) win
+        // over an explicit local .env MAIL_MAILER. Without this guard, any
+        // developer who imports a prod DB copy for local testing would have
+        // every outbound email — verification, password reset, etc. —
+        // silently sent through production credentials instead of logged.
+        if ($this->app->environment('local')) {
+            return;
+        }
+
         try {
             $email = app(SettingService::class)->group('email');
         } catch (\Throwable) {
