@@ -175,8 +175,11 @@ export default function EmployeeCvIndex({
 }
 
 function UploadCvDialog() {
+    const [open, setOpen] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button>Unggah CV</Button>
             </DialogTrigger>
@@ -188,7 +191,14 @@ function UploadCvDialog() {
                     </DialogDescription>
                 </DialogHeader>
 
-                <Form {...CvUploadController.store.form()} className="space-y-5">
+                <Form
+                    {...CvUploadController.store.form()}
+                    className="space-y-5"
+                    onSuccess={() => {
+                        setOpen(false);
+                        setFile(null);
+                    }}
+                >
                     {({ processing, errors }) => (
                         <>
                             <InputField
@@ -205,6 +215,8 @@ function UploadCvDialog() {
                                 required
                                 accept=".pdf,.doc,.docx"
                                 error={errors.file}
+                                value={file}
+                                onChange={setFile}
                             />
 
                             <DialogFooter>
@@ -221,8 +233,10 @@ function UploadCvDialog() {
 }
 
 function EditCvDialog({ item }: { item: CvItem }) {
+    const [open, setOpen] = useState(false);
+
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline">Ubah</Button>
             </DialogTrigger>
@@ -234,7 +248,11 @@ function EditCvDialog({ item }: { item: CvItem }) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <Form {...CvUploadController.update.form(item.id)} className="space-y-5">
+                <Form
+                    {...CvUploadController.update.form(item.id)}
+                    className="space-y-5"
+                    onSuccess={() => setOpen(false)}
+                >
                     {({ processing, errors }) => (
                         <>
                             <InputField
@@ -268,8 +286,10 @@ function EditCvDialog({ item }: { item: CvItem }) {
 }
 
 function DeleteCvDialog({ item }: { item: CvItem }) {
+    const [open, setOpen] = useState(false);
+
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="destructive">Hapus</Button>
             </DialogTrigger>
@@ -281,7 +301,7 @@ function DeleteCvDialog({ item }: { item: CvItem }) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <Form {...CvUploadController.destroy.form(item.id)}>
+                <Form {...CvUploadController.destroy.form(item.id)} onSuccess={() => setOpen(false)}>
                     {({ processing }) => (
                         <DialogFooter>
                             <Button type="submit" variant="destructive" disabled={processing}>
