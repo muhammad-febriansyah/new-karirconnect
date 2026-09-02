@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class BillingController extends Controller
 {
@@ -78,7 +79,7 @@ class BillingController extends Controller
         ]);
     }
 
-    public function checkout(Request $request, SubscriptionPlan $plan): RedirectResponse
+    public function checkout(Request $request, SubscriptionPlan $plan): RedirectResponse|SymfonyResponse
     {
         $company = $this->resolveCompany($request);
         abort_unless($company !== null, 404);
@@ -98,7 +99,7 @@ class BillingController extends Controller
         }
 
         if ($order->payment_url) {
-            return redirect()->away($order->payment_url);
+            return Inertia::location($order->payment_url);
         }
 
         return redirect()->route('employer.billing.show', ['order' => $order->reference]);
