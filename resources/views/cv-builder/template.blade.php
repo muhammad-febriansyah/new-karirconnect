@@ -14,7 +14,8 @@
         .item { margin-bottom: 12px; }
         .header { margin-bottom: 16px; }
         .contact { font-size: 10pt; color: #475569; margin-top: 4px; }
-        .contact span { margin-right: 12px; }
+        .contact span { margin-right: 12px; padding-right: 12px; border-right: 1px solid #cbd5e1; }
+        .contact span:last-child { border-right: none; padding-right: 0; }
         ul { margin: 4px 0 0 0; padding-left: 18px; }
         .skills { display: flex; flex-wrap: wrap; gap: 6px; }
         .skill-tag { background: #f1f5f9; padding: 3px 8px; border-radius: 4px; font-size: 9pt; }
@@ -36,10 +37,10 @@
             <div class="muted">{{ $personal['headline'] }}</div>
         @endif
         <div class="contact">
-            @if(! empty($personal['email'])) <span>✉ {{ $personal['email'] }}</span> @endif
-            @if(! empty($personal['phone'])) <span>☎ {{ $personal['phone'] }}</span> @endif
-            @if(! empty($personal['location'])) <span>⌖ {{ $personal['location'] }}</span> @endif
-            @if(! empty($personal['website'])) <span>⌘ {{ $personal['website'] }}</span> @endif
+            @if(! empty($personal['email'])) <span>{{ $personal['email'] }}</span> @endif
+            @if(! empty($personal['phone'])) <span>{{ $personal['phone'] }}</span> @endif
+            @if(! empty($personal['location'])) <span>{{ $personal['location'] }}</span> @endif
+            @if(! empty($personal['website'])) <span>{{ $personal['website'] }}</span> @endif
         </div>
     </div>
 
