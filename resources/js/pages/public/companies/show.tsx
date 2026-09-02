@@ -14,11 +14,13 @@ import {
     MapPin,
     Share2,
     Sparkles,
+    Star,
     Users,
     Wallet,
     type LucideIcon,
 } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
+import { index as companyReviewsIndex } from '@/actions/App/Http/Controllers/Public/CompanyReviewController';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { SafeHtml } from '@/components/shared/safe-html';
 import { Badge } from '@/components/ui/badge';
@@ -273,6 +275,16 @@ export default function PublicCompanyShow({ company, jobs }: Props) {
                                         </a>
                                     </Button>
                                 )}
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-10 rounded-xl border-border/60"
+                                >
+                                    <Link href={companyReviewsIndex(company.slug).url}>
+                                        <Star className="size-4" />
+                                        <span className="hidden sm:inline">Review</span>
+                                    </Link>
+                                </Button>
                                 <Button
                                     type="button"
                                     variant="outline"
