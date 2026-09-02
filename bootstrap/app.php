@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\Ai\AiUnavailableException;
 use App\Exceptions\Auth\InvalidRefreshTokenException;
 use App\Exceptions\Auth\RefreshTokenReusedException;
 use App\Http\Middleware\EnsureCompanyApproved;
@@ -64,5 +65,24 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return null;
+        });
+
+        /*
+         * Any AI provider failure (quota exhausted, bad key, network error,
+         * ...) degrades to "feature temporarily unavailable" instead of a
+         * raw 500 — the provider error is already captured in ai_audit_logs
+         * for debugging. Mobile gets a 503 JSON body; web gets sent back to
+         * the form it submitted with the message flashed, same as every
+         * other user-facing validation/business error in this app.
+         */
+        $exceptions->render(function (AiUnavailableException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'code' => 'ai_unavailable',
+                ], 503);
+            }
+
+            return back()->with('error', $e->getMessage());
         });
     })->create();

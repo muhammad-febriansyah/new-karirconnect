@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Exceptions\Ai\AiUnavailableException;
 use App\Models\AiAuditLog;
 use App\Services\Ai\Contracts\AiClient;
 use App\Services\Ai\Contracts\AiResponse;
@@ -54,7 +55,9 @@ class AiAuditService
                 'error_message' => $e->getMessage(),
             ])->save();
 
-            throw $e;
+            // The raw provider error (quota, bad key, network, ...) is kept
+            // above for admins; users only ever see the generic message.
+            throw new AiUnavailableException($e);
         }
     }
 }
