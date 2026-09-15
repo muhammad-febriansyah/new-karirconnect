@@ -18,7 +18,7 @@ class CandidateCvRequest extends FormRequest
     {
         return [
             'label' => ['required', 'string', 'max:120'],
-            'file' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
+            'file' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:8192'],
         ];
     }
 }

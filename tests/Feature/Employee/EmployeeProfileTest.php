@@ -116,6 +116,9 @@ test('employee can save cv builder draft and pdf is generated', function () {
 
     $cv = $profile->cvs()->where('source', 'builder')->first();
     expect(Storage::disk('public')->exists($cv->file_path))->toBeTrue();
+    expect($cv->is_active)->toBeTrue();
+    expect($profile->refresh()->primary_resume_id)->toBe($cv->id);
+    expect($profile->profile_completion)->toBe(10);
 });
 
 test('employee can update profile fields with city dropdown', function () {

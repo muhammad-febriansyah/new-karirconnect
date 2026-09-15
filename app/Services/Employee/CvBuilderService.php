@@ -5,6 +5,7 @@ namespace App\Services\Employee;
 use App\Models\CandidateCv;
 use App\Models\EmployeeProfile;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -21,8 +22,6 @@ class CvBuilderService
      */
     public function build(EmployeeProfile $profile, array $data, string $label = 'CV Builder'): CandidateCv
     {
-        $profile->forceFill(['cv_builder_json' => $data])->save();
-
         $pdf = Pdf::loadView('cv-builder.template', [
             'data' => $data,
             'profile' => $profile,
@@ -35,23 +34,39 @@ class CvBuilderService
         Storage::disk(self::DISK)->put($filename, $pdf->output());
 
         $existing = $profile->cvs()->where('source', 'builder')->first();
+        $oldFilePath = $existing?->file_path;
 
-        if ($existing) {
-            Storage::disk(self::DISK)->delete($existing->file_path ?? '');
-            $existing->fill([
-                'label' => $label,
-                'file_path' => $filename,
-                'pages_count' => null,
-            ])->save();
+        $cv = DB::transaction(function () use ($profile, $data, $label, $filename, $existing): CandidateCv {
+            $profile->forceFill(['cv_builder_json' => $data])->save();
 
-            return $existing;
+            if ($existing) {
+                $existing->fill([
+                    'label' => $label,
+                    'file_path' => $filename,
+                    'pages_count' => null,
+                    'is_active' => true,
+                ])->save();
+
+                $cv = $existing;
+            } else {
+                $cv = $profile->cvs()->create([
+                    'label' => $label,
+                    'source' => 'builder',
+                    'file_path' => $filename,
+                    'is_active' => true,
+                ]);
+            }
+
+            $profile->cvs()->whereKeyNot($cv->id)->update(['is_active' => false]);
+            $profile->forceFill(['primary_resume_id' => $cv->id])->save();
+
+            return $cv;
+        });
+
+        if ($oldFilePath !== null && $oldFilePath !== $filename) {
+            Storage::disk(self::DISK)->delete($oldFilePath);
         }
 
-        return $profile->cvs()->create([
-            'label' => $label,
-            'source' => 'builder',
-            'file_path' => $filename,
-            'is_active' => false,
-        ]);
+        return $cv;
     }
 }

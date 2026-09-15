@@ -162,9 +162,9 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                     </Badge>
                 </div>
 
-                {(form.errors.profile || form.errors.job) && (
+                {((form.errors as Record<string, string>).profile || (form.errors as Record<string, string>).job) && (
                     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                        {form.errors.profile ?? form.errors.job}
+                        {(form.errors as Record<string, string>).profile ?? (form.errors as Record<string, string>).job}
                     </div>
                 )}
 

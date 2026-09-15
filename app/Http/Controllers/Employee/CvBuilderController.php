@@ -84,6 +84,7 @@ class CvBuilderController extends Controller
         unset($payload['label']);
 
         $cv = $this->builder->build($profile, $payload, $label);
+        $this->profiles->recomputeCompletion($profile->fresh());
 
         return back()->with('success', 'CV berhasil disimpan dan PDF di-generate.')
             ->with('cv_id', $cv->id);

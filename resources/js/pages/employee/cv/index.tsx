@@ -212,6 +212,7 @@ function UploadCvDialog() {
                                 id="file"
                                 name="file"
                                 label="File CV"
+                                description="Format PDF, DOC, atau DOCX. Maksimal 8 MB."
                                 required
                                 accept=".pdf,.doc,.docx"
                                 error={errors.file}
