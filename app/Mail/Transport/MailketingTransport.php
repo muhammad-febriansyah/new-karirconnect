@@ -11,8 +11,6 @@ use Symfony\Component\Mime\MessageConverter;
 
 class MailketingTransport extends AbstractTransport
 {
-    private const ENDPOINT = 'https://api.mailketing.co.id/api/v1/send';
-
     public function __construct(private readonly string $apiToken, private readonly int $timeoutSeconds = 15)
     {
         parent::__construct();
@@ -30,11 +28,15 @@ class MailketingTransport extends AbstractTransport
         $from = $this->resolveFrom($email);
         $recipient = $this->resolveRecipient($email);
 
-        $response = Http::asForm()
+        $response = Http::asJson()
+            ->withHeaders([
+                'X-Api-Token' => $this->apiToken,
+            ])
+            ->connectTimeout(5)
             ->timeout($this->timeoutSeconds)
+            ->retry([250, 500], throw: false)
             ->acceptJson()
-            ->post(self::ENDPOINT, [
-                'api_token' => $this->apiToken,
+            ->post(rtrim((string) config('mail.mailers.mailketing.base_url'), '/').'/send', [
                 'from_name' => $from['name'],
                 'from_email' => $from['email'],
                 'recipient' => $recipient,
@@ -43,10 +45,13 @@ class MailketingTransport extends AbstractTransport
             ]);
 
         $payload = $response->json();
-        $status = is_array($payload) ? ($payload['status'] ?? null) : null;
+        $success = is_array($payload) && ($payload['success'] ?? false) === true;
 
-        if (! $response->successful() || $status !== 'success') {
-            $reason = is_array($payload) ? (string) ($payload['response'] ?? 'Unknown error') : $response->body();
+        if (! $response->successful() || ! $success) {
+            $reason = is_array($payload)
+                ? (string) ($payload['message'] ?? $payload['response'] ?? 'Unknown error')
+                : $response->body();
+
             throw new \RuntimeException("Mailketing API error: {$reason}");
         }
     }

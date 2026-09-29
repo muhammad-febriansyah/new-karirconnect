@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * Verify notif yang via 'mail' channel benar-benar lewat MailketingTransport
- * dan POST ke endpoint Mailketing dengan payload sesuai dokumentasi:
- * https://mailketing.co.id/docs/send-email-via-api/
+ * dan POST ke endpoint Mailketing API v2 dengan payload sesuai dokumentasi:
+ * https://api.mailketing.co.id/docs/
  */
 it('sends mail notification through Mailketing API endpoint', function (): void {
     Mail::extend('mailketing', fn () => new MailketingTransport('test-token-12345'));
@@ -20,12 +20,17 @@ it('sends mail notification through Mailketing API endpoint', function (): void 
         'mail.default' => 'mailketing',
         'mail.mailers.mailketing.transport' => 'mailketing',
         'mail.mailers.mailketing.api_token' => 'test-token-12345',
+        'mail.mailers.mailketing.base_url' => 'https://api.mailketing.co.id/api/v2',
         'mail.from.address' => 'noreply@karirconnect.test',
         'mail.from.name' => 'KarirConnect',
     ]);
 
     Http::fake([
-        'api.mailketing.co.id/*' => Http::response(['status' => 'success', 'response' => 'Mail Sent'], 200),
+        'api.mailketing.co.id/*' => Http::response([
+            'success' => true,
+            'data' => ['message_id' => 'test-message-id'],
+            'message' => 'Email queued successfully',
+        ], 200),
     ]);
 
     $user = User::factory()->create(['name' => 'Budi', 'email' => 'budi@example.test']);
@@ -55,12 +60,12 @@ it('sends mail notification through Mailketing API endpoint', function (): void 
     expect($captured)->not->toBeNull();
     [$request] = $captured;
 
-    expect($request->url())->toBe('https://api.mailketing.co.id/api/v1/send');
+    expect($request->url())->toBe('https://api.mailketing.co.id/api/v2/send');
     expect($request->method())->toBe('POST');
+    expect($request->header('X-Api-Token'))->toBe(['test-token-12345']);
 
-    parse_str($request->body(), $payload);
-    expect($payload)->toHaveKeys(['api_token', 'from_name', 'from_email', 'recipient', 'subject', 'content']);
-    expect($payload['api_token'])->toBe('test-token-12345');
+    $payload = $request->data();
+    expect($payload)->toHaveKeys(['from_name', 'from_email', 'recipient', 'subject', 'content']);
     expect($payload['recipient'])->toBe('budi@example.test');
     expect($payload['from_email'])->toBe('noreply@karirconnect.test');
     expect($payload['from_name'])->toBe('KarirConnect');
@@ -74,12 +79,17 @@ it('throws TransportException when Mailketing API responds with failure', functi
         'mail.default' => 'mailketing',
         'mail.mailers.mailketing.transport' => 'mailketing',
         'mail.mailers.mailketing.api_token' => 'bad-token',
+        'mail.mailers.mailketing.base_url' => 'https://api.mailketing.co.id/api/v2',
         'mail.from.address' => 'noreply@karirconnect.test',
         'mail.from.name' => 'KarirConnect',
     ]);
 
     Http::fake([
-        'api.mailketing.co.id/*' => Http::response(['status' => 'failed', 'response' => 'User Not Found or Wrong API Token'], 200),
+        'api.mailketing.co.id/*' => Http::response([
+            'success' => false,
+            'data' => null,
+            'message' => 'API token tidak valid',
+        ], 401),
     ]);
 
     $user = User::factory()->create();
@@ -94,12 +104,17 @@ it('AiInterviewInvitationNotification builds a valid mail payload via Mailketing
         'mail.default' => 'mailketing',
         'mail.mailers.mailketing.transport' => 'mailketing',
         'mail.mailers.mailketing.api_token' => 'aitoken',
+        'mail.mailers.mailketing.base_url' => 'https://api.mailketing.co.id/api/v2',
         'mail.from.address' => 'noreply@karirconnect.test',
         'mail.from.name' => 'KarirConnect',
     ]);
 
     Http::fake([
-        'api.mailketing.co.id/*' => Http::response(['status' => 'success', 'response' => 'Mail Sent'], 200),
+        'api.mailketing.co.id/*' => Http::response([
+            'success' => true,
+            'data' => ['message_id' => 'test-message-id'],
+            'message' => 'Email queued successfully',
+        ], 200),
     ]);
 
     $user = User::factory()->create();
@@ -114,7 +129,7 @@ it('AiInterviewInvitationNotification builds a valid mail payload via Mailketing
     $captured = collect(Http::recorded())->first();
     expect($captured)->not->toBeNull();
     [$request] = $captured;
-    parse_str($request->body(), $payload);
+    $payload = $request->data();
 
     expect($payload['recipient'])->toBe($user->email);
     expect($payload['subject'])->toContain('Undangan AI Interview');

@@ -82,6 +82,7 @@ return [
         'mailketing' => [
             'transport' => 'mailketing',
             'api_token' => env('MAILKETING_API_TOKEN'),
+            'base_url' => env('MAILKETING_BASE_URL', 'https://api.mailketing.co.id/api/v2'),
         ],
 
         'failover' => [
