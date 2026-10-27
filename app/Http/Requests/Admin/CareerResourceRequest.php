@@ -43,6 +43,28 @@ class CareerResourceRequest extends FormRequest
         ];
     }
 
+    /**
+     * Human-readable field names, so errors don't show raw keys like "body".
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'title' => 'judul',
+            'slug' => 'slug',
+            'excerpt' => 'ringkasan',
+            'body' => 'isi artikel',
+            'thumbnail' => 'thumbnail',
+            'category' => 'kategori',
+            'tags' => 'tags',
+            'tags.*' => 'tag',
+            'reading_minutes' => 'estimasi baca',
+            'is_published' => 'status terbit',
+            'published_at' => 'tanggal tayang',
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
         $tags = $this->input('tags', []);

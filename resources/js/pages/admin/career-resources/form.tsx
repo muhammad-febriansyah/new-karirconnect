@@ -109,14 +109,45 @@ export default function CareerResourceForm({ mode, item }: Props) {
                 : CareerResourceController.store().url,
             {
                 forceFormData: true,
-                preserveScroll: true,
+                // Keep the scroll only when the form comes back with errors;
+                // a successful save should land at the top of the list, where
+                // the new article appears.
+                preserveScroll: 'errors',
                 onSuccess: () => {
                     toast.success(
                         isEdit
-                            ? 'Berita berhasil diperbarui'
-                            : 'Berita berhasil dibuat',
+                            ? 'Artikel berhasil diperbarui'
+                            : 'Artikel berhasil dibuat',
                         { description: 'Perubahan berhasil disimpan.' },
                     );
+                },
+                onError: (errors) => {
+                    const messages = Object.values(errors).filter(Boolean);
+
+                    toast.error(
+                        isEdit
+                            ? 'Artikel gagal diperbarui'
+                            : 'Artikel gagal dibuat',
+                        {
+                            description:
+                                messages.length > 1
+                                    ? `${messages[0]} (+${messages.length - 1} kesalahan lain)`
+                                    : (messages[0] ??
+                                      'Periksa kembali isian formulir.'),
+                        },
+                    );
+                },
+                onHttpException: () => {
+                    toast.error('Artikel gagal disimpan', {
+                        description:
+                            'Terjadi kesalahan di server. Silakan coba lagi.',
+                    });
+                },
+                onNetworkError: () => {
+                    toast.error('Artikel gagal disimpan', {
+                        description:
+                            'Koneksi terputus. Periksa internet lalu coba lagi.',
+                    });
                 },
             },
         );
