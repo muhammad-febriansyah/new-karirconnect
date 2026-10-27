@@ -13,28 +13,23 @@ class CareerResourceController extends Controller
     public function index(Request $request): Response
     {
         $category = $request->string('category')->toString();
+        $search = trim($request->string('search')->toString());
 
         $query = CareerResource::query()
             ->live()
+            ->when($category !== '', fn ($query) => $query->where('category', $category))
+            ->when($search !== '', fn ($query) => $query->where(function ($inner) use ($search): void {
+                $inner->where('title', 'like', "%{$search}%")
+                    ->orWhere('excerpt', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhereJsonContains('tags', $search);
+            }))
             ->orderByDesc('published_at')
             ->orderByDesc('id');
 
-        if ($category !== '') {
-            $query->where('category', $category);
-        }
-
-        return Inertia::render('public/career-resources/index', [
-            'filters' => [
-                'category' => $category,
-            ],
-            'categories' => CareerResource::query()
-                ->live()
-                ->whereNotNull('category')
-                ->distinct()
-                ->orderBy('category')
-                ->pluck('category')
-                ->values(),
-            'items' => $query->get()->map(fn (CareerResource $resource): array => [
+        $items = $query->paginate(12)
+            ->withQueryString()
+            ->through(fn (CareerResource $resource): array => [
                 'id' => $resource->id,
                 'title' => $resource->title,
                 'slug' => $resource->slug,
@@ -45,7 +40,21 @@ class CareerResourceController extends Controller
                 'views_count' => $resource->views_count,
                 'published_at' => optional($resource->published_at)->toIso8601String(),
                 'thumbnail' => $resource->thumbnail_path ? asset('storage/'.$resource->thumbnail_path) : null,
-            ]),
+            ]);
+
+        return Inertia::render('public/career-resources/index', [
+            'filters' => [
+                'category' => $category,
+                'search' => $search,
+            ],
+            'categories' => CareerResource::query()
+                ->live()
+                ->whereNotNull('category')
+                ->distinct()
+                ->orderBy('category')
+                ->pluck('category')
+                ->values(),
+            'items' => $items,
         ]);
     }
 

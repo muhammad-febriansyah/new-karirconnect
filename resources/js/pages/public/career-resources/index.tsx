@@ -16,9 +16,9 @@ import {
     Rocket,
     Search,
     Sparkles,
-    type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -28,8 +28,8 @@ import {
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/format-date';
+import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as resourceIndex, show as resourceShow } from '@/routes/public/career-resources';
 
@@ -47,9 +47,17 @@ type ResourceItem = {
 };
 
 type Props = {
-    filters: { category: string };
+    filters: { category: string; search: string };
     categories: string[];
-    items: ResourceItem[];
+    items: {
+        data: ResourceItem[];
+        current_page: number;
+        last_page: number;
+        from: number | null;
+        to: number | null;
+        total: number;
+        links: Array<{ url: string | null; label: string; active: boolean }>;
+    };
 };
 
 const CATEGORY_META: Record<string, { icon: LucideIcon; tone: string; label: string }> = {
@@ -81,32 +89,54 @@ const CATEGORY_META: Record<string, { icon: LucideIcon; tone: string; label: str
 };
 
 function metaFor(category: string | null): { icon: LucideIcon; tone: string } {
-    if (!category) return { icon: BookOpen, tone: 'bg-muted text-muted-foreground' };
+    if (!category) {
+        return { icon: BookOpen, tone: 'bg-muted text-muted-foreground' };
+    }
+
     const lower = category.toLowerCase();
+
     return CATEGORY_META[lower] ?? { icon: Compass, tone: 'bg-brand-blue/10 text-brand-blue' };
 }
 
 export default function CareerResourcesIndex({ filters, categories, items }: Props) {
-    const [search, setSearch] = useState('');
+    return (
+        <CareerResourcesIndexContent
+            key={filters.search}
+            filters={filters}
+            categories={categories}
+            items={items}
+        />
+    );
+}
 
-    const filteredItems = useMemo(() => {
-        if (!search.trim()) return items;
-        const needle = search.toLowerCase();
-        return items.filter(
-            (i) =>
-                i.title.toLowerCase().includes(needle) ||
-                (i.excerpt ?? '').toLowerCase().includes(needle) ||
-                i.tags.some((t) => t.toLowerCase().includes(needle)),
-        );
-    }, [items, search]);
+function CareerResourcesIndexContent({ filters, categories, items }: Props) {
+    const [search, setSearch] = useState(filters.search);
 
-    const featured = filteredItems[0];
-    const rest = filteredItems.slice(1);
+    useEffect(() => {
+        const normalizedSearch = search.trim();
+
+        if (normalizedSearch === filters.search) {
+            return;
+        }
+
+        const timeout = window.setTimeout(() => {
+            router.get(
+                resourceIndex().url,
+                { category: filters.category, search: normalizedSearch },
+                { preserveScroll: true, preserveState: true, replace: true },
+            );
+        }, 300);
+
+        return () => window.clearTimeout(timeout);
+    }, [filters.category, filters.search, search]);
+
+    const featured = items.current_page === 1 ? items.data[0] : undefined;
+    const rest = items.current_page === 1 ? items.data.slice(1) : items.data;
 
     const setCategory = (category: string) => {
         router.get(
             resourceIndex().url,
-            category ? { category } : {},
+            { category, search: search.trim() },
             { preserveScroll: true, preserveState: true, replace: true },
         );
     };
@@ -135,7 +165,7 @@ export default function CareerResourcesIndex({ filters, categories, items }: Pro
                     <div className="flex flex-col gap-3">
                         <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-brand-blue/15 bg-brand-blue/5 px-2.5 py-1 text-xs font-medium text-brand-blue">
                             <Sparkles className="size-3" />
-                            {items.length} panduan praktis
+                            {items.total} panduan praktis
                         </span>
                         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                             Tips & Panduan Karier
@@ -169,6 +199,7 @@ export default function CareerResourcesIndex({ filters, categories, items }: Pro
                             </CategoryChip>
                             {categories.map((category) => {
                                 const meta = metaFor(category);
+
                                 return (
                                     <CategoryChip
                                         key={category}
@@ -185,7 +216,7 @@ export default function CareerResourcesIndex({ filters, categories, items }: Pro
                     </div>
                 </header>
 
-                {filteredItems.length === 0 ? (
+                {items.data.length === 0 ? (
                     <section className="rounded-2xl border border-dashed border-border/60 bg-card p-12 text-center">
                         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
                             <Search className="size-5" />
@@ -209,10 +240,10 @@ export default function CareerResourcesIndex({ filters, categories, items }: Pro
                             <section className="space-y-4">
                                 <div className="flex items-baseline justify-between">
                                     <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                                        Artikel Lainnya
+                                        {featured ? 'Artikel Lainnya' : 'Artikel'}
                                     </h2>
                                     <span className="text-sm text-muted-foreground">
-                                        {rest.length} artikel
+                                        {rest.length} artikel di halaman ini
                                     </span>
                                 </div>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -223,6 +254,47 @@ export default function CareerResourcesIndex({ filters, categories, items }: Pro
                             </section>
                         )}
                     </>
+                )}
+
+                {items.last_page > 1 && (
+                    <div className="flex flex-col items-center justify-between gap-4 border-t border-border/60 pt-5 sm:flex-row">
+                        <p className="text-sm text-muted-foreground">
+                            Menampilkan {items.from}–{items.to} dari {items.total} artikel
+                        </p>
+                        <nav aria-label="Navigasi halaman artikel" className="flex flex-wrap justify-center gap-1">
+                            {items.links.map((link, index) => {
+                                const isPrevious = /previous/i.test(link.label);
+                                const isNext = /next/i.test(link.label);
+                                const label = isPrevious
+                                    ? '‹ Sebelumnya'
+                                    : isNext
+                                      ? 'Berikutnya ›'
+                                      : link.label;
+                                const className = cn(
+                                    'inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm transition-colors',
+                                    link.active
+                                        ? 'border-brand-blue bg-brand-blue text-white'
+                                        : 'border-border/60 bg-card text-foreground hover:border-brand-blue/40 hover:text-brand-blue',
+                                    !link.url && 'pointer-events-none opacity-40',
+                                );
+
+                                return link.url ? (
+                                    <Link
+                                        key={`${link.label}-${index}`}
+                                        href={link.url}
+                                        aria-current={link.active ? 'page' : undefined}
+                                        className={className}
+                                    >
+                                        {label}
+                                    </Link>
+                                ) : (
+                                    <span key={`${link.label}-${index}`} className={className}>
+                                        {label}
+                                    </span>
+                                );
+                            })}
+                        </nav>
+                    </div>
                 )}
 
                 {/* ===== Bottom CTA ===== */}
@@ -305,17 +377,17 @@ function FeaturedArticleCard({ item }: { item: ResourceItem }) {
                 aria-hidden
                 className="absolute inset-x-0 top-0 z-10 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
             />
-            <div className="grid gap-0 lg:grid-cols-[1.4fr_1fr]">
+            <div className="flex flex-col">
                 {/* Image / illustration */}
-                <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan lg:aspect-auto">
+                <div className="relative w-full overflow-hidden bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan">
                     {item.thumbnail ? (
                         <img
                             src={item.thumbnail}
                             alt={item.title}
-                            className="block max-h-full max-w-full object-contain"
+                            className="block h-auto w-full"
                         />
                     ) : (
-                        <div className="relative size-full">
+                        <div className="relative aspect-[16/9] w-full">
                             <div
                                 aria-hidden
                                 className="absolute inset-0 opacity-30"
@@ -400,15 +472,15 @@ function ArticleCard({ item }: { item: ResourceItem }) {
                 aria-hidden
                 className="absolute inset-x-0 top-0 z-10 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
             />
-            <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
+            <div className="relative overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
                 {item.thumbnail ? (
                     <img
                         src={item.thumbnail}
                         alt={item.title}
-                        className="block max-h-full max-w-full object-contain"
+                        className="block h-auto w-full"
                     />
                 ) : (
-                    <div className="relative size-full">
+                    <div className="relative aspect-[16/9] w-full">
                         <div
                             aria-hidden
                             className="absolute inset-0 opacity-50"

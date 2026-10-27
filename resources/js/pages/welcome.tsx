@@ -448,7 +448,7 @@ function ArticleCard({ article, logoPath }: { article: Article; logoPath?: strin
             href={`/career-resources/${article.slug}`}
             className="group/art flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10"
         >
-            <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-muted/40">
+            <div className="relative flex items-center justify-center overflow-hidden bg-muted/40">
                 {hasThumb ? (
                     <img
                         src={article.thumbnail!}
@@ -460,13 +460,17 @@ function ArticleCard({ article, logoPath }: { article: Article; logoPath?: strin
                                 setThumbBroken(true);
                             }
                         }}
-                        className="block max-h-full max-w-full object-contain"
+                        className="block h-auto w-full"
                     />
                 ) : logoPath ? (
-                    <img src={logoPath} alt="KarirConnect" loading="lazy" className="h-9 w-auto opacity-90 transition-transform duration-300 group-hover/art:scale-110" />
+                    <div className="flex aspect-[16/9] w-full items-center justify-center">
+                        <img src={logoPath} alt="KarirConnect" loading="lazy" className="h-9 w-auto opacity-90 transition-transform duration-300 group-hover/art:scale-110" />
+                    </div>
                 ) : (
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-md transition-transform duration-300 group-hover/art:scale-110">
-                        <AppLogoIcon className="size-7 fill-current text-white" />
+                    <div className="flex aspect-[16/9] w-full items-center justify-center">
+                        <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-md transition-transform duration-300 group-hover/art:scale-110">
+                            <AppLogoIcon className="size-7 fill-current text-white" />
+                        </div>
                     </div>
                 )}
             </div>
