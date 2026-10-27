@@ -460,7 +460,7 @@ function ArticleCard({ article, logoPath }: { article: Article; logoPath?: strin
                                 setThumbBroken(true);
                             }
                         }}
-                        className="size-full object-cover transition-transform duration-500 group-hover/art:scale-105"
+                        className="block max-h-full max-w-full object-contain"
                     />
                 ) : logoPath ? (
                     <img src={logoPath} alt="KarirConnect" loading="lazy" className="h-9 w-auto opacity-90 transition-transform duration-300 group-hover/art:scale-110" />

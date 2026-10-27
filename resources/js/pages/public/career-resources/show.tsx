@@ -269,7 +269,7 @@ el.id = `heading-${i}`;
 
                     {/* Cover */}
                     {hasThumb ? (
-                        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs">
+                        <div className="relative flex justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/30 shadow-xs">
                             <img
                                 src={item.thumbnail!}
                                 alt={item.title}
@@ -279,7 +279,7 @@ el.id = `heading-${i}`;
                                         setThumbBroken(true);
                                     }
                                 }}
-                                className="aspect-[16/8] w-full object-cover"
+                                className="block max-h-[70vh] max-w-full object-contain"
                             />
                         </div>
                     ) : (

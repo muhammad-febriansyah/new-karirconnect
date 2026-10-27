@@ -307,12 +307,12 @@ function FeaturedArticleCard({ item }: { item: ResourceItem }) {
             />
             <div className="grid gap-0 lg:grid-cols-[1.4fr_1fr]">
                 {/* Image / illustration */}
-                <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan lg:aspect-auto">
+                <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br from-brand-navy via-brand-blue to-brand-cyan lg:aspect-auto">
                     {item.thumbnail ? (
                         <img
                             src={item.thumbnail}
                             alt={item.title}
-                            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="block max-h-full max-w-full object-contain"
                         />
                     ) : (
                         <div className="relative size-full">
@@ -400,12 +400,12 @@ function ArticleCard({ item }: { item: ResourceItem }) {
                 aria-hidden
                 className="absolute inset-x-0 top-0 z-10 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
             />
-            <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
+            <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
                 {item.thumbnail ? (
                     <img
                         src={item.thumbnail}
                         alt={item.title}
-                        className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="block max-h-full max-w-full object-contain"
                     />
                 ) : (
                     <div className="relative size-full">
