@@ -116,8 +116,6 @@ class CareerResourceController extends Controller
 
         CareerResource::query()->create($data);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Resource karier berhasil disimpan.']);
-
         return to_route('admin.career-resources.index');
     }
 
@@ -162,8 +160,6 @@ class CareerResourceController extends Controller
         }
 
         $careerResource->update($data);
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Resource karier berhasil diperbarui.']);
 
         return to_route('admin.career-resources.index');
     }

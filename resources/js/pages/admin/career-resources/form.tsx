@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, CalendarClock, Clock, Loader2, Save } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import CareerResourceController from '@/actions/App/Http/Controllers/Admin/CareerResourceController';
 import { ImageUploadField } from '@/components/form/image-upload-field';
 import { InputField } from '@/components/form/input-field';
@@ -109,6 +110,14 @@ export default function CareerResourceForm({ mode, item }: Props) {
             {
                 forceFormData: true,
                 preserveScroll: true,
+                onSuccess: () => {
+                    toast.success(
+                        isEdit
+                            ? 'Berita berhasil diperbarui'
+                            : 'Berita berhasil dibuat',
+                        { description: 'Perubahan berhasil disimpan.' },
+                    );
+                },
             },
         );
     };

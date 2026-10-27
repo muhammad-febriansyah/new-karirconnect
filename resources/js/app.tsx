@@ -1,7 +1,7 @@
 import { createInertiaApp, router } from '@inertiajs/react';
+import { NavigationLoader } from '@/components/feedback/navigation-loader';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { trackPageView } from '@/lib/analytics';
 import AdminLayout from '@/layouts/admin-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
@@ -10,6 +10,7 @@ import EmployerLayout from '@/layouts/employer-layout';
 import HomeLayout from '@/layouts/home-layout';
 import PublicLayout from '@/layouts/public-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { trackPageView } from '@/lib/analytics';
 
 function resolveAppName(): string {
     if (typeof document === 'undefined') {
@@ -59,9 +60,11 @@ createInertiaApp({
         if (!title) {
             return appName;
         }
+
         if (title === appName || title.endsWith(` - ${appName}`)) {
             return title;
         }
+
         return `${title} - ${appName}`;
     },
     layout: (name) => {
@@ -94,10 +97,9 @@ createInertiaApp({
             <TooltipProvider delayDuration={0}>
                 {app}
                 <Toaster />
+                <NavigationLoader />
             </TooltipProvider>
         );
     },
-    progress: {
-        color: '#4B5563',
-    },
+    progress: false,
 });
