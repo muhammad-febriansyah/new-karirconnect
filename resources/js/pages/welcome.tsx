@@ -448,20 +448,29 @@ function ArticleCard({ article, logoPath }: { article: Article; logoPath?: strin
             href={`/career-resources/${article.slug}`}
             className="group/art flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10"
         >
-            <div className="relative flex items-center justify-center overflow-hidden bg-muted/40">
+            <div className="relative flex aspect-video items-center justify-center overflow-hidden bg-muted/40">
                 {hasThumb ? (
-                    <img
-                        src={article.thumbnail!}
-                        alt={article.title}
-                        loading="lazy"
-                        onError={() => setThumbBroken(true)}
-                        onLoad={(e) => {
-                            if (e.currentTarget.naturalWidth < 64 || e.currentTarget.naturalHeight < 64) {
-                                setThumbBroken(true);
-                            }
-                        }}
-                        className="block h-auto w-full"
-                    />
+                    <>
+                        <img
+                            src={article.thumbnail!}
+                            alt=""
+                            aria-hidden="true"
+                            loading="lazy"
+                            className="absolute inset-0 size-full scale-110 object-cover opacity-35 blur-xl"
+                        />
+                        <img
+                            src={article.thumbnail!}
+                            alt={article.title}
+                            loading="lazy"
+                            onError={() => setThumbBroken(true)}
+                            onLoad={(e) => {
+                                if (e.currentTarget.naturalWidth < 64 || e.currentTarget.naturalHeight < 64) {
+                                    setThumbBroken(true);
+                                }
+                            }}
+                            className="relative size-full object-contain"
+                        />
+                    </>
                 ) : logoPath ? (
                     <div className="flex aspect-[16/9] w-full items-center justify-center">
                         <img src={logoPath} alt="KarirConnect" loading="lazy" className="h-9 w-auto opacity-90 transition-transform duration-300 group-hover/art:scale-110" />

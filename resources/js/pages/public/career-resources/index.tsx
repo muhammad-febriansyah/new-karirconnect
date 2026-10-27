@@ -263,8 +263,8 @@ function CareerResourcesIndexContent({ filters, categories, items }: Props) {
                         </p>
                         <nav aria-label="Navigasi halaman artikel" className="flex flex-wrap justify-center gap-1">
                             {items.links.map((link, index) => {
-                                const isPrevious = /previous/i.test(link.label);
-                                const isNext = /next/i.test(link.label);
+                                const isPrevious = index === 0;
+                                const isNext = index === items.links.length - 1;
                                 const label = isPrevious
                                     ? '‹ Sebelumnya'
                                     : isNext
@@ -472,13 +472,21 @@ function ArticleCard({ item }: { item: ResourceItem }) {
                 aria-hidden
                 className="absolute inset-x-0 top-0 z-10 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
             />
-            <div className="relative overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
+            <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
                 {item.thumbnail ? (
-                    <img
-                        src={item.thumbnail}
-                        alt={item.title}
-                        className="block h-auto w-full"
-                    />
+                    <>
+                        <img
+                            src={item.thumbnail}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 size-full scale-110 object-cover opacity-35 blur-xl"
+                        />
+                        <img
+                            src={item.thumbnail}
+                            alt={item.title}
+                            className="relative size-full object-contain"
+                        />
+                    </>
                 ) : (
                     <div className="relative aspect-[16/9] w-full">
                         <div
