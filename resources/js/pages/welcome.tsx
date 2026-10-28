@@ -719,7 +719,7 @@ export default function Welcome({ home }: Props) {
                                     variant="outline"
                                     className="h-11 rounded-xl border-white/30 bg-white/10 px-5 font-semibold text-white backdrop-blur hover:bg-white/15 hover:text-white"
                                 >
-                                    <Link href="/career-resources">Lihat Demo</Link>
+                                    <Link href={auth?.user ? '/employee/cv/index' : '/register/jobseeker'}>Lihat Demo</Link>
                                 </Button>
                             </div>
                         </div>
@@ -749,8 +749,8 @@ export default function Welcome({ home }: Props) {
                         className="pointer-events-none absolute inset-0 opacity-[0.12]"
                         style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)', backgroundSize: '22px 22px' }}
                     />
-                    <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
+                    <div className="relative z-10 flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="relative z-10 max-w-xl lg:w-[43%]">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-brand-cyan backdrop-blur">
                                 <Building2 className="size-4" /> Untuk Perusahaan
                             </span>
@@ -759,7 +759,14 @@ export default function Welcome({ home }: Props) {
                                 Posting lowongan kerja, akses database kandidat, dan gunakan fitur ATS kami untuk merekrut lebih cepat dan efisien.
                             </p>
                         </div>
-                        <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+                        <div
+                            aria-hidden="true"
+                            className="relative order-2 -mx-8 h-40 overflow-hidden rounded-2xl sm:-mx-10 sm:h-48 lg:absolute lg:inset-y-0 lg:left-[42%] lg:right-[19%] lg:mx-0 lg:h-auto lg:rounded-none [mask-image:linear-gradient(90deg,transparent_0%,black_15%,black_85%,transparent_100%)]"
+                        >
+                            <img src="/images/employer-job-search.jpeg" alt="" className="size-full object-cover object-center" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/5 via-transparent to-brand-navy/10 lg:from-brand-navy lg:via-brand-navy/10 lg:to-brand-navy" />
+                        </div>
+                        <div className="relative z-10 order-3 flex shrink-0 flex-col gap-3 sm:items-end lg:w-64">
                             <div className="flex flex-col gap-3 sm:w-64">
                                 <Button asChild size="lg" className="h-12 rounded-xl bg-white px-5 font-bold text-brand-blue shadow-md hover:bg-white/95">
                                     <Link href="/register/perusahaan">
