@@ -78,7 +78,7 @@
     --brand-cyan: oklch(0.78 0.13 215);
     --brand-navy: oklch(0.21 0.15 268);
 
-    --background: oklch(1 0 0);
+    --background: #F7F8FD;
     --foreground: oklch(0.18 0.04 260);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.18 0.04 260);
