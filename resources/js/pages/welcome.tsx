@@ -413,7 +413,7 @@ function CompanyGridCard({ company }: { company: TopCompany }) {
     return (
         <Link
             href={`/companies/${company.slug}`}
-            className="group/co flex flex-col rounded-2xl border border-border/60 bg-background p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md hover:shadow-brand-blue/10"
+            className="group/co flex flex-col rounded-2xl border border-border/60 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md hover:shadow-brand-blue/10"
         >
             <div className="flex items-center gap-3">
                 <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 ring-1 ring-border/60">
