@@ -19,7 +19,6 @@ import {
     MapPin,
     Search,
     ShieldCheck,
-    Smartphone,
     Sparkles,
     Star,
     TrendingUp,
@@ -28,7 +27,6 @@ import {
 } from 'lucide-react';
 import {  useMemo, useState } from 'react';
 import type {FormEvent} from 'react';
-import AppLogoIcon from '@/components/app-logo-icon';
 import { SeoHead } from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -93,16 +91,6 @@ type Testimonial = {
     text: string;
 };
 
-type Article = {
-    slug: string;
-    title: string;
-    excerpt: string;
-    category: string | null;
-    thumbnail: string | null;
-    reading_minutes: number;
-    published_at: string | null;
-};
-
 type FaqEntry = {
     id: number;
     question: string;
@@ -127,7 +115,6 @@ type Home = {
     top_categories: TopCategory[];
     salary_teasers: SalaryTeaser[];
     testimonials: Testimonial[];
-    articles: Article[];
     faqs: FaqEntry[];
     search_options: SearchOptions;
 };
@@ -438,70 +425,9 @@ function CompanyGridCard({ company }: { company: TopCompany }) {
     );
 }
 
-function ArticleCard({ article, logoPath }: { article: Article; logoPath?: string | null }) {
-    // Treat broken or placeholder (tiny) thumbnails as missing so the brand logo shows instead.
-    const [thumbBroken, setThumbBroken] = useState(false);
-    const hasThumb = !!article.thumbnail && !thumbBroken;
-
-    return (
-        <Link
-            href={`/career-resources/${article.slug}`}
-            className="group/art flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-brand-blue/10"
-        >
-            <div className="relative flex aspect-video items-center justify-center overflow-hidden bg-muted/40">
-                {hasThumb ? (
-                    <>
-                        <img
-                            src={article.thumbnail!}
-                            alt=""
-                            aria-hidden="true"
-                            loading="lazy"
-                            className="absolute inset-0 size-full scale-110 object-cover opacity-35 blur-xl"
-                        />
-                        <img
-                            src={article.thumbnail!}
-                            alt={article.title}
-                            loading="lazy"
-                            onError={() => setThumbBroken(true)}
-                            onLoad={(e) => {
-                                if (e.currentTarget.naturalWidth < 64 || e.currentTarget.naturalHeight < 64) {
-                                    setThumbBroken(true);
-                                }
-                            }}
-                            className="relative size-full object-contain"
-                        />
-                    </>
-                ) : logoPath ? (
-                    <div className="flex aspect-[16/9] w-full items-center justify-center">
-                        <img src={logoPath} alt="KarirConnect" loading="lazy" className="h-9 w-auto opacity-90 transition-transform duration-300 group-hover/art:scale-110" />
-                    </div>
-                ) : (
-                    <div className="flex aspect-[16/9] w-full items-center justify-center">
-                        <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-md transition-transform duration-300 group-hover/art:scale-110">
-                            <AppLogoIcon className="size-7 fill-current text-white" />
-                        </div>
-                    </div>
-                )}
-            </div>
-            <div className="flex flex-1 flex-col gap-2.5 p-5">
-                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    {article.category && (
-                        <span className="inline-flex items-center rounded-full bg-brand-blue/10 px-2 py-0.5 font-semibold text-brand-blue">{article.category}</span>
-                    )}
-                    <span className="inline-flex items-center gap-1">
-                        <Clock className="size-3" /> {article.reading_minutes} menit baca
-                    </span>
-                </div>
-                <h3 className="line-clamp-2 text-sm font-bold leading-snug text-brand-navy transition-colors group-hover/art:text-brand-blue">{article.title}</h3>
-            </div>
-        </Link>
-    );
-}
-
 export default function Welcome({ home }: Props) {
     const page = usePage<SharedPageProps>();
     const { auth } = page.props;
-    const logoPath = (page.props as unknown as { branding?: { logo_path?: string | null } }).branding?.logo_path ?? null;
     const options = home.search_options;
     const [search, setSearch] = useState('');
     const [provinceId, setProvinceId] = useState<string | null>(null);
@@ -814,26 +740,6 @@ export default function Welcome({ home }: Props) {
                 </div>
             </section>
 
-            {/* ===== Articles ===== */}
-            {home.articles.length > 0 && (
-                <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-6">
-                    <div className="mb-7 flex items-end justify-between">
-                        <div>
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-brand-blue">Tips & Panduan</span>
-                            <h2 className="mt-1 text-2xl font-bold tracking-tight text-brand-navy">Artikel terbaru untuk kariermu</h2>
-                        </div>
-                        <Link href="/career-resources" className="hidden text-sm font-semibold text-brand-blue hover:text-brand-blue/80 sm:inline-flex">
-                            Semua Artikel →
-                        </Link>
-                    </div>
-                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        {home.articles.map((a) => (
-                            <ArticleCard key={a.slug} article={a} logoPath={logoPath} />
-                        ))}
-                    </div>
-                </section>
-            )}
-
             {/* ===== Employer CTA ===== */}
             <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
                 <div className="relative overflow-hidden rounded-3xl bg-brand-navy p-8 text-white shadow-xl sm:p-10">
@@ -877,34 +783,6 @@ export default function Welcome({ home }: Props) {
                 </div>
             </section>
 
-            {/* ===== Download App ===== */}
-            <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-                <div className="flex flex-col items-start justify-between gap-6 rounded-3xl border border-border/60 bg-muted/30 p-6 sm:flex-row sm:items-center sm:p-8">
-                    <div className="flex items-center gap-4">
-                        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-blue to-brand-cyan text-white shadow-md">
-                            <Smartphone className="size-6" />
-                        </span>
-                        <div>
-                            <h3 className="text-lg font-bold text-brand-navy">Download Aplikasi KarirConnect</h3>
-                            <p className="text-sm text-muted-foreground">Lamar kerja di mana saja, kapan saja. Gratis!</p>
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                        <button
-                            type="button"
-                            className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand-navy px-5 text-sm font-semibold text-white transition-all hover:bg-brand-navy/90"
-                        >
-                            <Smartphone className="size-4" /> Google Play
-                        </button>
-                        <button
-                            type="button"
-                            className="inline-flex h-12 items-center gap-2 rounded-xl bg-brand-navy px-5 text-sm font-semibold text-white transition-all hover:bg-brand-navy/90"
-                        >
-                            <Smartphone className="size-4" /> App Store
-                        </button>
-                    </div>
-                </div>
-            </section>
         </>
     );
 }
