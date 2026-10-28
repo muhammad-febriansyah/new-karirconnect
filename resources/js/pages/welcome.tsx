@@ -594,7 +594,7 @@ export default function Welcome({ home }: Props) {
             />
 
             {/* ===== Hero ===== */}
-            <section className="relative overflow-hidden border-b border-brand-navy/20 bg-gradient-to-b from-[#1b5fd6] via-[#1550c4] to-[#103e9e] text-white">
+            <section className="relative overflow-hidden border-b border-brand-navy/20 bg-[#091D64] text-white">
                 {/* Flowing contour lines */}
                 <svg
                     aria-hidden
@@ -615,8 +615,8 @@ export default function Welcome({ home }: Props) {
                     </g>
                 </svg>
                 {/* Glow blobs */}
-                <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-brand-cyan/20 blur-3xl" />
-                <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-80 rounded-full bg-white/8 blur-3xl" />
+                <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-brand-cyan/10 blur-3xl" />
+                <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-80 rounded-full bg-white/5 blur-3xl" />
                 <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pt-24 pb-10 text-center sm:px-6 sm:pt-32">
                     <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
                         Temukan Karir Impianmu
