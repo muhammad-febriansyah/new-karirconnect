@@ -24,10 +24,13 @@ class CompanyVerified extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Perusahaan Anda Telah Terverifikasi')
-            ->greeting('Halo, '.$notifiable->name)
-            ->line("Perusahaan {$this->company->name} sudah berhasil terverifikasi. Lencana 'Verified' kini muncul di profil perusahaan.")
-            ->action('Buka Profil Perusahaan', url('/employer/company/edit'));
+            ->subject('Verifikasi Perusahaan Berhasil — Akun Employer Siap Digunakan')
+            ->greeting('Yth. '.$notifiable->name.',')
+            ->line("Perusahaan {$this->company->name} telah menyelesaikan proses verifikasi dan memperoleh persetujuan KarirConnect.")
+            ->line('Akun employer Anda kini dapat digunakan untuk membuat dan mempublikasikan lowongan kerja.')
+            ->line("Lencana verifikasi juga telah ditambahkan pada profil {$this->company->name}.")
+            ->action('Buat Lowongan', route('employer.jobs.create'))
+            ->salutation('Hormat kami,\nTim KarirConnect');
     }
 
     /**
@@ -37,8 +40,8 @@ class CompanyVerified extends Notification
     {
         return [
             'title' => 'Perusahaan terverifikasi',
-            'body' => "Lencana Verified kini muncul di profil {$this->company->name}.",
-            'action_url' => '/employer/company/edit',
+            'body' => "Perusahaan {$this->company->name} telah diverifikasi. Akun employer kini dapat digunakan untuk memposting lowongan.",
+            'action_url' => route('employer.jobs.create', absolute: false),
             'icon' => 'shield',
             'company_id' => $this->company->id,
             'company_name' => $this->company->name,

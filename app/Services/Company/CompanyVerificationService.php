@@ -62,6 +62,8 @@ class CompanyVerificationService
             return $verification;
         }
 
+        $shouldNotifyOwner = $company->verification_status !== CompanyVerificationStatus::Verified;
+
         $company->forceFill([
             'verification_status' => CompanyVerificationStatus::Verified,
             'verified_at' => now(),
@@ -91,7 +93,9 @@ class CompanyVerificationService
             ],
         );
 
-        $company->owner?->notify(new CompanyVerified($company));
+        if ($shouldNotifyOwner) {
+            $company->owner?->notify(new CompanyVerified($company));
+        }
 
         return $verification;
     }
