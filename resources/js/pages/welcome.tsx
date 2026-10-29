@@ -759,12 +759,6 @@ export default function Welcome({ home }: Props) {
                                 Posting lowongan kerja, akses database kandidat, dan gunakan fitur ATS kami untuk merekrut lebih cepat dan efisien.
                             </p>
                         </div>
-                        <div
-                            aria-hidden="true"
-                            className="relative order-2 -mx-8 h-40 overflow-hidden rounded-2xl sm:-mx-10 sm:h-48 lg:absolute lg:inset-y-0 lg:left-[42%] lg:right-[19%] lg:mx-0 lg:h-auto lg:rounded-none [mask-image:linear-gradient(90deg,transparent_0%,black_15%,black_85%,transparent_100%)]"
-                        >
-                            <img src="/images/employer-job-search.png?v=20261029" alt="" className="size-full object-cover object-center" />
-                        </div>
                         <div className="relative z-10 order-3 flex shrink-0 flex-col gap-3 sm:items-end lg:w-64">
                             <div className="flex flex-col gap-3 sm:w-64">
                                 <Button asChild size="lg" className="h-12 rounded-xl bg-white px-5 font-bold text-brand-blue shadow-md hover:bg-white/95">
