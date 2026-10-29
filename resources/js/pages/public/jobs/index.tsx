@@ -627,7 +627,7 @@ function CategoryTab({
                 'group relative inline-flex items-center gap-2 overflow-hidden rounded-xl px-3 py-2 text-sm font-semibold transition-all',
                 active
                     ? `bg-gradient-to-br text-white shadow-md ${gradient}`
-                    : 'border border-border/60 bg-background text-foreground/80 hover:border-brand-blue/30 hover:bg-muted/50 hover:text-foreground',
+                    : 'border border-border/60 bg-white text-foreground/80 hover:border-brand-blue/30 hover:bg-muted/50 hover:text-foreground',
             )}
         >
             {active && (
