@@ -742,7 +742,7 @@ export default function Welcome({ home }: Props) {
 
             {/* ===== Employer CTA ===== */}
             <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-                <div className="relative overflow-hidden rounded-3xl bg-brand-navy p-8 text-white shadow-xl sm:p-10">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0a63] via-[#101c8d] to-[#0750b5] p-8 text-white shadow-xl sm:p-10">
                     <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-brand-blue/30 blur-3xl" />
                     <div
                         aria-hidden
@@ -763,7 +763,7 @@ export default function Welcome({ home }: Props) {
                             aria-hidden="true"
                             className="relative order-2 -mx-8 h-40 overflow-hidden rounded-2xl sm:-mx-10 sm:h-48 lg:absolute lg:inset-y-0 lg:left-[42%] lg:right-[19%] lg:mx-0 lg:h-auto lg:rounded-none [mask-image:linear-gradient(90deg,transparent_0%,black_15%,black_85%,transparent_100%)]"
                         >
-                            <img src="/images/employer-job-search.jpeg?v=20261029" alt="" className="size-full object-cover object-center" />
+                            <img src="/images/employer-job-search.png?v=20261029" alt="" className="size-full object-cover object-center" />
                             <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/5 via-transparent to-brand-navy/10 lg:from-brand-navy lg:via-brand-navy/10 lg:to-brand-navy" />
                         </div>
                         <div className="relative z-10 order-3 flex shrink-0 flex-col gap-3 sm:items-end lg:w-64">
