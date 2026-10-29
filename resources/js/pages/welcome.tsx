@@ -284,7 +284,7 @@ function FilterSelect({
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="h-10 w-full appearance-none rounded-xl border border-border/60 bg-background pl-4 pr-9 text-sm font-medium text-brand-navy transition-colors hover:border-brand-blue/40 focus:border-brand-blue/50 focus:outline-none focus:ring-2 focus:ring-brand-blue/15"
+                className="h-10 w-full appearance-none rounded-xl border border-border/60 bg-white pl-4 pr-9 text-sm font-medium text-brand-navy transition-colors hover:border-brand-blue/40 focus:border-brand-blue/50 focus:outline-none focus:ring-2 focus:ring-brand-blue/15"
             >
                 <option value="">{placeholder}</option>
                 {options.map((o) => (
@@ -627,8 +627,8 @@ export default function Welcome({ home }: Props) {
                                 className={cn(
                                     'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-all',
                                     activeCategory === tab
-                                        ? 'border-brand-blue bg-brand-blue text-white shadow-xs shadow-brand-blue/30'
-                                        : 'border-border bg-background text-brand-navy hover:border-brand-blue/40 hover:bg-brand-blue/5',
+                                        ? 'border-brand-blue bg-white text-brand-blue shadow-xs shadow-brand-blue/15'
+                                        : 'border-border bg-white text-brand-navy hover:border-brand-blue/40 hover:bg-brand-blue/5',
                                 )}
                             >
                                 {tab}
