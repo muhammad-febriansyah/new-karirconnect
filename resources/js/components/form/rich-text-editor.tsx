@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { FormField } from './form-field';
+import { Table, TableCell, TableHeader, TableRow } from './table-extensions';
 
 type RichTextEditorProps = {
     id?: string;
@@ -51,6 +52,10 @@ export function RichTextEditor({
                 underline: false,
             }),
             Underline,
+            Table,
+            TableRow,
+            TableHeader,
+            TableCell,
             Link.configure({
                 openOnClick: false,
                 HTMLAttributes: {

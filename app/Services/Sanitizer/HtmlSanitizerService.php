@@ -16,6 +16,7 @@ class HtmlSanitizerService
         'p', 'br', 'strong', 'em', 'u', 'h2', 'h3', 'h4',
         'ul', 'ol', 'li', 'a[href|target|rel]', 'blockquote',
         'code', 'pre', 'img[src|alt|width|height]',
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th[colspan|rowspan]', 'td[colspan|rowspan]',
     ];
 
     /**

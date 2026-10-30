@@ -17,7 +17,19 @@ export function sanitizeHtml(html: string | null | undefined): string {
     }
 
     return DOMPurify.sanitize(html, {
-        ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'width', 'height', 'id', 'class'],
+        ALLOWED_ATTR: [
+            'href',
+            'target',
+            'rel',
+            'src',
+            'alt',
+            'width',
+            'height',
+            'id',
+            'class',
+            'colspan',
+            'rowspan',
+        ],
     });
 }
 
