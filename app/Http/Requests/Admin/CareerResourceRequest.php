@@ -28,6 +28,8 @@ class CareerResourceRequest extends FormRequest
 
         return [
             'title' => ['required', 'string', 'max:160'],
+            'seo_title' => ['nullable', 'string', 'max:80'],
+            'seo_description' => ['nullable', 'string', 'max:200'],
             'slug' => ['nullable', 'string', 'max:180', 'alpha_dash', Rule::unique('career_resources', 'slug')->ignore($resource)],
             'excerpt' => ['nullable', 'string'],
             'body' => ['required', 'string'],
@@ -52,6 +54,8 @@ class CareerResourceRequest extends FormRequest
     {
         return [
             'title' => 'judul',
+            'seo_title' => 'judul SEO',
+            'seo_description' => 'deskripsi SEO',
             'slug' => 'slug',
             'excerpt' => 'ringkasan',
             'body' => 'isi artikel',

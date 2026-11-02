@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     ArrowRight,
@@ -22,6 +22,7 @@ import {
 import type {LucideIcon} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
+import { SeoHead } from '@/components/seo-head';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -50,6 +51,8 @@ type Props = {
     item: {
         id: number;
         title: string;
+        seo_title: string | null;
+        seo_description: string | null;
         slug: string;
         excerpt: string | null;
         body: string;
@@ -169,7 +172,11 @@ el.id = `heading-${i}`;
 
     return (
         <>
-            <Head title={item.title} />
+            <SeoHead
+                title={item.seo_title || item.title}
+                description={item.seo_description || item.excerpt}
+                type="article"
+            />
 
             <div className="space-y-6">
                 {/* Breadcrumb */}

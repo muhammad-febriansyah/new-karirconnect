@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'title',
+    'seo_title',
+    'seo_description',
     'slug',
     'excerpt',
     'body',

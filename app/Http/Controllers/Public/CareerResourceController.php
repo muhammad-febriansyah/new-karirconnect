@@ -70,6 +70,8 @@ class CareerResourceController extends Controller
             'item' => [
                 'id' => $careerResource->id,
                 'title' => $careerResource->title,
+                'seo_title' => $careerResource->seo_title,
+                'seo_description' => $careerResource->seo_description,
                 'slug' => $careerResource->slug,
                 'excerpt' => $careerResource->excerpt,
                 'body' => $careerResource->body,

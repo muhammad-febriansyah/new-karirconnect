@@ -17,6 +17,8 @@ import { slugify } from '@/lib/slugify';
 type Item = {
     id: number;
     title: string;
+    seo_title: string | null;
+    seo_description: string | null;
     slug: string;
     excerpt: string | null;
     body: string;
@@ -37,6 +39,8 @@ type Props = {
 
 type FormShape = {
     title: string;
+    seo_title: string;
+    seo_description: string;
     slug: string;
     excerpt: string;
     body: string;
@@ -78,6 +82,8 @@ export default function CareerResourceForm({ mode, item }: Props) {
     const [slugTouched, setSlugTouched] = useState(false);
     const form = useForm<FormShape>({
         title: item?.title ?? '',
+        seo_title: item?.seo_title ?? '',
+        seo_description: item?.seo_description ?? '',
         slug: item?.slug ?? '',
         excerpt: item?.excerpt ?? '',
         body: item?.body ?? '',
@@ -249,6 +255,41 @@ export default function CareerResourceForm({ mode, item }: Props) {
                                         )
                                     }
                                     error={form.errors.reading_minutes}
+                                />
+                            </div>
+                        </Section>
+
+                        <Section
+                            title="SEO"
+                            description="Kosongkan untuk memakai judul dan ringkasan artikel sebagai metadata pencarian."
+                        >
+                            <div className="space-y-4">
+                                <InputField
+                                    label="Judul SEO"
+                                    description="Maksimum 80 karakter."
+                                    maxLength={80}
+                                    value={form.data.seo_title}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'seo_title',
+                                            event.target.value,
+                                        )
+                                    }
+                                    error={form.errors.seo_title}
+                                />
+                                <TextareaField
+                                    label="Deskripsi SEO"
+                                    description="Maksimum 200 karakter."
+                                    maxLength={200}
+                                    rows={3}
+                                    value={form.data.seo_description}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'seo_description',
+                                            event.target.value,
+                                        )
+                                    }
+                                    error={form.errors.seo_description}
                                 />
                             </div>
                         </Section>
