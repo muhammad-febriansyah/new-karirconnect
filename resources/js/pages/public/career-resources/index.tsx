@@ -474,19 +474,11 @@ function ArticleCard({ item }: { item: ResourceItem }) {
             />
             <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
                 {item.thumbnail ? (
-                    <>
-                        <img
-                            src={item.thumbnail}
-                            alt=""
-                            aria-hidden="true"
-                            className="absolute inset-0 size-full scale-110 object-cover opacity-35 blur-xl"
-                        />
-                        <img
-                            src={item.thumbnail}
-                            alt={item.title}
-                            className="relative size-full object-contain"
-                        />
-                    </>
+                    <img
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="block size-full object-cover"
+                    />
                 ) : (
                     <div className="relative aspect-[16/9] w-full">
                         <div
