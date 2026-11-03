@@ -40,4 +40,8 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     ],
 
+    'contact' => [
+        'recipient' => env('CONTACT_FORM_RECIPIENT', 'cs@karirconnect.id'),
+    ],
+
 ];

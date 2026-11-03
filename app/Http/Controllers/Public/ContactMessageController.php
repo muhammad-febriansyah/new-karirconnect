@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Public;
 
+use App\Actions\Contact\SendContactMessageEmailAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Public\ContactMessageRequest;
 use App\Models\ContactMessage;
@@ -16,13 +17,17 @@ class ContactMessageController extends Controller
         return Inertia::render('public/contact');
     }
 
-    public function store(ContactMessageRequest $request): RedirectResponse
+    public function store(ContactMessageRequest $request, SendContactMessageEmailAction $sendContactMessageEmail): RedirectResponse
     {
-        ContactMessage::query()->create([
+        $contactMessage = ContactMessage::query()->create([
             ...$request->validated(),
             'ip' => $request->ip(),
             'status' => 'new',
         ]);
+
+        if (! $sendContactMessageEmail->execute($contactMessage)) {
+            return back()->with('error', 'Pesan tersimpan, tetapi notifikasi email belum terkirim. Tim tetap dapat melihat pesan Anda.');
+        }
 
         return back()->with('success', 'Pesan Anda sudah kami terima. Tim kami akan segera menghubungi Anda.');
     }

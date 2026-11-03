@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Contact\SendContactMessageEmailAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Public\ContactMessageRequest;
 use App\Models\AboutPage;
@@ -114,16 +115,21 @@ class ContentController extends Controller
     /**
      * Contact form. Throttled on the route: it is unauthenticated and writes.
      */
-    public function contact(ContactMessageRequest $request): JsonResponse
+    public function contact(ContactMessageRequest $request, SendContactMessageEmailAction $sendContactMessageEmail): JsonResponse
     {
-        ContactMessage::query()->create([
+        $contactMessage = ContactMessage::query()->create([
             ...$request->validated(),
             'ip' => $request->ip(),
             'status' => 'new',
         ]);
 
+        $emailSent = $sendContactMessageEmail->execute($contactMessage);
+
         return response()->json([
-            'message' => 'Pesan Anda sudah kami terima. Tim kami akan segera menghubungi Anda.',
+            'message' => $emailSent
+                ? 'Pesan Anda sudah kami terima. Tim kami akan segera menghubungi Anda.'
+                : 'Pesan tersimpan, tetapi notifikasi email belum terkirim.',
+            'email_notification_sent' => $emailSent,
         ], 201);
     }
 }
