@@ -472,12 +472,12 @@ function ArticleCard({ item }: { item: ResourceItem }) {
                 aria-hidden
                 className="absolute inset-x-0 top-0 z-10 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-0 transition-opacity group-hover:opacity-100"
             />
-            <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
+            <div className="relative overflow-hidden bg-gradient-to-br from-brand-blue/15 via-brand-cyan/10 to-brand-navy/15">
                 {item.thumbnail ? (
                     <img
                         src={item.thumbnail}
                         alt={item.title}
-                        className="block size-full object-cover"
+                        className="block h-auto w-full"
                     />
                 ) : (
                     <div className="relative aspect-[16/9] w-full">
