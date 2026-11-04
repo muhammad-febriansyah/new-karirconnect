@@ -169,6 +169,24 @@ describe('feed items', function () {
         // Remotive forbids passing its jobs to Google Jobs.
         expect($response->getContent())->not->toContain('"@type":"JobPosting"');
     });
+
+    it('does not show a source credit for scraped career sites', function () {
+        $source = app(ExternalSourceCatalog::class)->sourceForEntry('dealls');
+        // Older rows may still carry an attribution rule in their config.
+        $source->update(['config' => [...$source->config, 'rules' => ['attribution' => ['name' => 'Dealls', 'url' => 'https://dealls.com']]]]);
+        $listing = ScrapedJobListing::factory()->create([
+            'job_source_id' => $source->id,
+            'scraped_company_id' => ScrapedCompany::factory()->create()->id,
+            'job_category_id' => JobCategory::factory()->create()->id,
+        ]);
+        $this->actingAs($this->admin)->postJson(route('admin.scraper.listings.publish'), [
+            'listing_ids' => [$listing->id], 'employment_type' => 'full_time', 'work_arrangement' => 'onsite', 'experience_level' => 'mid',
+        ]);
+        $job = Job::query()->sole();
+
+        $this->get(route('public.jobs.show', $job->slug))
+            ->assertInertia(fn (Assert $page) => $page->where('job.external.attribution', null));
+    });
 });
 
 it('applies catalog limits and tells the worker which pages it read recently', function () {

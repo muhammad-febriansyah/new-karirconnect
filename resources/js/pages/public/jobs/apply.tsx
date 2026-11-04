@@ -193,12 +193,10 @@ return true;
 
                 {job.relayed_to_company && (
                     <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
-                        Lowongan ini berasal dari halaman karier{' '}
-                        {job.company.name ?? 'perusahaan'}. Dengan mengirim
-                        lamaran, nama, email, telepon, surat lamaran, dan CV
-                        Anda akan diteruskan lewat email ke tim rekrutmen
-                        perusahaan tersebut, dan mereka akan menghubungi Anda
-                        langsung.
+                        Dengan mengirim lamaran, nama, email, telepon, surat
+                        lamaran, dan CV Anda akan dikirim lewat email ke tim
+                        rekrutmen {job.company.name ?? 'perusahaan'}, dan mereka
+                        akan menghubungi Anda langsung.
                     </div>
                 )}
 

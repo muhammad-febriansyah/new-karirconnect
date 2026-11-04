@@ -25,14 +25,36 @@ class ExternalApplicationRelayed extends Mailable
         $candidate = $this->application->employeeProfile?->user;
 
         return new Envelope(
-            subject: 'Lamaran: '.$this->application->job?->title.' — '.($candidate?->name ?? 'Kandidat').' (via KarirConnect)',
+            // Sent from the app's own address, under the candidate's name.
+            from: new Address((string) config('mail.from.address'), $candidate?->name ?? (string) config('mail.from.name')),
+            subject: 'Lamaran '.$this->application->job?->title.' - '.($candidate?->name ?? 'Kandidat'),
             replyTo: $candidate?->email ? [new Address($candidate->email, $candidate->name)] : [],
         );
     }
 
+    /**
+     * A plain letter from the candidate, without the app's mail layout.
+     */
     public function content(): Content
     {
-        return new Content(markdown: 'emails.external-application');
+        return new Content(
+            view: 'emails.external-application',
+            text: 'emails.external-application-text',
+            with: ['coverLetter' => $this->plainCoverLetter()],
+        );
+    }
+
+    private function plainCoverLetter(): ?string
+    {
+        $html = $this->application->cover_letter;
+
+        if (blank($html)) {
+            return null;
+        }
+
+        $text = html_entity_decode(strip_tags(preg_replace('#<(br|/p|/li|/h[1-6])[^>]*>#i', "\n", $html)), ENT_QUOTES | ENT_HTML5);
+
+        return trim(preg_replace("/\n{3,}/", "\n\n", $text));
     }
 
     /**

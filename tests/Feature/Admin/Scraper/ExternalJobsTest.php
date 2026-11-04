@@ -262,7 +262,18 @@ describe('applying to external jobs', function () {
         $application = Application::query()->sole();
 
         Mail::assertSent(ExternalApplicationRelayed::class, fn (ExternalApplicationRelayed $mail) => $mail->hasTo('rekrutmen@contohtek.co.id')
-            && $mail->hasReplyTo($candidate->email));
+            && $mail->hasReplyTo($candidate->email)
+            && $mail->hasFrom((string) config('mail.from.address'), $candidate->name));
+
+        // Reads as a plain letter from the candidate: no platform branding.
+        $mail = new ExternalApplicationRelayed($application);
+        $mail->assertSeeInHtml('Saya ingin melamar posisi')
+            ->assertSeeInHtml('Saya tertarik.')
+            ->assertSeeInText($candidate->name)
+            ->assertDontSeeInHtml('KarirConnect')
+            ->assertDontSeeInText('KarirConnect')
+            ->assertDontSeeInHtml((string) config('app.name'));
+        expect($mail->envelope()->subject)->not->toContain('KarirConnect');
         Notification::assertNothingSent();
         expect($application->refresh()->relayed_at)->not->toBeNull();
     });

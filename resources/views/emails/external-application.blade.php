@@ -3,37 +3,41 @@
     $user = $application->employeeProfile?->user;
     $profile = $application->employeeProfile;
 @endphp
-<x-mail::message>
-# Lamaran baru untuk {{ $job?->title }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>Lamaran {{ $job?->title }}</title>
+</head>
+<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#1f2937;">
+    <p>Yth. Tim Rekrutmen {{ $job?->company?->name }},</p>
 
-Kandidat berikut melamar lowongan **{{ $job?->title }}** di {{ $job?->company?->name }} melalui KarirConnect.
-Lowongan ini kami tampilkan dari halaman karier Anda, dan kandidat sudah setuju lamarannya diteruskan ke alamat ini.
+    <p>Saya ingin melamar posisi <strong>{{ $job?->title }}</strong>. Berikut data diri saya:</p>
 
-**Nama:** {{ $user?->name }}  
-**Email:** {{ $user?->email }}  
-@if ($user?->phone)
-**Telepon:** {{ $user->phone }}  
-@endif
-@if ($profile?->headline)
-**Headline:** {{ $profile->headline }}  
-@endif
-@if ($application->expected_salary)
-**Ekspektasi gaji:** Rp {{ number_format($application->expected_salary, 0, ',', '.') }}  
-@endif
+    <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px;">
+        <tr><td style="padding:2px 16px 2px 0;color:#6b7280;">Nama</td><td>{{ $user?->name }}</td></tr>
+        <tr><td style="padding:2px 16px 2px 0;color:#6b7280;">Email</td><td>{{ $user?->email }}</td></tr>
+        @if ($user?->phone)
+            <tr><td style="padding:2px 16px 2px 0;color:#6b7280;">Telepon</td><td>{{ $user->phone }}</td></tr>
+        @endif
+        @if ($profile?->headline)
+            <tr><td style="padding:2px 16px 2px 0;color:#6b7280;">Profil singkat</td><td>{{ $profile->headline }}</td></tr>
+        @endif
+        @if ($application->expected_salary)
+            <tr><td style="padding:2px 16px 2px 0;color:#6b7280;">Ekspektasi gaji</td><td>Rp {{ number_format($application->expected_salary, 0, ',', '.') }}</td></tr>
+        @endif
+    </table>
 
-@if ($application->cover_letter)
-**Surat lamaran**
+    @if ($coverLetter)
+        <p style="white-space:pre-line;">{{ $coverLetter }}</p>
+    @endif
 
-{{ trim(html_entity_decode(strip_tags(preg_replace('#<(br|/p|/li|/h[1-6])[^>]*>#i', "\n", $application->cover_letter)), ENT_QUOTES | ENT_HTML5)) }}
-@endif
+    @if ($application->candidateCv?->file_path)
+        <p>CV saya terlampir pada email ini.</p>
+    @endif
 
-@if ($application->candidateCv?->file_path)
-CV kandidat terlampir.
-@endif
+    <p>Terima kasih atas waktu dan perhatiannya.</p>
 
-Balas email ini untuk menghubungi kandidat secara langsung.
-
-<x-mail::subcopy>
-Anda menerima email ini karena alamat ini terdaftar sebagai email rekrutmen {{ $job?->company?->name }} di KarirConnect. Jika ini keliru, balas email ini dan kami akan berhenti meneruskan lamaran.
-</x-mail::subcopy>
-</x-mail::message>
+    <p>Hormat saya,<br>{{ $user?->name }}</p>
+</body>
+</html>

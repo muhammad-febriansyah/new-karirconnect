@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\EducationLevel;
 use App\Enums\EmploymentType;
 use App\Enums\ExperienceLevel;
+use App\Enums\JobSourceType;
 use App\Enums\JobStatus;
 use App\Enums\WorkArrangement;
 use Database\Factories\JobFactory;
@@ -204,10 +205,14 @@ class Job extends Model
      */
     public function externalRules(): array
     {
-        $rules = $this->isExternal() ? ($this->scrapedListing?->source?->config['rules'] ?? []) : [];
+        $source = $this->isExternal() ? $this->scrapedListing?->source : null;
+        $rules = $source?->config['rules'] ?? [];
 
         return [
-            'attribution' => isset($rules['attribution']['name'], $rules['attribution']['url']) ? $rules['attribution'] : null,
+            // Shown publicly only for job feeds, whose terms require a credit.
+            'attribution' => $source?->type === JobSourceType::JobFeed && isset($rules['attribution']['name'], $rules['attribution']['url'])
+                ? $rules['attribution']
+                : null,
             'apply_external_only' => (bool) ($rules['apply_external_only'] ?? false),
             'no_structured_data' => (bool) ($rules['no_structured_data'] ?? false),
         ];

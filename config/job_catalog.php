@@ -99,7 +99,6 @@ return [
                 // Job pages only: /loker/<title>~<company>. Category pages
                 // (/loker/posisi/...) and the /en/ duplicates are skipped.
                 'url_pattern' => '^https://dealls\\.com/loker/[^/?#~]+~[^/?#]+$',
-                'rules' => ['attribution' => ['name' => 'Dealls', 'url' => 'https://dealls.com']],
             ],
             // One request per second, 150 job pages per run (fits the 300 s run
             // limit), every two hours; unread pages first, so all job pages
