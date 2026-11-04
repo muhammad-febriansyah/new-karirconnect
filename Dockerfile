@@ -32,6 +32,13 @@ RUN apt-get update \
 COPY docker/php/php.ini /etc/php/${PHP_VERSION}/fpm/conf.d/99-karirconnect.ini
 COPY docker/php/php.ini /etc/php/${PHP_VERSION}/cli/conf.d/99-karirconnect.ini
 COPY docker/php/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
+# FPM runs as www-data in the foreground: log to the container output and
+# skip the pid file (both default to root-only paths).
+RUN sed -i \
+      -e 's|^error_log = .*|error_log = /proc/self/fd/2|' \
+      -e 's|^pid = |;pid = |' \
+      /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+ && grep -q '^error_log = /proc/self/fd/2' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf
 
 WORKDIR /var/www/html
 
