@@ -26,5 +26,10 @@ crawler/.pytest_cache
 !.env.example
 !.env.docker.example
 *.sql
+*.sql.gz
+*.tgz
+*.tar
+*.tar.gz
+*.zip
 *.log
 docker-compose*.override.yml

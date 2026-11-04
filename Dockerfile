@@ -77,22 +77,33 @@ EXPOSE 9000
 ENTRYPOINT ["entrypoint"]
 CMD ["php-fpm", "-F"]
 
-# --------------------------------------------------------------- crawler
-FROM app AS crawler
-USER root
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-    CRAWLER_PYTHON=/opt/crawler-venv/bin/python \
-    CRAWLER_WORKER_PATH=/var/www/html/crawler
-
+# ------------------------------------------------------- crawler-runtime
+# Python, Playwright and Chromium only depend on the requirements files, so
+# this layer stays cached across code changes.
+FROM base AS crawler-runtime
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+COPY crawler/requirements.txt crawler/requirements-browser.txt /tmp/crawler/
 RUN apt-get update \
  && apt-get install -y --no-install-recommends python3 python3-venv \
  && python3 -m venv /opt/crawler-venv \
- && /opt/crawler-venv/bin/pip install --no-cache-dir -r crawler/requirements-browser.txt \
+ && /opt/crawler-venv/bin/pip install --no-cache-dir -r /tmp/crawler/requirements-browser.txt \
  && /opt/crawler-venv/bin/playwright install --with-deps chromium \
- && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /var/lib/apt/lists/* /tmp/crawler \
  && chmod -R a+rX /ms-playwright
 
+# --------------------------------------------------------------- crawler
+FROM crawler-runtime AS crawler
+ENV CRAWLER_PYTHON=/opt/crawler-venv/bin/python \
+    CRAWLER_WORKER_PATH=/var/www/html/crawler
+
+COPY --from=build --chown=www-data:www-data /var/www/html /var/www/html
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint \
+ && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+ && chown -R www-data:www-data storage bootstrap/cache
+
 USER www-data
+ENTRYPOINT ["entrypoint"]
 CMD ["php", "artisan", "queue:work", "crawler", "--queue=crawler", "--timeout=390", "--tries=1", "--max-time=3600"]
 
 # ------------------------------------------------------------------- web
