@@ -1,0 +1,142 @@
+# KarirConnect production stack.
+#
+#   cp .env.docker.example .env   # fill in the values
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# See docs/DEPLOY_DOCKER.md for the first deploy and the migration from the
+# current server.
+
+name: karirconnect
+
+x-php: &php
+  build:
+    context: .
+    target: app
+  image: karirconnect-app:${IMAGE_TAG:-latest}
+  env_file: .env
+  restart: unless-stopped
+  volumes:
+    - storage:/var/www/html/storage
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  networks: [internal]
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  app:
+    <<: *php
+    environment:
+      CONTAINER_ROLE: app
+      RUN_MIGRATIONS: "${RUN_MIGRATIONS:-true}"
+
+  queue:
+    <<: *php
+    environment:
+      CONTAINER_ROLE: queue
+    command: ["php", "artisan", "queue:work", "--queue=default", "--tries=3", "--backoff=30", "--max-time=3600"]
+    depends_on:
+      app:
+        condition: service_started
+
+  crawler:
+    <<: *php
+    build:
+      context: .
+      target: crawler
+    image: karirconnect-crawler:${IMAGE_TAG:-latest}
+    environment:
+      CONTAINER_ROLE: crawler
+      CRAWLER_PYTHON: /opt/crawler-venv/bin/python
+      CRAWLER_WORKER_PATH: /var/www/html/crawler
+    # Chromium needs shared memory; keep the browser from starving the app.
+    shm_size: 512m
+    mem_limit: 2g
+    depends_on:
+      app:
+        condition: service_started
+
+  scheduler:
+    <<: *php
+    environment:
+      CONTAINER_ROLE: scheduler
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      app:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      target: web
+    image: karirconnect-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - storage:/var/www/html/storage:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_started
+    networks: [internal]
+    logging: *logging
+
+  mysql:
+    image: mysql:8.4.3
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:?set DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME:?set DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD}
+      TZ: Asia/Jakarta
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [internal]
+    logging: *logging
+
+  redis:
+    image: redis:7.4.1-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD}"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks: [internal]
+    logging: *logging
+
+volumes:
+  storage:
+  mysql:
+  redis:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:

@@ -10,6 +10,7 @@ use App\Http\Middleware\EnsureOnboardingCompleted;
 use App\Http\Middleware\EnsureSubscriptionActive;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,6 +27,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['sidebar_state']);
+
+        // Every response, web and API alike.
+        $middleware->append(SecurityHeaders::class);
+
+        /*
+         * Behind a reverse proxy (the Docker nginx, a load balancer or
+         * Cloudflare) the app must trust X-Forwarded-Proto to know a request
+         * was HTTPS: HSTS and secure cookies depend on it. Comma-separated
+         * IPs/CIDRs, or "*" when the app port is reachable only by the proxy.
+         */
+        if (filled(env('TRUSTED_PROXIES'))) {
+            $middleware->trustProxies(at: env('TRUSTED_PROXIES') === '*' ? '*' : array_map('trim', explode(',', (string) env('TRUSTED_PROXIES'))));
+        }
 
         $middleware->web(append: [
             HandleInertiaRequests::class,

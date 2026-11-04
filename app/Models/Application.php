@@ -22,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'screening_score',
     'current_stage',
     'applied_at',
+    'relayed_at',
+    'relay_error',
     'reviewed_at',
 ])]
 class Application extends Model
@@ -41,6 +43,7 @@ class Application extends Model
             'ai_match_score' => 'integer',
             'screening_score' => 'integer',
             'applied_at' => 'datetime',
+            'relayed_at' => 'datetime',
             'reviewed_at' => 'datetime',
         ];
     }

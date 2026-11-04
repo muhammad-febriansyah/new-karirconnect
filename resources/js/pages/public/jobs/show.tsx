@@ -19,9 +19,10 @@ import {
     Sparkles,
     Users,
     Wallet,
-    type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { StatusBadge } from '@/components/feedback/status-badge';
 import { SeoHead } from '@/components/seo-head';
 import { SafeHtml } from '@/components/shared/safe-html';
@@ -39,15 +40,15 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnalyticsEvent, trackEvent } from '@/lib/analytics';
 import { formatDate } from '@/lib/format-date';
-import { stripHtml } from '@/lib/sanitize-html';
 import { formatStatus } from '@/lib/format-status';
+import { stripHtml } from '@/lib/sanitize-html';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
-import { index as jobBrowseIndex } from '@/routes/public/jobs';
 import {
     destroy as savedJobDestroy,
     store as savedJobStore,
 } from '@/routes/employee/saved-jobs';
+import { index as jobBrowseIndex } from '@/routes/public/jobs';
 import type { Auth } from '@/types';
 
 type Job = {
@@ -88,6 +89,11 @@ type Job = {
     }[];
     views_count: number;
     applications_count: number;
+    external: {
+        relay_enabled: boolean;
+        apply_url: string | null;
+        attribution: { name: string; url: string } | null;
+    } | null;
 };
 
 type MatchBreakdown = {
@@ -125,7 +131,10 @@ type SimilarJob = {
 };
 
 function formatRupiah(value: number | null): string {
-    if (!value) return '';
+    if (!value) {
+        return '';
+    }
+
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -134,23 +143,49 @@ function formatRupiah(value: number | null): string {
 }
 
 function formatRupiahShort(value: number | null): string {
-    if (!value) return '';
-    if (value >= 1_000_000)
+    if (!value) {
+        return '';
+    }
+
+    if (value >= 1_000_000) {
         return `Rp ${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)}jt`;
-    if (value >= 1_000) return `Rp ${(value / 1_000).toFixed(0)}rb`;
+    }
+
+    if (value >= 1_000) {
+        return `Rp ${(value / 1_000).toFixed(0)}rb`;
+    }
+
     return `Rp ${value}`;
 }
 
 function formatRelative(iso: string | null): string {
-    if (!iso) return '';
+    if (!iso) {
+        return '';
+    }
+
     const ms = Date.now() - new Date(iso).getTime();
     const min = Math.floor(ms / 60000);
-    if (min < 1) return 'baru saja';
-    if (min < 60) return `${min} menit lalu`;
+
+    if (min < 1) {
+        return 'baru saja';
+    }
+
+    if (min < 60) {
+        return `${min} menit lalu`;
+    }
+
     const hr = Math.floor(min / 60);
-    if (hr < 24) return `${hr} jam lalu`;
+
+    if (hr < 24) {
+        return `${hr} jam lalu`;
+    }
+
     const day = Math.floor(hr / 24);
-    if (day < 30) return `${day} hari lalu`;
+
+    if (day < 30) {
+        return `${day} hari lalu`;
+    }
+
     return new Date(iso).toLocaleDateString('id-ID', {
         day: '2-digit',
         month: 'short',
@@ -159,8 +194,12 @@ function formatRelative(iso: string | null): string {
 }
 
 function daysUntil(iso: string | null): number | null {
-    if (!iso) return null;
+    if (!iso) {
+        return null;
+    }
+
     const diff = new Date(iso).getTime() - Date.now();
+
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
@@ -178,6 +217,24 @@ export default function PublicJobShow({
     isSaved,
     similar,
 }: Props) {
+    // Jobs Eksternal without a recruitment email: apply on the company site.
+    const appliesExternally =
+        job.external !== null &&
+        !job.external.relay_enabled &&
+        !!job.external.apply_url;
+    const applyLink = (label: string) =>
+        appliesExternally ? (
+            <a
+                href={job.external?.apply_url ?? '#'}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+            >
+                {label === 'Lamar' ? 'Lamar' : 'Lamar di situs perusahaan'}
+            </a>
+        ) : (
+            <Link href={`/jobs/${job.slug}/apply`}>{label}</Link>
+        );
+
     const auth = (usePage().props as unknown as { auth?: Auth }).auth;
     const isEmployee = auth?.user?.role === 'employee';
     const [copied, setCopied] = useState(false);
@@ -222,26 +279,36 @@ export default function PublicJobShow({
     const remainingDays = daysUntil(job.application_deadline);
 
     const salaryLabel = useMemo(() => {
-        if (!job.is_salary_visible || !job.salary_min) return null;
+        if (!job.is_salary_visible || !job.salary_min) {
+            return null;
+        }
+
         if (job.salary_max && job.salary_max !== job.salary_min) {
             return `${formatRupiahShort(job.salary_min)} – ${formatRupiahShort(job.salary_max)}`;
         }
+
         return formatRupiahShort(job.salary_min);
     }, [job.is_salary_visible, job.salary_min, job.salary_max]);
 
     const fullSalaryLabel = useMemo(() => {
-        if (!job.is_salary_visible || !job.salary_min) return null;
+        if (!job.is_salary_visible || !job.salary_min) {
+            return null;
+        }
+
         if (job.salary_max && job.salary_max !== job.salary_min) {
             return `${formatRupiah(job.salary_min)} – ${formatRupiah(job.salary_max)}`;
         }
+
         return formatRupiah(job.salary_min);
     }, [job.is_salary_visible, job.salary_min, job.salary_max]);
 
     const toggleSave = () => {
         if (!auth?.user) {
             router.visit('/login');
+
             return;
         }
+
         if (isSaved) {
             router.delete(savedJobDestroy(job.slug).url, {
                 preserveScroll: true,
@@ -258,14 +325,17 @@ export default function PublicJobShow({
     const handleShare = async () => {
         const url = typeof window !== 'undefined' ? window.location.href : '';
         const title = `${job.title} – ${job.is_anonymous ? 'KarirConnect' : job.company.name}`;
+
         if (typeof navigator !== 'undefined' && 'share' in navigator) {
             try {
                 await navigator.share({ title, url });
+
                 return;
             } catch {
                 // user dismissed, fall through to copy
             }
         }
+
         if (typeof navigator !== 'undefined' && navigator.clipboard) {
             await navigator.clipboard.writeText(url);
             setCopied(true);
@@ -455,9 +525,7 @@ export default function PublicJobShow({
                                     size="lg"
                                     className="h-11 flex-1 rounded-xl bg-brand-blue px-6 hover:bg-brand-blue/90 sm:flex-none"
                                 >
-                                    <Link href={`/jobs/${job.slug}/apply`}>
-                                        Lamar Sekarang
-                                    </Link>
+                                    {applyLink('Lamar Sekarang')}
                                 </Button>
                                 <div className="flex gap-2">
                                     {isEmployee && (
@@ -595,6 +663,21 @@ export default function PublicJobShow({
                                 </span>{' '}
                                 pelamar
                             </span>
+                            {job.external?.attribution && (
+                                // Required by the feed's terms: credit it with a
+                                // followed link back to the original posting.
+                                <span className="inline-flex items-center gap-1.5">
+                                    Sumber:{' '}
+                                    <a
+                                        href={job.external.attribution.url}
+                                        target="_blank"
+                                        rel="noopener"
+                                        className="font-medium text-brand-blue hover:underline"
+                                    >
+                                        {job.external.attribution.name}
+                                    </a>
+                                </span>
+                            )}
                             {job.screening_questions.length > 0 && (
                                 <span className="inline-flex items-center gap-1.5">
                                     <ClipboardCheck className="size-4" />
@@ -702,9 +785,7 @@ export default function PublicJobShow({
                                 size="lg"
                                 className="mt-4 h-11 w-full rounded-xl bg-brand-blue hover:bg-brand-blue/90"
                             >
-                                <Link href={`/jobs/${job.slug}/apply`}>
-                                    Lamar Sekarang
-                                </Link>
+                                {applyLink('Lamar Sekarang')}
                             </Button>
                             <div className="mt-2 grid grid-cols-2 gap-2">
                                 {isEmployee && (
@@ -956,7 +1037,7 @@ export default function PublicJobShow({
                         size="lg"
                         className="h-10 shrink-0 rounded-xl bg-brand-blue px-5 hover:bg-brand-blue/90"
                     >
-                        <Link href={`/jobs/${job.slug}/apply`}>Lamar</Link>
+                        {applyLink('Lamar')}
                     </Button>
                 </div>
             </div>
@@ -1020,10 +1101,14 @@ function Highlight({
 
 function SimilarJobsCard({ jobs }: { jobs: SimilarJob[] }) {
     const formatSalary = (s: SimilarJob): string | null => {
-        if (!s.is_salary_visible || !s.salary_min) return null;
+        if (!s.is_salary_visible || !s.salary_min) {
+            return null;
+        }
+
         if (s.salary_max && s.salary_max !== s.salary_min) {
             return `${formatRupiahShort(s.salary_min)} – ${formatRupiahShort(s.salary_max)}`;
         }
+
         return formatRupiahShort(s.salary_min);
     };
 

@@ -1,0 +1,42 @@
+{
+  "jobs": [
+    {
+      "id": 4011001,
+      "title": "Backend Engineer (Go)",
+      "company_name": "Contoh Teknologi",
+      "absolute_url": "https://job-boards.greenhouse.io/contohtek/jobs/4011001",
+      "location": {"name": "Jakarta, Indonesia"},
+      "updated_at": "2026-10-28T12:00:00+07:00",
+      "first_published": "2026-10-01T09:00:00+07:00",
+      "application_deadline": "2026-12-31",
+      "metadata": [
+        {"id": 1, "name": "Employment Type", "value": "Full-time", "value_type": "single_select"},
+        {"id": 2, "name": "Workplace Type", "value": "Hybrid", "value_type": "single_select"}
+      ],
+      "departments": [{"id": 10, "name": "Engineering"}],
+      "offices": [{"id": 20, "name": "Jakarta"}],
+      "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;Kami membangun platform logistik.&lt;/p&gt;&lt;/div&gt;&lt;h3&gt;What you&amp;#39;ll do&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;Build APIs in Go&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Kualifikasi&lt;/strong&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;3+ tahun pengalaman&lt;/li&gt;&lt;/ul&gt;&lt;h3&gt;Benefits&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;BPJS&lt;/li&gt;&lt;/ul&gt;"
+    },
+    {
+      "id": 4011002,
+      "title": "Data Analyst",
+      "company_name": "Contoh Teknologi",
+      "absolute_url": "https://job-boards.greenhouse.io/contohtek/jobs/4011002",
+      "location": {"name": "Remote"},
+      "updated_at": "2026-10-20T12:00:00Z",
+      "first_published": null,
+      "metadata": [],
+      "departments": [],
+      "offices": [],
+      "content": "&lt;p&gt;Analyse data.&lt;/p&gt;"
+    },
+    {
+      "id": 4011003,
+      "title": "   ",
+      "absolute_url": "https://job-boards.greenhouse.io/contohtek/jobs/4011003",
+      "location": {"name": "Bandung"},
+      "content": ""
+    }
+  ],
+  "meta": {"total": 3}
+}

@@ -21,6 +21,12 @@ use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReviewModerationController;
 use App\Http\Controllers\Admin\SalaryInsightController;
+use App\Http\Controllers\Admin\Scraper\CrawlErrorController;
+use App\Http\Controllers\Admin\Scraper\CrawlRunController;
+use App\Http\Controllers\Admin\Scraper\ExternalJobController;
+use App\Http\Controllers\Admin\Scraper\JobSourceController;
+use App\Http\Controllers\Admin\Scraper\ScrapedJobListingController;
+use App\Http\Controllers\Admin\Scraper\ScraperDashboardController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ShowcaseDataController;
 use App\Http\Controllers\Admin\SkillController;
@@ -115,6 +121,42 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 
         Route::resource('jobs', JobController::class)
             ->only(['index', 'show', 'update', 'destroy']);
+
+        /*
+         * Job scraper: external sources, crawl runs, their results and logs.
+         * Every action that starts or stops a crawl is a POST.
+         */
+        Route::prefix('scraper')
+            ->as('scraper.')
+            ->group(function (): void {
+                Route::get('/', [ScraperDashboardController::class, 'index'])->name('dashboard');
+
+                Route::resource('sources', JobSourceController::class)
+                    ->except(['show'])
+                    ->parameters(['sources' => 'jobSource']);
+                Route::post('sources/{jobSource}/run', [JobSourceController::class, 'run'])->name('sources.run');
+
+                Route::get('listings', [ScrapedJobListingController::class, 'index'])->name('listings.index');
+                Route::get('listings/{listing}', [ScrapedJobListingController::class, 'show'])->name('listings.show');
+                Route::get('listings/{listing}/edit', [ScrapedJobListingController::class, 'edit'])->name('listings.edit');
+                Route::put('listings/{listing}', [ScrapedJobListingController::class, 'update'])->name('listings.update');
+                Route::delete('listings/{listing}', [ScrapedJobListingController::class, 'destroy'])->name('listings.destroy');
+                Route::patch('listings/{listing}/visibility', [ScrapedJobListingController::class, 'toggleVisibility'])->name('listings.visibility');
+
+                Route::get('runs', [CrawlRunController::class, 'index'])->name('runs.index');
+                Route::get('runs/{run}', [CrawlRunController::class, 'show'])->name('runs.show');
+                Route::post('runs/{run}/retry', [CrawlRunController::class, 'retry'])->name('runs.retry');
+                Route::post('runs/{run}/cancel', [CrawlRunController::class, 'cancel'])->name('runs.cancel');
+
+                Route::get('logs', [CrawlErrorController::class, 'index'])->name('logs.index');
+
+                // Jobs Eksternal: the "Scrap" dialog and publishing to the portal.
+                Route::post('scrape', [ExternalJobController::class, 'scrape'])->name('scrape.start');
+                Route::get('scrape/status', [ExternalJobController::class, 'status'])->name('scrape.status');
+                Route::get('scrape/results', [ExternalJobController::class, 'results'])->name('scrape.results');
+                Route::post('listings/publish', [ExternalJobController::class, 'publish'])->name('listings.publish');
+                Route::patch('companies/{company}/recruitment-email', [ExternalJobController::class, 'updateRecruitmentEmail'])->name('companies.recruitment-email');
+            });
 
         Route::prefix('companies')
             ->name('companies.')

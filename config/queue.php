@@ -44,6 +44,26 @@ return [
             'after_commit' => false,
         ],
 
+        /*
+         * Job scraper runs last minutes, far past the default 90s retry_after.
+         * A separate connection keeps a long crawl from being handed to a
+         * second worker while the first is still running it. Keep
+         * retry_after above crawler.timeout_seconds + the job's extra 90s.
+         */
+        'crawler' => [
+            'driver' => env('CRAWLER_QUEUE_DRIVER', 'database'),
+            // "connection" means the DB connection for the database driver and
+            // the Redis connection for the redis driver.
+            'connection' => env('CRAWLER_QUEUE_DRIVER', 'database') === 'redis'
+                ? env('REDIS_QUEUE_CONNECTION', 'default')
+                : env('DB_QUEUE_CONNECTION'),
+            'block_for' => null,
+            'table' => env('DB_QUEUE_TABLE', 'jobs'),
+            'queue' => env('CRAWLER_QUEUE', 'crawler'),
+            'retry_after' => (int) env('CRAWLER_QUEUE_RETRY_AFTER', 600),
+            'after_commit' => true,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => env('BEANSTALKD_QUEUE_HOST', 'localhost'),

@@ -65,6 +65,10 @@ class JobBrowseController extends Controller
             'city.province:id,name',
             'skills:id,name',
             'screeningQuestions',
+            'scrapedListing:id,scraped_company_id,job_source_id,apply_url',
+            'scrapedListing.origins:id,scraped_job_listing_id,job_source_id,source_url',
+            'scrapedListing.company:id,recruitment_email',
+            'scrapedListing.source' => fn ($query) => $query->withTrashed(),
         ]);
 
         $this->jobs->incrementViews($job);
@@ -195,6 +199,20 @@ class JobBrowseController extends Controller
             ])->values(),
             'views_count' => $job->views_count,
             'applications_count' => $job->applications_count,
+            // Jobs Eksternal: apply here when the application can be forwarded
+            // by email, otherwise on the company's own site.
+            'external' => $job->isExternal() ? [
+                'relay_enabled' => $job->relayEmail() !== null,
+                'apply_url' => $job->external_apply_url,
+                // Feeds require crediting them with a followed link back.
+                'attribution' => ($attribution = $job->externalRules()['attribution']) ? [
+                    'name' => $attribution['name'],
+                    // The listing's page on that feed, as its terms ask.
+                    'url' => $job->scrapedListing?->origins->firstWhere('job_source_id', $job->scrapedListing->job_source_id)?->source_url
+                        ?? $job->scrapedListing?->apply_url
+                        ?? $attribution['url'],
+                ] : null,
+            ] : null,
         ];
     }
 

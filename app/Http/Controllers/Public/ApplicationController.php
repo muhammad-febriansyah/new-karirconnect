@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class ApplicationController extends Controller
 {
@@ -21,9 +22,15 @@ class ApplicationController extends Controller
         private readonly EmployeeProfileService $profiles,
     ) {}
 
-    public function create(Request $request, Job $job): Response|RedirectResponse
+    public function create(Request $request, Job $job): Response|RedirectResponse|SymfonyResponse
     {
         abort_unless($job->status === JobStatus::Published, 404);
+
+        // An external job nobody can receive applications for here: send the
+        // candidate to the company's own apply page.
+        if ($job->isExternal() && $job->relayEmail() === null && filled($job->external_apply_url)) {
+            return Inertia::location($job->external_apply_url);
+        }
 
         $user = $request->user();
         if ($user === null || $user->role->value !== 'employee') {
@@ -48,6 +55,8 @@ class ApplicationController extends Controller
                 'slug' => $job->slug,
                 'title' => $job->title,
                 'company' => ['id' => $job->company?->id, 'name' => $job->company?->name],
+                // Shown on the form: the application is forwarded by email.
+                'relayed_to_company' => $job->isExternal(),
                 'screening_questions' => $job->screeningQuestions->map(fn ($q) => [
                     'id' => $q->id,
                     'question' => $q->question,

@@ -1,0 +1,9 @@
+[project]
+name = "karir-crawler"
+version = "0.1.0"
+description = "Job source crawler worker for KarirConnect (called by Laravel over stdin/stdout)."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

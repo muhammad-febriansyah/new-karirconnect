@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'company_id',
+    'scraped_job_listing_id',
+    'external_apply_url',
     'posted_by_user_id',
     'job_category_id',
     'title',
@@ -171,5 +173,54 @@ class Job extends Model
     public function views(): HasMany
     {
         return $this->hasMany(JobView::class);
+    }
+
+    /**
+     * The scraped listing this job was published from (Jobs Eksternal).
+     *
+     * @return BelongsTo<ScrapedJobListing, $this>
+     */
+    public function scrapedListing(): BelongsTo
+    {
+        return $this->belongsTo(ScrapedJobListing::class, 'scraped_job_listing_id');
+    }
+
+    public function isExternal(): bool
+    {
+        return $this->scraped_job_listing_id !== null;
+    }
+
+    /**
+     * Where applications to this external job are forwarded, if an admin has
+     * set a recruitment email for the company. Null means the candidate is
+     * sent to the original apply page instead.
+     */
+    /**
+     * Terms of the source this external job came from (set in
+     * config/job_catalog.php): attribution, apply on the original page only,
+     * and whether its listings may be re-shared as structured data.
+     *
+     * @return array{attribution: array{name: string, url: string}|null, apply_external_only: bool, no_structured_data: bool}
+     */
+    public function externalRules(): array
+    {
+        $rules = $this->isExternal() ? ($this->scrapedListing?->source?->config['rules'] ?? []) : [];
+
+        return [
+            'attribution' => isset($rules['attribution']['name'], $rules['attribution']['url']) ? $rules['attribution'] : null,
+            'apply_external_only' => (bool) ($rules['apply_external_only'] ?? false),
+            'no_structured_data' => (bool) ($rules['no_structured_data'] ?? false),
+        ];
+    }
+
+    public function relayEmail(): ?string
+    {
+        if (! $this->isExternal() || $this->externalRules()['apply_external_only']) {
+            return null;
+        }
+
+        $email = $this->scrapedListing?->company?->recruitment_email;
+
+        return filled($email) ? $email : null;
     }
 }

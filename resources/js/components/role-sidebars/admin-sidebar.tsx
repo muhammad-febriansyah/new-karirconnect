@@ -5,6 +5,10 @@ import {
     Bot,
     BriefcaseBusiness,
     Building2,
+    Bug,
+    CloudDownload,
+    Gauge,
+    ListChecks,
     ClipboardList,
     CreditCard,
     DatabaseBackup,
@@ -44,6 +48,10 @@ import PaymentController from '@/actions/App/Http/Controllers/Admin/PaymentContr
 import ReportController from '@/actions/App/Http/Controllers/Admin/ReportController';
 import ReviewModerationController from '@/actions/App/Http/Controllers/Admin/ReviewModerationController';
 import SalaryInsightController from '@/actions/App/Http/Controllers/Admin/SalaryInsightController';
+import CrawlErrorController from '@/actions/App/Http/Controllers/Admin/Scraper/CrawlErrorController';
+import CrawlRunController from '@/actions/App/Http/Controllers/Admin/Scraper/CrawlRunController';
+import ScrapedJobListingController from '@/actions/App/Http/Controllers/Admin/Scraper/ScrapedJobListingController';
+import ScraperDashboardController from '@/actions/App/Http/Controllers/Admin/Scraper/ScraperDashboardController';
 import ShowcaseDataController from '@/actions/App/Http/Controllers/Admin/ShowcaseDataController';
 import SubscriptionController from '@/actions/App/Http/Controllers/Admin/SubscriptionController';
 import SubscriptionPlanController from '@/actions/App/Http/Controllers/Admin/SubscriptionPlanController';
@@ -130,6 +138,31 @@ export const adminMainNavSections: NavSection[] = [
                 title: 'Soal Asesmen',
                 href: AssessmentQuestionController.index().url,
                 icon: ClipboardList,
+            },
+        ],
+    },
+    {
+        label: 'Jobs Eksternal',
+        items: [
+            {
+                title: 'Jobs Eksternal',
+                href: ScrapedJobListingController.index().url,
+                icon: CloudDownload,
+            },
+            {
+                title: 'Ringkasan Scraper',
+                href: ScraperDashboardController.index().url,
+                icon: Gauge,
+            },
+            {
+                title: 'Monitoring Crawl',
+                href: CrawlRunController.index().url,
+                icon: ListChecks,
+            },
+            {
+                title: 'Log Crawl',
+                href: CrawlErrorController.index().url,
+                icon: Bug,
             },
         ],
     },

@@ -6,6 +6,7 @@ use App\Enums\AiInterviewMode;
 use App\Enums\AiInterviewStatus;
 use App\Enums\ApplicationStatus;
 use App\Enums\JobStatus;
+use App\Jobs\RelayExternalApplicationJob;
 use App\Models\AiInterviewSession;
 use App\Models\Application;
 use App\Models\ApplicationScreeningAnswer;
@@ -39,6 +40,13 @@ class SubmitApplicationAction
     {
         if ($job->status !== JobStatus::Published) {
             throw ValidationException::withMessages(['job' => 'Lowongan tidak menerima lamaran saat ini.']);
+        }
+
+        // External jobs take applications here only when they can be
+        // forwarded to the company; otherwise the candidate applies on the
+        // company's own site.
+        if ($job->isExternal() && $job->relayEmail() === null) {
+            throw ValidationException::withMessages(['job' => 'Lowongan ini dilamar langsung di situs perusahaan.']);
         }
 
         if (Application::query()->where('job_id', $job->id)->where('employee_profile_id', $profile->id)->exists()) {
@@ -88,8 +96,14 @@ class SubmitApplicationAction
             $this->applications->syncMatchScore($application);
             $this->applications->incrementJobCounter($job);
 
-            $employer = $job->postedBy ?? $job->company?->owner;
-            $employer?->notify(new ApplicationSubmittedNotification($application->fresh()));
+            if ($job->isExternal()) {
+                // No employer account exists for an external job: forward the
+                // application to the company's recruitment email instead.
+                RelayExternalApplicationJob::dispatch($application->id)->afterCommit();
+            } else {
+                $employer = $job->postedBy ?? $job->company?->owner;
+                $employer?->notify(new ApplicationSubmittedNotification($application->fresh()));
+            }
 
             $this->maybeAutoInviteAiInterview($application, $job, $profile);
 

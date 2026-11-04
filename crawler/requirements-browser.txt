@@ -1,0 +1,4 @@
+# Optional: headless browser engine for JavaScript-only career pages.
+# After installing, also run: .venv/bin/playwright install chromium
+-r requirements.txt
+playwright==1.52.0

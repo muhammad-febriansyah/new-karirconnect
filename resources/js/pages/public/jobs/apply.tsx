@@ -12,7 +12,8 @@ import {
     ShieldCheck,
     Wallet,
 } from 'lucide-react';
-import { useEffect, useMemo, type FormEvent } from 'react';
+import { useEffect, useMemo  } from 'react';
+import type {FormEvent} from 'react';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { MoneyInput } from '@/components/form/money-input';
 import { RichTextEditor } from '@/components/form/rich-text-editor';
@@ -38,6 +39,7 @@ type Props = {
         slug: string;
         title: string;
         company: { id: number | null; name: string | null };
+        relayed_to_company?: boolean;
         screening_questions: Question[];
     };
     profile: {
@@ -70,20 +72,25 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
     const form = useForm({
         cover_letter: '',
         expected_salary: profile.expected_salary ?? '',
-        candidate_cv_id: profile.primary_cv_id ?? (profile.cvs[0]?.id ?? null),
+        candidate_cv_id: profile.primary_cv_id ?? profile.cvs[0]?.id ?? null,
         answers: job.screening_questions.map((q, i) => ({
             question_id: q.id,
-            answer: i === salaryQuestionIdx && profile.expected_salary
-                ? String(profile.expected_salary)
-                : '',
+            answer:
+                i === salaryQuestionIdx && profile.expected_salary
+                    ? String(profile.expected_salary)
+                    : '',
         })),
     });
 
     // Mirror salary screening answer into expected_salary so backend keeps the
     // dedicated column populated even when only the screening question is shown.
     useEffect(() => {
-        if (!hasSalaryQuestion) return;
+        if (!hasSalaryQuestion) {
+return;
+}
+
         const ans = form.data.answers[salaryQuestionIdx]?.answer ?? '';
+
         if (String(form.data.expected_salary ?? '') !== ans) {
             form.setData('expected_salary', ans === '' ? '' : ans);
         }
@@ -98,19 +105,32 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
     const completion = useMemo(() => {
         const checks = [
             Boolean(form.data.candidate_cv_id),
-            Boolean(form.data.cover_letter && form.data.cover_letter.replace(/<[^>]+>/g, '').trim().length > 0),
+            Boolean(
+                form.data.cover_letter &&
+                form.data.cover_letter.replace(/<[^>]+>/g, '').trim().length >
+                    0,
+            ),
             hasSalaryQuestion
                 ? Boolean(form.data.answers[salaryQuestionIdx]?.answer)
                 : Boolean(form.data.expected_salary),
-            job.screening_questions.length === 0
-                || job.screening_questions.every((q, idx) => {
-                    if (!q.is_required) return true;
+            job.screening_questions.length === 0 ||
+                job.screening_questions.every((q, idx) => {
+                    if (!q.is_required) {
+return true;
+}
+
                     return Boolean(form.data.answers[idx]?.answer);
                 }),
         ];
         const done = checks.filter(Boolean).length;
+
         return Math.round((done / checks.length) * 100);
-    }, [form.data, job.screening_questions, hasSalaryQuestion, salaryQuestionIdx]);
+    }, [
+        form.data,
+        job.screening_questions,
+        hasSalaryQuestion,
+        salaryQuestionIdx,
+    ]);
 
     if (alreadyApplied) {
         return (
@@ -124,11 +144,14 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                     <div className="flex justify-center gap-2">
                         <Button asChild variant="outline">
                             <Link href={`/jobs/${job.slug}`}>
-                                <ArrowLeft className="size-4" /> Kembali ke Lowongan
+                                <ArrowLeft className="size-4" /> Kembali ke
+                                Lowongan
                             </Link>
                         </Button>
                         <Button asChild>
-                            <Link href="/employee/applications">Lihat Status Lamaran</Link>
+                            <Link href="/employee/applications">
+                                Lihat Status Lamaran
+                            </Link>
                         </Button>
                     </div>
                 </div>
@@ -148,27 +171,49 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                             href={`/jobs/${job.slug}`}
                             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-brand-blue"
                         >
-                            <ArrowLeft className="size-3" /> Kembali ke detail lowongan
+                            <ArrowLeft className="size-3" /> Kembali ke detail
+                            lowongan
                         </Link>
                         <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-navy sm:text-3xl">
                             Lamar: {job.title}
                         </h1>
                         {job.company.name && (
-                            <p className="mt-0.5 text-sm text-muted-foreground">{job.company.name}</p>
+                            <p className="mt-0.5 text-sm text-muted-foreground">
+                                {job.company.name}
+                            </p>
                         )}
                     </div>
-                    <Badge variant="secondary" className="self-start sm:self-end">
+                    <Badge
+                        variant="secondary"
+                        className="self-start sm:self-end"
+                    >
                         {completion}% lengkap
                     </Badge>
                 </div>
 
-                {((form.errors as Record<string, string>).profile || (form.errors as Record<string, string>).job) && (
-                    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                        {(form.errors as Record<string, string>).profile ?? (form.errors as Record<string, string>).job}
+                {job.relayed_to_company && (
+                    <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
+                        Lowongan ini berasal dari halaman karier{' '}
+                        {job.company.name ?? 'perusahaan'}. Dengan mengirim
+                        lamaran, nama, email, telepon, surat lamaran, dan CV
+                        Anda akan diteruskan lewat email ke tim rekrutmen
+                        perusahaan tersebut, dan mereka akan menghubungi Anda
+                        langsung.
                     </div>
                 )}
 
-                <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+                {((form.errors as Record<string, string>).profile ||
+                    (form.errors as Record<string, string>).job) && (
+                    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+                        {(form.errors as Record<string, string>).profile ??
+                            (form.errors as Record<string, string>).job}
+                    </div>
+                )}
+
+                <form
+                    onSubmit={onSubmit}
+                    className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start"
+                >
                     {/* ===== Main column ===== */}
                     <div className="space-y-5">
                         {/* CV picker */}
@@ -184,12 +229,24 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                 />
                             ) : (
                                 <RadioGroup
-                                    value={String(form.data.candidate_cv_id ?? '')}
-                                    onValueChange={(v) => form.setData('candidate_cv_id', Number(v))}
+                                    value={String(
+                                        form.data.candidate_cv_id ?? '',
+                                    )}
+                                    onValueChange={(v) =>
+                                        form.setData(
+                                            'candidate_cv_id',
+                                            Number(v),
+                                        )
+                                    }
                                     className="grid gap-2 sm:grid-cols-2"
                                 >
                                     {profile.cvs.map((cv) => {
-                                        const checked = String(cv.id) === String(form.data.candidate_cv_id ?? '');
+                                        const checked =
+                                            String(cv.id) ===
+                                            String(
+                                                form.data.candidate_cv_id ?? '',
+                                            );
+
                                         return (
                                             <Label
                                                 key={cv.id}
@@ -213,7 +270,7 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                                             {cv.label}
                                                         </span>
                                                     </div>
-                                                    <span className="mt-0.5 inline-block rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                                                    <span className="mt-0.5 inline-block rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
                                                         {cv.source}
                                                     </span>
                                                 </div>
@@ -234,7 +291,9 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                             <RichTextEditor
                                 placeholder="Tulis pengantar singkat — pengalaman relevan, motivasi, atau pencapaian yang mendukung…"
                                 value={form.data.cover_letter}
-                                onChange={(html) => form.setData('cover_letter', html)}
+                                onChange={(html) =>
+                                    form.setData('cover_letter', html)
+                                }
                                 error={form.errors.cover_letter}
                             />
                         </FormCard>
@@ -248,11 +307,18 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                             >
                                 <MoneyInput
                                     value={form.data.expected_salary}
-                                    onChange={(value) => form.setData('expected_salary', value ?? '')}
+                                    onChange={(value) =>
+                                        form.setData(
+                                            'expected_salary',
+                                            value ?? '',
+                                        )
+                                    }
                                     placeholder="Rp 12.000.000"
                                 />
                                 {form.errors.expected_salary && (
-                                    <p className="mt-1.5 text-xs text-destructive">{form.errors.expected_salary}</p>
+                                    <p className="mt-1.5 text-xs text-destructive">
+                                        {form.errors.expected_salary}
+                                    </p>
                                 )}
                             </FormCard>
                         )}
@@ -270,28 +336,58 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                             key={q.id}
                                             className="space-y-2 rounded-lg border border-border/40 bg-muted/20 p-3"
                                         >
-                                            <Label className="text-sm font-medium leading-snug">
+                                            <Label className="text-sm leading-snug font-medium">
                                                 {q.question}
-                                                {q.is_required && <span className="ml-1 text-destructive">*</span>}
+                                                {q.is_required && (
+                                                    <span className="ml-1 text-destructive">
+                                                        *
+                                                    </span>
+                                                )}
                                             </Label>
                                             {q.type === 'yes_no' ? (
                                                 <RadioGroup
-                                                    value={String(form.data.answers[idx]?.answer ?? '')}
+                                                    value={String(
+                                                        form.data.answers[idx]
+                                                            ?.answer ?? '',
+                                                    )}
                                                     onValueChange={(v) => {
-                                                        const next = [...form.data.answers];
-                                                        next[idx] = { question_id: q.id, answer: v };
-                                                        form.setData('answers', next);
+                                                        const next = [
+                                                            ...form.data
+                                                                .answers,
+                                                        ];
+                                                        next[idx] = {
+                                                            question_id: q.id,
+                                                            answer: v,
+                                                        };
+                                                        form.setData(
+                                                            'answers',
+                                                            next,
+                                                        );
                                                     }}
                                                 >
                                                     <div className="flex gap-2">
                                                         {[
-                                                            { value: 'yes', label: 'Ya' },
-                                                            { value: 'no', label: 'Tidak' },
+                                                            {
+                                                                value: 'yes',
+                                                                label: 'Ya',
+                                                            },
+                                                            {
+                                                                value: 'no',
+                                                                label: 'Tidak',
+                                                            },
                                                         ].map((opt) => {
-                                                            const checked = form.data.answers[idx]?.answer === opt.value;
+                                                            const checked =
+                                                                form.data
+                                                                    .answers[
+                                                                    idx
+                                                                ]?.answer ===
+                                                                opt.value;
+
                                                             return (
                                                                 <Label
-                                                                    key={opt.value}
+                                                                    key={
+                                                                        opt.value
+                                                                    }
                                                                     htmlFor={`q-${q.id}-${opt.value}`}
                                                                     className={cn(
                                                                         'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all',
@@ -301,7 +397,9 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                                                     )}
                                                                 >
                                                                     <RadioGroupItem
-                                                                        value={opt.value}
+                                                                        value={
+                                                                            opt.value
+                                                                        }
                                                                         id={`q-${q.id}-${opt.value}`}
                                                                         className="size-3.5"
                                                                     />
@@ -313,14 +411,28 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                                 </RadioGroup>
                                             ) : SALARY_RE.test(q.question) ? (
                                                 <MoneyInput
-                                                    value={String(form.data.answers[idx]?.answer ?? '')}
+                                                    value={String(
+                                                        form.data.answers[idx]
+                                                            ?.answer ?? '',
+                                                    )}
                                                     onChange={(value) => {
-                                                        const next = [...form.data.answers];
+                                                        const next = [
+                                                            ...form.data
+                                                                .answers,
+                                                        ];
                                                         next[idx] = {
                                                             question_id: q.id,
-                                                            answer: value === null ? '' : String(value),
+                                                            answer:
+                                                                value === null
+                                                                    ? ''
+                                                                    : String(
+                                                                          value,
+                                                                      ),
                                                         };
-                                                        form.setData('answers', next);
+                                                        form.setData(
+                                                            'answers',
+                                                            next,
+                                                        );
                                                     }}
                                                     placeholder="Rp 0"
                                                 />
@@ -328,21 +440,47 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                                 <Input
                                                     type="number"
                                                     placeholder="Masukkan angka"
-                                                    value={String(form.data.answers[idx]?.answer ?? '')}
+                                                    value={String(
+                                                        form.data.answers[idx]
+                                                            ?.answer ?? '',
+                                                    )}
                                                     onChange={(e) => {
-                                                        const next = [...form.data.answers];
-                                                        next[idx] = { question_id: q.id, answer: e.target.value };
-                                                        form.setData('answers', next);
+                                                        const next = [
+                                                            ...form.data
+                                                                .answers,
+                                                        ];
+                                                        next[idx] = {
+                                                            question_id: q.id,
+                                                            answer: e.target
+                                                                .value,
+                                                        };
+                                                        form.setData(
+                                                            'answers',
+                                                            next,
+                                                        );
                                                     }}
                                                 />
                                             ) : (
                                                 <Input
                                                     placeholder="Tulis jawaban Anda…"
-                                                    value={String(form.data.answers[idx]?.answer ?? '')}
+                                                    value={String(
+                                                        form.data.answers[idx]
+                                                            ?.answer ?? '',
+                                                    )}
                                                     onChange={(e) => {
-                                                        const next = [...form.data.answers];
-                                                        next[idx] = { question_id: q.id, answer: e.target.value };
-                                                        form.setData('answers', next);
+                                                        const next = [
+                                                            ...form.data
+                                                                .answers,
+                                                        ];
+                                                        next[idx] = {
+                                                            question_id: q.id,
+                                                            answer: e.target
+                                                                .value,
+                                                        };
+                                                        form.setData(
+                                                            'answers',
+                                                            next,
+                                                        );
                                                     }}
                                                 />
                                             )}
@@ -357,8 +495,13 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                     <aside className="space-y-4 lg:sticky lg:top-20">
                         <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
                             <div className="mb-3 flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-brand-navy">Ringkasan</h3>
-                                <Badge variant="secondary" className="text-[10px]">
+                                <h3 className="text-sm font-bold text-brand-navy">
+                                    Ringkasan
+                                </h3>
+                                <Badge
+                                    variant="secondary"
+                                    className="text-[10px]"
+                                >
                                     {completion}%
                                 </Badge>
                             </div>
@@ -369,11 +512,16 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                 />
                             </div>
                             <ul className="space-y-2 text-xs">
-                                <ChecklistItem done={Boolean(form.data.candidate_cv_id)} label="CV terpilih" />
+                                <ChecklistItem
+                                    done={Boolean(form.data.candidate_cv_id)}
+                                    label="CV terpilih"
+                                />
                                 <ChecklistItem
                                     done={Boolean(
+                                        form.data.cover_letter &&
                                         form.data.cover_letter
-                                            && form.data.cover_letter.replace(/<[^>]+>/g, '').trim().length > 0,
+                                            .replace(/<[^>]+>/g, '')
+                                            .trim().length > 0,
                                     )}
                                     label="Cover letter (opsional)"
                                     optional
@@ -381,17 +529,29 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                 <ChecklistItem
                                     done={
                                         hasSalaryQuestion
-                                            ? Boolean(form.data.answers[salaryQuestionIdx]?.answer)
+                                            ? Boolean(
+                                                  form.data.answers[
+                                                      salaryQuestionIdx
+                                                  ]?.answer,
+                                              )
                                             : Boolean(form.data.expected_salary)
                                     }
                                     label="Ekspektasi gaji"
                                 />
                                 {job.screening_questions.length > 0 && (
                                     <ChecklistItem
-                                        done={job.screening_questions.every((q, idx) => {
-                                            if (!q.is_required) return true;
-                                            return Boolean(form.data.answers[idx]?.answer);
-                                        })}
+                                        done={job.screening_questions.every(
+                                            (q, idx) => {
+                                                if (!q.is_required) {
+return true;
+}
+
+                                                return Boolean(
+                                                    form.data.answers[idx]
+                                                        ?.answer,
+                                                );
+                                            },
+                                        )}
                                         label="Pertanyaan screening"
                                     />
                                 )}
@@ -399,7 +559,9 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
 
                             <Button
                                 type="submit"
-                                disabled={form.processing || profile.cvs.length === 0}
+                                disabled={
+                                    form.processing || profile.cvs.length === 0
+                                }
                                 size="lg"
                                 className="mt-5 h-11 w-full rounded-xl bg-brand-blue hover:bg-brand-blue/90"
                             >
@@ -410,13 +572,19 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                 )}
                                 Kirim Lamaran
                             </Button>
-                            <Button asChild variant="ghost" size="sm" className="mt-1.5 h-9 w-full">
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="sm"
+                                className="mt-1.5 h-9 w-full"
+                            >
                                 <Link href={`/jobs/${job.slug}`}>Batalkan</Link>
                             </Button>
 
                             <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
                                 <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
-                                Data dikirim langsung ke recruiter. Profil & CV bisa diperbarui kapan saja.
+                                Data dikirim langsung ke recruiter. Profil & CV
+                                bisa diperbarui kapan saja.
                             </p>
                         </div>
 
@@ -425,13 +593,20 @@ export default function ApplyForm({ job, profile, alreadyApplied }: Props) {
                                 <span className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                                     <Lightbulb className="size-4" />
                                 </span>
-                                <h3 className="text-sm font-bold text-brand-navy">Tips Cepat</h3>
+                                <h3 className="text-sm font-bold text-brand-navy">
+                                    Tips Cepat
+                                </h3>
                             </div>
                             <ul className="mt-3 space-y-2 text-xs">
                                 {TIPS.map((tip, i) => (
-                                    <li key={i} className="flex gap-2 text-foreground/80">
+                                    <li
+                                        key={i}
+                                        className="flex gap-2 text-foreground/80"
+                                    >
                                         <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
-                                        <span className="leading-relaxed">{tip}</span>
+                                        <span className="leading-relaxed">
+                                            {tip}
+                                        </span>
                                     </li>
                                 ))}
                             </ul>
@@ -464,15 +639,22 @@ function FormCard({
                 </span>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <h2 className="text-base font-bold tracking-tight text-brand-navy">{title}</h2>
+                        <h2 className="text-base font-bold tracking-tight text-brand-navy">
+                            {title}
+                        </h2>
                         {badge && (
-                            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium">
+                            <Badge
+                                variant="outline"
+                                className="h-5 px-1.5 text-[10px] font-medium"
+                            >
                                 {badge}
                             </Badge>
                         )}
                     </div>
                     {description && (
-                        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            {description}
+                        </p>
                     )}
                 </div>
             </header>
@@ -495,16 +677,23 @@ function ChecklistItem({
             <span
                 className={cn(
                     'flex size-4 shrink-0 items-center justify-center rounded-full',
-                    done ? 'bg-emerald-500 text-white' : 'border border-border/60 bg-background',
+                    done
+                        ? 'bg-emerald-500 text-white'
+                        : 'border border-border/60 bg-background',
                 )}
             >
                 {done && <CheckCircle2 className="size-3" />}
             </span>
-            <span className={cn('flex-1', done ? 'text-foreground' : 'text-muted-foreground')}>
+            <span
+                className={cn(
+                    'flex-1',
+                    done ? 'text-foreground' : 'text-muted-foreground',
+                )}
+            >
                 {label}
             </span>
             {optional && (
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                <span className="text-[10px] tracking-wider text-muted-foreground/70 uppercase">
                     opsional
                 </span>
             )}

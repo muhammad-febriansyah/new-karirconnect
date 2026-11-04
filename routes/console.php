@@ -31,3 +31,9 @@ Schedule::command('subscriptions:expire')
     ->withoutOverlapping()
     ->onOneServer()
     ->name('subscriptions:expire');
+
+Schedule::command('crawler:dispatch-due')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('crawler:dispatch-due');

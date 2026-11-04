@@ -101,7 +101,8 @@ class SeoService
             robots: 'index,follow',
             keywords: $defaults['keywords'],
             image: $job->company?->logo_path ? asset('storage/'.$job->company->logo_path) : $defaults['image'],
-            schema: array_filter([
+            // Some feeds (e.g. Remotive) forbid passing their jobs on to Google Jobs.
+            schema: $job->externalRules()['no_structured_data'] ? null : array_filter([
                 '@context' => 'https://schema.org',
                 '@type' => 'JobPosting',
                 'title' => $job->title,

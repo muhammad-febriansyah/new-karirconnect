@@ -1,0 +1,26 @@
+#!/bin/sh
+# Drop-in for CRAWLER_PYTHON: Laravel runs `<this script> -m karir_crawler.cli`
+# with the request JSON on stdin, and the worker runs inside a locked-down
+# container instead of the host Python.
+#
+#   CRAWLER_PYTHON=crawler/bin/docker-worker
+#   CRAWLER_IMAGE=karir-crawler:browser        (or karir-crawler:api)
+#   CRAWLER_LOCK_DIR=/var/lib/karir-crawler    (shared by all containers)
+set -eu
+
+image="${CRAWLER_IMAGE:-karir-crawler:api}"
+lock_dir="${CRAWLER_LOCK_DIR:-/tmp/karir-crawler-locks}"
+mkdir -p "$lock_dir"
+
+exec docker run --rm -i \
+    --read-only \
+    --tmpfs /tmp:rw,noexec,nosuid,size=256m \
+    --cap-drop ALL \
+    --security-opt no-new-privileges \
+    --memory "${CRAWLER_MEMORY:-1g}" \
+    --cpus "${CRAWLER_CPUS:-1}" \
+    --pids-limit 512 \
+    --shm-size 256m \
+    -v "$lock_dir:/locks" \
+    -e KARIR_CRAWLER_LOCK_DIR=/locks \
+    "$image" "$@"

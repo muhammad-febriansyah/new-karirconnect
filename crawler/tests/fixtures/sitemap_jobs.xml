@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://careers.example.com/jobs/backend-engineer</loc><lastmod>2026-10-01</lastmod></url>
+  <url><loc>https://careers.example.com/jobs/data-analyst</loc><lastmod>2026-11-01</lastmod></url>
+  <url><loc>https://careers.example.com/jobs/designer</loc><lastmod>2026-09-15</lastmod></url>
+  <url><loc>https://careers.example.com/about</loc></url>
+  <url><loc>https://other.example.org/jobs/not-ours</loc></url>
+</urlset>
