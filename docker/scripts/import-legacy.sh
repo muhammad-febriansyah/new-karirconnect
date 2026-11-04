@@ -14,8 +14,9 @@ dump="${1:?usage: import-legacy.sh <dump.sql> [storage-public.tgz]}"
 archive="${2:-}"
 compose="docker compose -f docker-compose.prod.yml"
 
-# shellcheck disable=SC1091
-. ./.env
+# Read only what is needed: a Laravel .env is not always valid shell.
+DB_DATABASE=$(grep -E '^DB_DATABASE=' .env | tail -1 | cut -d= -f2- | tr -d "\"'")
+: "${DB_DATABASE:?DB_DATABASE missing in .env}"
 
 echo "Importing database ${DB_DATABASE} ..."
 $compose exec -T mysql sh -c "exec mysql -uroot -p\"\$MYSQL_ROOT_PASSWORD\" \"$DB_DATABASE\"" < "$dump"
