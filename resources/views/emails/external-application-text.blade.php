@@ -1,22 +1,43 @@
-Yth. Bapak/Ibu Tim Rekrutmen{{ $letter['company'] ? ' '.$letter['company'] : '' }},
+Kepada Yth.
+Bapak/Ibu HRD{{ $letter['company'] ? ' '.$letter['company'] : '' }}
+di tempat
 
-Saya {{ $letter['name'] }}{{ $letter['current_role'] ? ', saat ini bekerja sebagai '.$letter['current_role'] : '' }}. Melalui email ini, saya bermaksud melamar posisi {{ $letter['job_title'] }}{{ $letter['company'] ? ' di '.$letter['company'] : '' }}.
+Dengan hormat,
+
+Bersama email ini, saya {{ $letter['name'] }} bermaksud mengajukan lamaran untuk posisi {{ $letter['job_title'] }}{{ $letter['company'] ? ' di '.$letter['company'] : '' }}.{{ $letter['current_role'] ? ' Saat ini saya bekerja sebagai '.$letter['current_role'].'.' : '' }}
 
 @if ($letter['cover_letter'])
 {{ $letter['cover_letter'] }}
 @else
-Saya yakin pengalaman dan keahlian yang saya miliki sesuai dengan kebutuhan posisi ini, dan saya ingin berkontribusi bagi tim Bapak/Ibu.
+Saya tertarik dengan posisi tersebut dan berharap dapat berkontribusi bagi perusahaan Bapak/Ibu.
 @endif
 
-Sebagai bahan pertimbangan, saya lampirkan CV beserta ringkasan profil saya di bawah ini. Saya siap mengikuti proses seleksi berikutnya dan dapat dihubungi kapan saja melalui balasan email ini{{ $letter['phone'] ? ' atau telepon/WhatsApp di '.$letter['phone'] : '' }}.
+Sebagai bahan pertimbangan, saya lampirkan curriculum vitae (CV) saya pada email ini.{{ $letter['facts'] ? ' Berikut ringkasan data diri saya:' : '' }}
+@if ($letter['facts'])
 
-Terima kasih atas waktu dan perhatian Bapak/Ibu.
+@foreach ($letter['facts'] as $fact)
+{{ $fact['label'] }}: {{ $fact['value'] }}
+@endforeach
+@endif
+@if ($letter['experiences'])
+
+Riwayat pekerjaan:
+@foreach ($letter['experiences'] as $experience)
+- {{ $experience['position'] }}{{ $experience['company'] ? ', '.$experience['company'] : '' }}{{ $experience['period'] ? ' ('.$experience['period'].')' : '' }}
+@endforeach
+@endif
+@if ($letter['skills'])
+
+Keahlian: {{ implode(', ', $letter['skills']) }}.
+@endif
+
+Besar harapan saya untuk dapat diberikan kesempatan wawancara agar dapat menjelaskan potensi diri saya secara lebih lanjut. Saya dapat dihubungi melalui balasan email ini{{ $letter['phone'] ? ' atau nomor '.$letter['phone'] : '' }}.
+
+Atas perhatian Bapak/Ibu, saya ucapkan terima kasih.
 
 Hormat saya,
+
 {{ $letter['name'] }}
-@if ($letter['headline'])
-{{ $letter['headline'] }}
-@endif
 @if ($letter['phone'])
 {{ $letter['phone'] }}
 @endif
@@ -26,27 +47,3 @@ Hormat saya,
 @foreach ($letter['links'] as $profileLink)
 {{ $profileLink['label'] }}: {{ $profileLink['url'] }}
 @endforeach
-@if ($letter['facts'])
-
-----------------------------------------
-RINGKASAN PROFIL
-@foreach ($letter['facts'] as $fact)
-{{ $fact['label'] }}: {{ $fact['value'] }}
-@endforeach
-@endif
-@if ($letter['experiences'])
-
-PENGALAMAN KERJA
-@foreach ($letter['experiences'] as $experience)
-- {{ $experience['position'] }}{{ $experience['company'] ? ', '.$experience['company'] : '' }}{{ $experience['period'] ? ' ('.$experience['period'].')' : '' }}
-@endforeach
-@endif
-@if ($letter['skills'])
-
-KEAHLIAN
-{{ implode(', ', $letter['skills']) }}
-@endif
-@if ($letter['cv_file'])
-
-Lampiran: {{ $letter['cv_file'] }}
-@endif

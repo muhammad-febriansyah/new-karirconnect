@@ -299,7 +299,7 @@ describe('applying to external jobs', function () {
             ->toBe(['CV-'.Str::slug($candidate->name).'.pdf']);
         expect($mail->attachments()[0]->attachWith(fn (string $path) => file_get_contents($path), fn (Closure $data) => $data()))
             ->toBe('%PDF-1.4 cv');
-        $mail->assertSeeInHtml('bermaksud melamar posisi')
+        $mail->assertSeeInHtml('bermaksud mengajukan lamaran untuk posisi')
             ->assertSeeInHtml('Saya tertarik.')
             ->assertSeeInText($candidate->name)
             ->assertDontSeeInHtml('KarirConnect')
@@ -337,14 +337,14 @@ describe('applying to external jobs', function () {
 
         expect($mail->envelope()->from->address)->toBe('lamaran@kirim.example')
             ->and($mail->envelope()->from->name)->toBe('Budi Santoso');
-        $mail->assertSeeInOrderInHtml(['Budi Santoso', 'Sales B2B berpengalaman', '081234567890', 'Rp 6.000.000'])
-            ->assertSeeInHtml('saat ini bekerja sebagai Account Executive di PT Maju')
+        $mail->assertSeeInOrderInHtml(['Budi Santoso', 'Universitas Indonesia', 'Rp 6.000.000', 'Negosiasi Korporat', '081234567890'])
+            ->assertSeeInHtml('Saat ini saya bekerja sebagai Account Executive di PT Maju')
             ->assertSeeInHtml('sekarang')
             ->assertSeeInHtml('Universitas Indonesia')
             ->assertSeeInHtml('Negosiasi Korporat')
             ->assertSeeInHtml('https://www.linkedin.com/in/budi')
             ->assertDontSeeInHtml('javascript:')
-            ->assertSeeInText('PENGALAMAN KERJA');
+            ->assertSeeInText('Riwayat pekerjaan:');
     });
 
     it('sends candidates to the company site when there is no recruitment email', function () {

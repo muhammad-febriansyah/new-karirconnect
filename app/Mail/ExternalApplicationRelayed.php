@@ -110,7 +110,7 @@ class ExternalApplicationRelayed extends Mailable
         $facts = collect([
             ['label' => 'Domisili', 'value' => collect([$profile?->city?->name, $profile?->province?->name])->filter()->implode(', ')],
             ['label' => 'Pengalaman', 'value' => $profile?->experience_level?->label()],
-            ['label' => 'Pendidikan', 'value' => $this->latestEducation($profile?->educations()->orderByDesc('end_year')->first())],
+            ['label' => 'Pendidikan terakhir', 'value' => $this->latestEducation($profile?->educations()->orderByDesc('end_year')->first())],
             ['label' => 'Ekspektasi gaji', 'value' => $salary],
         ])->filter(fn (array $row): bool => filled($row['value']))->values()->all();
 
