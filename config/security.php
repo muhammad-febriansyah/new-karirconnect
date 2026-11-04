@@ -37,7 +37,9 @@ return [
         // Only ever sent over HTTPS; browsers ignore it on plain HTTP anyway.
         'enabled' => (bool) env('SECURITY_HSTS_ENABLED', true),
         'max_age' => (int) env('SECURITY_HSTS_MAX_AGE', 31536000),
-        'include_subdomains' => (bool) env('SECURITY_HSTS_INCLUDE_SUBDOMAINS', true),
+        // Off by default: one subdomain without HTTPS (e.g. a mail host) would
+        // become unreachable in browsers that saw the header.
+        'include_subdomains' => (bool) env('SECURITY_HSTS_INCLUDE_SUBDOMAINS', false),
         // Only enable once every subdomain serves HTTPS: preload is hard to undo.
         'preload' => (bool) env('SECURITY_HSTS_PRELOAD', false),
     ],

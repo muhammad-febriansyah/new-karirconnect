@@ -66,6 +66,13 @@ it('sends HSTS only over https', function () {
     expect($this->get('/')->headers->has('Strict-Transport-Security'))->toBeFalse();
 
     $this->get('https://localhost/')
+        ->assertHeader('Strict-Transport-Security', 'max-age=31536000');
+});
+
+it('adds includeSubDomains to HSTS only when enabled', function () {
+    config(['security.hsts.include_subdomains' => true]);
+
+    $this->get('https://localhost/')
         ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
 

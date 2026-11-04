@@ -6,7 +6,7 @@ encode zstd gzip
 # Security headers for every response, including static files. Laravel
 # adds the Content-Security-Policy (with a per-request nonce) itself.
 header {
-	Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	Strict-Transport-Security "max-age=31536000"
 	X-Content-Type-Options "nosniff"
 	X-Frame-Options "SAMEORIGIN"
 	Referrer-Policy "strict-origin-when-cross-origin"
