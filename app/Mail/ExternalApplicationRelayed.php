@@ -74,9 +74,11 @@ class ExternalApplicationRelayed extends Mailable
      *     company: ?string,
      *     name: ?string,
      *     headline: ?string,
-     *     summary: list<array{label: string, value: string}>,
-     *     experiences: list<array{title: string, period: string}>,
-     *     education: ?string,
+     *     email: ?string,
+     *     phone: ?string,
+     *     current_role: ?string,
+     *     facts: list<array{label: string, value: string}>,
+     *     experiences: list<array{position: string, company: ?string, period: string}>,
      *     skills: list<string>,
      *     links: list<array{label: string, url: string}>,
      *     cover_letter: ?string,
@@ -90,31 +92,27 @@ class ExternalApplicationRelayed extends Mailable
         $user = $profile?->user;
         $cvPath = $this->cvPath();
 
-        $location = collect([$profile?->city?->name, $profile?->province?->name])->filter()->implode(', ');
-        $salary = $application->expected_salary
-            ? 'Rp '.number_format($application->expected_salary, 0, ',', '.').' / bulan'
-            : null;
-
-        $summary = collect([
-            ['label' => 'Email', 'value' => $user?->email],
-            ['label' => 'Telepon', 'value' => $user?->phone],
-            ['label' => 'Domisili', 'value' => $location],
-            ['label' => 'Posisi saat ini', 'value' => $profile?->current_position],
-            ['label' => 'Pengalaman', 'value' => $profile?->experience_level?->label()],
-            ['label' => 'Ekspektasi gaji', 'value' => $salary],
-        ])->filter(fn (array $row): bool => filled($row['value']))->values()->all();
-
         $experiences = $profile?->workExperiences()
             ->orderByDesc('is_current')
             ->orderByDesc('start_date')
             ->limit(self::MAX_EXPERIENCES)
-            ->get()
-            ->map(fn (WorkExperience $experience): array => [
-                'title' => trim($experience->position.' · '.$experience->company_name, ' ·'),
-                'period' => $this->period($experience),
-            ])->all() ?? [];
+            ->get() ?? collect();
 
-        $skills = $profile?->skills()->orderBy('name')->limit(self::MAX_SKILLS)->pluck('name')->all() ?? [];
+        $current = $experiences->first(fn (WorkExperience $experience): bool => (bool) $experience->is_current);
+        $currentRole = $current
+            ? trim($current->position.($current->company_name ? ' di '.$current->company_name : ''))
+            : $profile?->current_position;
+
+        $salary = $application->expected_salary
+            ? 'Rp '.number_format($application->expected_salary, 0, ',', '.').' per bulan'
+            : null;
+
+        $facts = collect([
+            ['label' => 'Domisili', 'value' => collect([$profile?->city?->name, $profile?->province?->name])->filter()->implode(', ')],
+            ['label' => 'Pengalaman', 'value' => $profile?->experience_level?->label()],
+            ['label' => 'Pendidikan', 'value' => $this->latestEducation($profile?->educations()->orderByDesc('end_year')->first())],
+            ['label' => 'Ekspektasi gaji', 'value' => $salary],
+        ])->filter(fn (array $row): bool => filled($row['value']))->values()->all();
 
         $links = collect([
             ['label' => 'LinkedIn', 'url' => $profile?->linkedin_url],
@@ -128,10 +126,16 @@ class ExternalApplicationRelayed extends Mailable
             'company' => $application->job?->company?->name,
             'name' => $user?->name,
             'headline' => $profile?->headline,
-            'summary' => $summary,
-            'experiences' => $experiences,
-            'education' => $this->latestEducation($profile?->educations()->orderByDesc('end_year')->first()),
-            'skills' => $skills,
+            'email' => $user?->email,
+            'phone' => $user?->phone,
+            'current_role' => filled($currentRole) ? $currentRole : null,
+            'facts' => $facts,
+            'experiences' => $experiences->map(fn (WorkExperience $experience): array => [
+                'position' => (string) $experience->position,
+                'company' => $experience->company_name,
+                'period' => $this->period($experience),
+            ])->all(),
+            'skills' => $profile?->skills()->orderBy('name')->limit(self::MAX_SKILLS)->pluck('name')->all() ?? [],
             'links' => $links,
             'cover_letter' => $this->plainCoverLetter(),
             'cv_file' => $cvPath ? $this->cvFileName($cvPath) : null,
@@ -155,7 +159,13 @@ class ExternalApplicationRelayed extends Mailable
         $level = EducationLevel::tryFrom((string) $education->level)?->label();
         $study = collect([$level, $education->major])->filter()->implode(' ');
 
-        return collect([$study, $education->institution, $education->end_year])->filter()->implode(' · ') ?: null;
+        $text = collect([$study, $education->institution])->filter()->implode(', ');
+
+        if ($text === '') {
+            return null;
+        }
+
+        return $education->end_year ? $text.' ('.$education->end_year.')' : $text;
     }
 
     private function plainCoverLetter(): ?string

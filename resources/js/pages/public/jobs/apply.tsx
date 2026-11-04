@@ -277,6 +277,11 @@ return true;
                                     })}
                                 </RadioGroup>
                             )}
+                            {form.errors.candidate_cv_id && (
+                                <p className="mt-1.5 text-xs text-destructive">
+                                    {form.errors.candidate_cv_id}
+                                </p>
+                            )}
                         </FormCard>
 
                         {/* Cover letter */}

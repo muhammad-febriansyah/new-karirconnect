@@ -9,6 +9,7 @@ use App\Jobs\RelayExternalApplicationJob;
 use App\Jobs\RunCrawlJob;
 use App\Mail\ExternalApplicationRelayed;
 use App\Models\Application;
+use App\Models\CandidateCv;
 use App\Models\CrawlRun;
 use App\Models\Education;
 use App\Models\EmployeeProfile;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -241,15 +243,36 @@ describe('applying to external jobs', function () {
         return Job::query()->where('scraped_job_listing_id', $listing->id)->sole();
     }
 
-    function readyCandidate(): User
+    function readyCandidate(bool $withCv = true): User
     {
         $user = User::factory()->employee()->create();
-        EmployeeProfile::factory()->create(['user_id' => $user->id, 'profile_completion' => 80]);
+        $profile = EmployeeProfile::factory()->create(['user_id' => $user->id, 'profile_completion' => 80]);
+
+        if ($withCv) {
+            Storage::disk('public')->put('candidate-cvs/budi.pdf', '%PDF-1.4 cv');
+            $cv = CandidateCv::factory()->create(['employee_profile_id' => $profile->id, 'file_path' => 'candidate-cvs/budi.pdf']);
+            $profile->update(['primary_resume_id' => $cv->id]);
+        }
 
         return $user;
     }
 
+    it('requires a CV before relaying an application', function () {
+        Storage::fake('public');
+        Mail::fake();
+        $job = publishedExternalJob('rekrutmen@contohtek.co.id');
+        $candidate = readyCandidate(withCv: false);
+
+        $this->actingAs($candidate)
+            ->post(route('public.jobs.apply.store', $job->slug), ['cover_letter' => '<p>Saya tertarik.</p>'])
+            ->assertSessionHasErrors('candidate_cv_id');
+
+        expect(Application::query()->count())->toBe(0);
+        Mail::assertNothingSent();
+    });
+
     it('relays the application by email when the company has a recruitment email', function () {
+        Storage::fake('public');
         Mail::fake();
         Notification::fake();
         $job = publishedExternalJob('rekrutmen@contohtek.co.id');
@@ -270,7 +293,13 @@ describe('applying to external jobs', function () {
 
         // Reads as a plain letter from the candidate: no platform branding.
         $mail = new ExternalApplicationRelayed($application);
-        $mail->assertSeeInHtml('mengajukan lamaran')
+
+        // The CV the candidate chose goes along as an attachment.
+        expect(collect($mail->attachments())->map(fn ($attachment) => $attachment->as)->all())
+            ->toBe(['CV-'.Str::slug($candidate->name).'.pdf']);
+        expect($mail->attachments()[0]->attachWith(fn (string $path) => file_get_contents($path), fn (Closure $data) => $data()))
+            ->toBe('%PDF-1.4 cv');
+        $mail->assertSeeInHtml('bermaksud melamar posisi')
             ->assertSeeInHtml('Saya tertarik.')
             ->assertSeeInText($candidate->name)
             ->assertDontSeeInHtml('KarirConnect')
@@ -309,7 +338,7 @@ describe('applying to external jobs', function () {
         expect($mail->envelope()->from->address)->toBe('lamaran@kirim.example')
             ->and($mail->envelope()->from->name)->toBe('Budi Santoso');
         $mail->assertSeeInOrderInHtml(['Budi Santoso', 'Sales B2B berpengalaman', '081234567890', 'Rp 6.000.000'])
-            ->assertSeeInHtml('Account Executive · PT Maju')
+            ->assertSeeInHtml('saat ini bekerja sebagai Account Executive di PT Maju')
             ->assertSeeInHtml('sekarang')
             ->assertSeeInHtml('Universitas Indonesia')
             ->assertSeeInHtml('Negosiasi Korporat')
@@ -319,6 +348,7 @@ describe('applying to external jobs', function () {
     });
 
     it('sends candidates to the company site when there is no recruitment email', function () {
+        Storage::fake('public');
         $job = publishedExternalJob(null);
         $candidate = readyCandidate();
 

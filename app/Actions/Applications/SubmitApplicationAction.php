@@ -18,6 +18,7 @@ use App\Notifications\ApplicationSubmittedNotification;
 use App\Services\Applications\ApplicationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -63,11 +64,20 @@ class SubmitApplicationAction
             ]);
         }
 
-        return DB::transaction(function () use ($job, $profile, $data): Application {
+        $cvId = $data['candidate_cv_id'] ?? $profile->primary_resume_id;
+
+        // The company only sees the forwarded email, so the CV must be in it.
+        if ($job->isExternal() && ! $this->hasCvFile($profile, $cvId)) {
+            throw ValidationException::withMessages([
+                'candidate_cv_id' => 'Pilih CV untuk dikirim ke perusahaan. Unggah atau buat CV terlebih dahulu bila belum ada.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($job, $profile, $data, $cvId): Application {
             $application = Application::query()->create([
                 'job_id' => $job->id,
                 'employee_profile_id' => $profile->id,
-                'candidate_cv_id' => $data['candidate_cv_id'] ?? $profile->primary_resume_id,
+                'candidate_cv_id' => $cvId,
                 'cover_letter' => $data['cover_letter'] ?? null,
                 'expected_salary' => $data['expected_salary'] ?? $profile->expected_salary_min,
                 'status' => ApplicationStatus::Submitted,
@@ -141,5 +151,16 @@ class SubmitApplicationAction
         ]);
 
         $profile->user?->notify(new AiInterviewInvitationNotification($session->fresh(['job'])));
+    }
+
+    private function hasCvFile(EmployeeProfile $profile, ?int $cvId): bool
+    {
+        if ($cvId === null) {
+            return false;
+        }
+
+        $path = $profile->cvs()->whereKey($cvId)->value('file_path');
+
+        return filled($path) && Storage::disk('public')->exists($path);
     }
 }

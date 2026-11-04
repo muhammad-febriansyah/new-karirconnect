@@ -1,50 +1,52 @@
-Lamaran untuk posisi {{ $letter['job_title'] }}{{ $letter['company'] ? ' - '.$letter['company'] : '' }}
+Yth. Bapak/Ibu Tim Rekrutmen{{ $letter['company'] ? ' '.$letter['company'] : '' }},
 
-Yth. Tim Rekrutmen{{ $letter['company'] ? ' '.$letter['company'] : '' }},
+Saya {{ $letter['name'] }}{{ $letter['current_role'] ? ', saat ini bekerja sebagai '.$letter['current_role'] : '' }}. Melalui email ini, saya bermaksud melamar posisi {{ $letter['job_title'] }}{{ $letter['company'] ? ' di '.$letter['company'] : '' }}.
 
-Perkenalkan, saya {{ $letter['name'] }}. Melalui email ini saya ingin mengajukan lamaran untuk posisi {{ $letter['job_title'] }}. Ringkasan profil saya sebagai berikut.
+@if ($letter['cover_letter'])
+{{ $letter['cover_letter'] }}
+@else
+Saya yakin pengalaman dan keahlian yang saya miliki sesuai dengan kebutuhan posisi ini, dan saya ingin berkontribusi bagi tim Bapak/Ibu.
+@endif
 
+Sebagai bahan pertimbangan, saya lampirkan CV beserta ringkasan profil saya di bawah ini. Saya siap mengikuti proses seleksi berikutnya dan dapat dihubungi kapan saja melalui balasan email ini{{ $letter['phone'] ? ' atau telepon/WhatsApp di '.$letter['phone'] : '' }}.
+
+Terima kasih atas waktu dan perhatian Bapak/Ibu.
+
+Hormat saya,
 {{ $letter['name'] }}
 @if ($letter['headline'])
 {{ $letter['headline'] }}
 @endif
-@foreach ($letter['summary'] as $row)
-{{ $row['label'] }}: {{ $row['value'] }}
+@if ($letter['phone'])
+{{ $letter['phone'] }}
+@endif
+@if ($letter['email'])
+{{ $letter['email'] }}
+@endif
+@foreach ($letter['links'] as $profileLink)
+{{ $profileLink['label'] }}: {{ $profileLink['url'] }}
 @endforeach
+@if ($letter['facts'])
+
+----------------------------------------
+RINGKASAN PROFIL
+@foreach ($letter['facts'] as $fact)
+{{ $fact['label'] }}: {{ $fact['value'] }}
+@endforeach
+@endif
 @if ($letter['experiences'])
 
 PENGALAMAN KERJA
 @foreach ($letter['experiences'] as $experience)
-- {{ $experience['title'] }}{{ $experience['period'] ? ' ('.$experience['period'].')' : '' }}
+- {{ $experience['position'] }}{{ $experience['company'] ? ', '.$experience['company'] : '' }}{{ $experience['period'] ? ' ('.$experience['period'].')' : '' }}
 @endforeach
-@endif
-@if ($letter['education'])
-
-PENDIDIKAN TERAKHIR
-{{ $letter['education'] }}
 @endif
 @if ($letter['skills'])
 
 KEAHLIAN
 {{ implode(', ', $letter['skills']) }}
 @endif
-@if ($letter['cover_letter'])
-
-SURAT LAMARAN
-{{ $letter['cover_letter'] }}
-@endif
-@if ($letter['cv_file'] || $letter['links'])
-
-DOKUMEN & TAUTAN
 @if ($letter['cv_file'])
-- {{ $letter['cv_file'] }} (terlampir)
-@endif
-@foreach ($letter['links'] as $link)
-- {{ $link['label'] }}: {{ $link['url'] }}
-@endforeach
-@endif
 
-Besar harapan saya untuk dapat mengikuti tahap seleksi berikutnya. Saya dapat dihubungi melalui balasan email ini. Terima kasih atas waktu dan perhatian Bapak/Ibu.
-
-Hormat saya,
-{{ $letter['name'] }}
+Lampiran: {{ $letter['cv_file'] }}
+@endif
