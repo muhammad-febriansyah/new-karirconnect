@@ -10,6 +10,7 @@ use App\Jobs\RunCrawlJob;
 use App\Mail\ExternalApplicationRelayed;
 use App\Models\Application;
 use App\Models\CrawlRun;
+use App\Models\Education;
 use App\Models\EmployeeProfile;
 use App\Models\Job;
 use App\Models\JobCategory;
@@ -17,7 +18,9 @@ use App\Models\JobSource;
 use App\Models\ScrapedCompany;
 use App\Models\ScrapedJobListing;
 use App\Models\ScrapedJobOrigin;
+use App\Models\Skill;
 use App\Models\User;
+use App\Models\WorkExperience;
 use App\Services\Crawler\ListingAttributeMapper;
 use App\Services\Crawler\ListingIngestor;
 use App\Services\ExternalJobs\ExternalCompanyProvisioner;
@@ -267,7 +270,7 @@ describe('applying to external jobs', function () {
 
         // Reads as a plain letter from the candidate: no platform branding.
         $mail = new ExternalApplicationRelayed($application);
-        $mail->assertSeeInHtml('Saya ingin melamar posisi')
+        $mail->assertSeeInHtml('mengajukan lamaran')
             ->assertSeeInHtml('Saya tertarik.')
             ->assertSeeInText($candidate->name)
             ->assertDontSeeInHtml('KarirConnect')
@@ -276,6 +279,43 @@ describe('applying to external jobs', function () {
         expect($mail->envelope()->subject)->not->toContain('KarirConnect');
         Notification::assertNothingSent();
         expect($application->refresh()->relayed_at)->not->toBeNull();
+    });
+
+    it('fills the relayed letter from the candidate profile', function () {
+        config(['external_jobs.relay_from_address' => 'lamaran@kirim.example']);
+        $job = publishedExternalJob('rekrutmen@contohtek.co.id');
+        $candidate = User::factory()->employee()->create(['name' => 'Budi Santoso', 'phone' => '081234567890']);
+        $profile = EmployeeProfile::factory()->create([
+            'user_id' => $candidate->id,
+            'headline' => 'Sales B2B berpengalaman',
+            'current_position' => 'Account Executive',
+            'linkedin_url' => 'https://www.linkedin.com/in/budi',
+            'portfolio_url' => 'javascript:alert(1)',
+        ]);
+        WorkExperience::factory()->create([
+            'employee_profile_id' => $profile->id, 'position' => 'Account Executive', 'company_name' => 'PT Maju',
+            'start_date' => '2022-01-01', 'end_date' => null, 'is_current' => true,
+        ]);
+        Education::factory()->create([
+            'employee_profile_id' => $profile->id, 'level' => 's1', 'major' => 'Manajemen', 'institution' => 'Universitas Indonesia', 'end_year' => 2020,
+        ]);
+        $profile->skills()->attach(Skill::factory()->create(['name' => 'Negosiasi Korporat', 'slug' => 'negosiasi-korporat'])->id);
+        $application = Application::factory()->create([
+            'job_id' => $job->id, 'employee_profile_id' => $profile->id, 'cover_letter' => '<p>Halo</p>', 'expected_salary' => 6000000,
+        ]);
+
+        $mail = new ExternalApplicationRelayed($application);
+
+        expect($mail->envelope()->from->address)->toBe('lamaran@kirim.example')
+            ->and($mail->envelope()->from->name)->toBe('Budi Santoso');
+        $mail->assertSeeInOrderInHtml(['Budi Santoso', 'Sales B2B berpengalaman', '081234567890', 'Rp 6.000.000'])
+            ->assertSeeInHtml('Account Executive · PT Maju')
+            ->assertSeeInHtml('sekarang')
+            ->assertSeeInHtml('Universitas Indonesia')
+            ->assertSeeInHtml('Negosiasi Korporat')
+            ->assertSeeInHtml('https://www.linkedin.com/in/budi')
+            ->assertDontSeeInHtml('javascript:')
+            ->assertSeeInText('PENGALAMAN KERJA');
     });
 
     it('sends candidates to the company site when there is no recruitment email', function () {

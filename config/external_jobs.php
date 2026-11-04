@@ -14,4 +14,11 @@ return [
     */
     'relay_mailer' => env('EXTERNAL_JOBS_RELAY_MAILER', 'smtp'),
 
+    /*
+    | Sender address for relayed applications. Use a neutral mailbox on a
+    | domain the relay mailer is allowed to send for (SPF/DKIM), otherwise
+    | the mail lands in spam. The sender name is always the candidate's.
+    */
+    'relay_from_address' => env('EXTERNAL_JOBS_RELAY_FROM_ADDRESS'),
+
 ];

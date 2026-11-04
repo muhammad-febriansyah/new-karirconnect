@@ -1,33 +1,50 @@
-@php
-    $job = $application->job;
-    $user = $application->employeeProfile?->user;
-    $profile = $application->employeeProfile;
-@endphp
-Yth. Tim Rekrutmen {{ $job?->company?->name }},
+Lamaran untuk posisi {{ $letter['job_title'] }}{{ $letter['company'] ? ' - '.$letter['company'] : '' }}
 
-Saya ingin melamar posisi {{ $job?->title }}. Berikut data diri saya:
+Yth. Tim Rekrutmen{{ $letter['company'] ? ' '.$letter['company'] : '' }},
 
-Nama: {{ $user?->name }}
-Email: {{ $user?->email }}
-@if ($user?->phone)
-Telepon: {{ $user->phone }}
+Perkenalkan, saya {{ $letter['name'] }}. Melalui email ini saya ingin mengajukan lamaran untuk posisi {{ $letter['job_title'] }}. Ringkasan profil saya sebagai berikut.
+
+{{ $letter['name'] }}
+@if ($letter['headline'])
+{{ $letter['headline'] }}
 @endif
-@if ($profile?->headline)
-Profil singkat: {{ $profile->headline }}
+@foreach ($letter['summary'] as $row)
+{{ $row['label'] }}: {{ $row['value'] }}
+@endforeach
+@if ($letter['experiences'])
+
+PENGALAMAN KERJA
+@foreach ($letter['experiences'] as $experience)
+- {{ $experience['title'] }}{{ $experience['period'] ? ' ('.$experience['period'].')' : '' }}
+@endforeach
 @endif
-@if ($application->expected_salary)
-Ekspektasi gaji: Rp {{ number_format($application->expected_salary, 0, ',', '.') }}
+@if ($letter['education'])
+
+PENDIDIKAN TERAKHIR
+{{ $letter['education'] }}
+@endif
+@if ($letter['skills'])
+
+KEAHLIAN
+{{ implode(', ', $letter['skills']) }}
+@endif
+@if ($letter['cover_letter'])
+
+SURAT LAMARAN
+{{ $letter['cover_letter'] }}
+@endif
+@if ($letter['cv_file'] || $letter['links'])
+
+DOKUMEN & TAUTAN
+@if ($letter['cv_file'])
+- {{ $letter['cv_file'] }} (terlampir)
+@endif
+@foreach ($letter['links'] as $link)
+- {{ $link['label'] }}: {{ $link['url'] }}
+@endforeach
 @endif
 
-@if ($coverLetter)
-{{ $coverLetter }}
-
-@endif
-@if ($application->candidateCv?->file_path)
-CV saya terlampir pada email ini.
-
-@endif
-Terima kasih atas waktu dan perhatiannya.
+Besar harapan saya untuk dapat mengikuti tahap seleksi berikutnya. Saya dapat dihubungi melalui balasan email ini. Terima kasih atas waktu dan perhatian Bapak/Ibu.
 
 Hormat saya,
-{{ $user?->name }}
+{{ $letter['name'] }}
