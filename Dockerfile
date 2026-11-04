@@ -90,5 +90,5 @@ CMD ["php", "artisan", "queue:work", "crawler", "--queue=crawler", "--timeout=39
 
 # ------------------------------------------------------------------- web
 FROM caddy:2.8.4-alpine AS web
-COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile
+COPY docker/caddy/Caddyfile docker/caddy/Caddyfile.behind-proxy docker/caddy/app.caddy /etc/caddy/
 COPY --from=build /var/www/html/public /var/www/html/public

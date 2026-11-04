@@ -1,0 +1,48 @@
+# Site body shared by Caddyfile (Caddy holds HTTPS) and
+# Caddyfile.behind-proxy (another web server on the host holds HTTPS).
+root * /var/www/html/public
+encode zstd gzip
+
+# Security headers for every response, including static files. Laravel
+# adds the Content-Security-Policy (with a per-request nonce) itself.
+header {
+	Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	X-Content-Type-Options "nosniff"
+	X-Frame-Options "SAMEORIGIN"
+	Referrer-Policy "strict-origin-when-cross-origin"
+	Permissions-Policy "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), browsing-topics=()"
+	Cross-Origin-Opener-Policy "same-origin-allow-popups"
+	X-Permitted-Cross-Domain-Policies "none"
+	-Server
+	-X-Powered-By
+}
+
+# Never serve dotfiles or PHP sources other than the front controller.
+@hidden path /.* */.*
+respond @hidden 404
+
+# Vite assets have hashed names: cache them for a year.
+@assets path /build/*
+header @assets Cache-Control "public, max-age=31536000, immutable"
+
+# Push-notification service worker loads Firebase from gstatic.
+@sw path /firebase-messaging-sw.js
+header @sw {
+	Content-Security-Policy "default-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com"
+	Cache-Control "no-cache"
+}
+
+# Uploaded files (logos, CV builder output) from the shared storage volume.
+handle_path /storage/* {
+	root * /var/www/html/storage/app/public
+	@php path *.php
+	respond @php 404
+	# No script can run from an uploaded file (e.g. a crafted SVG).
+	header Content-Security-Policy "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; frame-ancestors 'self'"
+	file_server
+}
+
+php_fastcgi app:9000 {
+	root /var/www/html/public
+}
+file_server

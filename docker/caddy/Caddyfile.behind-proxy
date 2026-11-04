@@ -1,0 +1,18 @@
+# KarirConnect web server behind another reverse proxy on the host (e.g. the
+# host's Nginx, which already serves other sites and holds the certificate).
+# Caddy only speaks plain HTTP on :80; publish it on a loopback port with
+# WEB_HTTP_PORT=127.0.0.1:8090 and let the host proxy forward to it.
+{
+	auto_https off
+	admin off
+	servers {
+		# The host proxy reaches the container from the Docker bridge, a
+		# private address; its X-Forwarded-* headers are kept.
+		trusted_proxies static private_ranges
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+:80 {
+	import /etc/caddy/app.caddy
+}

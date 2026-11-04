@@ -46,6 +46,24 @@ docker compose -f docker-compose.prod.yml ps
 curl -I https://<domain>/up
 ```
 
+## Server yang sudah punya Nginx (beberapa situs)
+
+Kalau Nginx di host sudah memakai port 80/443 untuk situs lain, jangan matikan Nginx. Caddy berjalan di port loopback dan Nginx meneruskan domain KarirConnect ke sana. Sertifikat tetap dikelola certbot di host.
+
+1. Di `.env`, aktifkan:
+
+   ```
+   CADDY_CONFIG=Caddyfile.behind-proxy
+   WEB_HTTP_PORT=127.0.0.1:8090
+   WEB_HTTPS_PORT=127.0.0.1:8453
+   ```
+
+   Pilih port lain bila `8090`/`8453` sudah dipakai (`ss -ltnp`).
+2. Jalankan container seperti biasa (`docker compose -f docker-compose.prod.yml up -d --build`).
+3. Ganti konfigurasi Nginx domain ini dengan `docker/nginx/karirconnect.id.conf` (backup dulu file lamanya), lalu `nginx -t && systemctl reload nginx`.
+
+Header keamanan dikirim oleh Caddy dan Laravel; jangan tambahkan `add_header` yang sama di Nginx.
+
 ## Memindahkan data dari server lama
 
 Langkah lengkapnya ada di komentar `docker/scripts/import-legacy.sh`. Ringkasnya:
