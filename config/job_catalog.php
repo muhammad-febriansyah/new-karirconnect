@@ -130,6 +130,9 @@ return [
             'schedule_minutes' => 120,
         ],
         'jobicy-apac' => [
+            // Hidden: its terms require a visible "Sumber" credit on every
+            // job page, and the portal shows jobs without naming a source.
+            'hidden' => true,
             'name' => 'Jobicy (remote Asia-Pasifik)',
             'group' => 'Feed lowongan remote',
             'description' => 'Lowongan remote Asia-Pasifik; hanya yang lokasinya menyebut Indonesia yang disimpan.',
@@ -147,6 +150,9 @@ return [
             'default_selected' => false,
         ],
         'remoteok' => [
+            // Hidden: its terms require a visible "Sumber" credit on every
+            // job page, and the portal shows jobs without naming a source.
+            'hidden' => true,
             'name' => 'Remote OK',
             'group' => 'Feed lowongan remote',
             'description' => 'Lowongan remote global; hanya yang lokasinya menyebut Indonesia yang disimpan.',
@@ -163,6 +169,9 @@ return [
             'default_selected' => false,
         ],
         'himalayas' => [
+            // Hidden: its terms require a visible "Sumber" credit on every
+            // job page, and the portal shows jobs without naming a source.
+            'hidden' => true,
             'name' => 'Himalayas',
             'group' => 'Feed lowongan remote',
             'description' => 'Lowongan remote global; hanya yang lokasinya menyebut Indonesia yang disimpan.',
@@ -176,6 +185,9 @@ return [
             'default_selected' => false,
         ],
         'remotive' => [
+            // Hidden: its terms require a visible "Sumber" credit on every
+            // job page, and the portal shows jobs without naming a source.
+            'hidden' => true,
             'name' => 'Remotive',
             'group' => 'Feed lowongan remote',
             'description' => 'Lowongan remote; hanya yang lokasinya menyebut Indonesia yang disimpan. Tidak diteruskan ke Google Jobs sesuai syarat Remotive.',
