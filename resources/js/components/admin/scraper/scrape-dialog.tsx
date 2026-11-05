@@ -19,6 +19,7 @@ import {
 } from '@/components/admin/scraper/source-picker';
 import type { ScrapeSources } from '@/components/admin/scraper/source-picker';
 import { EmptyState } from '@/components/feedback/empty-state';
+import { DatePickerField } from '@/components/form/date-picker-field';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -61,6 +62,8 @@ export function ScrapeDialog({
     );
     const [saved, setSaved] = useState<number[]>([]);
     const [urlText, setUrlText] = useState('');
+    const [publishedFrom, setPublishedFrom] = useState('');
+    const [publishedTo, setPublishedTo] = useState('');
     const urls = parseUrls(urlText);
     const chosenCount = catalog.length + saved.length + urls.length;
     const [runIds, setRunIds] = useState<number[]>([]);
@@ -71,12 +74,24 @@ export function ScrapeDialog({
     const timer = useRef<number | null>(null);
 
     const start = useHttp<
-        { catalog: string[]; urls: string[]; source_ids: number[] },
+        {
+            catalog: string[];
+            urls: string[];
+            source_ids: number[];
+            published_from: string | null;
+            published_to: string | null;
+        },
         {
             runs: Array<{ id: number; source: string }>;
             skipped: Array<{ source: string; reason: string }>;
         }
-    >({ catalog: [], urls: [], source_ids: [] });
+    >({
+        catalog: [],
+        urls: [],
+        source_ids: [],
+        published_from: null,
+        published_to: null,
+    });
     const status = useHttp<
         Record<string, never>,
         { runs: RunRow[]; finished: boolean }
@@ -158,7 +173,13 @@ export function ScrapeDialog({
     };
 
     const begin = () => {
-        start.transform(() => ({ catalog, urls, source_ids: saved }));
+        start.transform(() => ({
+            catalog,
+            urls,
+            source_ids: saved,
+            published_from: publishedFrom || null,
+            published_to: publishedTo || null,
+        }));
         start.post(ExternalJobController.scrape().url, {
             onSuccess: (response) => {
                 response.skipped.forEach((item) =>
@@ -235,6 +256,66 @@ export function ScrapeDialog({
                             urlText={urlText}
                             onUrlTextChange={setUrlText}
                         />
+                    )}
+
+                    {step === 'choose' && (
+                        <div className="mt-6 space-y-3">
+                            <div>
+                                <p className="text-sm font-medium">
+                                    Tanggal tayang (opsional)
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Hanya lowongan yang ditayangkan di rentang
+                                    ini yang disimpan. Kosongkan untuk mengambil
+                                    semua.
+                                </p>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <DatePickerField
+                                    id="published_from"
+                                    label="Dari tanggal"
+                                    value={publishedFrom || null}
+                                    onChange={setPublishedFrom}
+                                    startYear={2020}
+                                    error={
+                                        (
+                                            start.errors as Record<
+                                                string,
+                                                string | undefined
+                                            >
+                                        ).published_from
+                                    }
+                                />
+                                <DatePickerField
+                                    id="published_to"
+                                    label="Sampai tanggal"
+                                    value={publishedTo || null}
+                                    onChange={setPublishedTo}
+                                    startYear={2020}
+                                    error={
+                                        (
+                                            start.errors as Record<
+                                                string,
+                                                string | undefined
+                                            >
+                                        ).published_to
+                                    }
+                                />
+                            </div>
+                            {(publishedFrom || publishedTo) && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setPublishedFrom('');
+                                        setPublishedTo('');
+                                    }}
+                                >
+                                    Hapus rentang tanggal
+                                </Button>
+                            )}
+                        </div>
                     )}
 
                     {step === 'running' && (

@@ -35,6 +35,8 @@ class PublishExternalJobsRequest extends FormRequest
             'filters.category' => ['nullable', 'integer'],
             'filters.search' => ['nullable', 'string', 'max:200'],
             'filters.published' => ['nullable', 'string', 'in:yes,no'],
+            'filters.published_from' => ['nullable', 'date_format:Y-m-d'],
+            'filters.published_to' => ['nullable', 'date_format:Y-m-d'],
             'filters.runs' => ['nullable', 'array', 'max:50'],
             'filters.runs.*' => ['integer'],
             'job_category_id' => ['nullable', 'integer', 'exists:job_categories,id'],

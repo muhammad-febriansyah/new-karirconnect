@@ -12,6 +12,7 @@ use App\Models\ScrapedCompany;
 use App\Models\ScrapedJobListing;
 use App\Models\ScrapedJobOrigin;
 use App\Services\Sanitizer\HtmlSanitizerService;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -37,11 +38,12 @@ class ListingIngestor
     /**
      * @param  list<array<string, mixed>>  $items
      * @param  array<string, mixed>|null  $companyProfile
-     * @return array{created: int, updated: int, unchanged: int, filtered: int, rejected: list<array{external_id: string|null, url: string|null, problems: list<string>}>}
+     * @return array{created: int, updated: int, unchanged: int, filtered: int, filtered_date: int, rejected: list<array{external_id: string|null, url: string|null, problems: list<string>}>}
      */
     public function ingest(JobSource $source, CrawlRun $run, array $items, ?array $companyProfile): array
     {
-        $counts = ['created' => 0, 'updated' => 0, 'unchanged' => 0, 'filtered' => 0, 'rejected' => []];
+        $counts = ['created' => 0, 'updated' => 0, 'unchanged' => 0, 'filtered' => 0, 'filtered_date' => 0, 'rejected' => []];
+        [$publishedFrom, $publishedTo] = $this->dateRange($run);
         $indonesiaOnly = (bool) config('job_catalog.indonesia_only');
         $boardCompany = null;
         $contactsQueued = [];
@@ -58,6 +60,12 @@ class ListingIngestor
                     'url' => is_string($item['source_url'] ?? null) ? $item['source_url'] : null,
                     'problems' => $problems,
                 ];
+
+                continue;
+            }
+
+            if (($publishedFrom || $publishedTo) && ! $this->inDateRange($item, $publishedFrom, $publishedTo)) {
+                $counts['filtered_date']++;
 
                 continue;
             }
@@ -110,6 +118,36 @@ class ListingIngestor
         }
 
         return $counts;
+    }
+
+    /**
+     * The run's "published between" range, if the admin set one.
+     *
+     * @return array{0: CarbonImmutable|null, 1: CarbonImmutable|null}
+     */
+    private function dateRange(CrawlRun $run): array
+    {
+        $range = $run->summary['date_range'] ?? [];
+
+        return [
+            ResultValidator::date($range['from'] ?? null)?->startOfDay(),
+            ResultValidator::date($range['to'] ?? null)?->endOfDay(),
+        ];
+    }
+
+    /**
+     * A posting without a publication date cannot be placed in the range and
+     * is left out.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function inDateRange(array $item, ?CarbonImmutable $from, ?CarbonImmutable $to): bool
+    {
+        $published = ResultValidator::date($item['published_at'] ?? null);
+
+        return $published !== null
+            && ($from === null || $published->gte($from))
+            && ($to === null || $published->lte($to));
     }
 
     /**

@@ -38,6 +38,7 @@ class CrawlOrchestrator
         CrawlRunTrigger $trigger,
         ?User $triggeredBy = null,
         ?CrawlRun $retryOf = null,
+        ?array $dateRange = null,
     ): CrawlRun {
         if (! $source->isRunnable()) {
             throw new CrawlNotAllowedException("Sumber \"{$source->name}\" tidak aktif sehingga tidak bisa di-crawl.");
@@ -58,6 +59,8 @@ class CrawlOrchestrator
             'trigger' => $trigger,
             'triggered_by_user_id' => $triggeredBy?->id,
             'retry_of_crawl_run_id' => $retryOf?->id,
+            // Only postings published in this range are stored (see ListingIngestor).
+            'summary' => array_filter(['date_range' => $dateRange ? array_filter($dateRange) : null]) ?: null,
         ]);
 
         RunCrawlJob::dispatch($run->id)
@@ -76,7 +79,7 @@ class CrawlOrchestrator
             throw new CrawlNotAllowedException('Crawl ini belum selesai, jadi belum bisa diulang.');
         }
 
-        return $this->queue($run->source, CrawlRunTrigger::Retry, $triggeredBy, $run);
+        return $this->queue($run->source, CrawlRunTrigger::Retry, $triggeredBy, $run, $run->summary['date_range'] ?? null);
     }
 
     /**
@@ -204,9 +207,10 @@ class CrawlOrchestrator
         }
 
         $workerRejected = (int) Arr::get($response, 'stats.rejected', 0);
-        $accepted = count($items) - count($counts['rejected']) - $counts['filtered'];
+        $accepted = count($items) - count($counts['rejected']) - $counts['filtered'] - $counts['filtered_date'];
+        $dateLimited = filled($run->summary['date_range'] ?? null);
 
-        if ($status === CrawlRunStatus::Succeeded && $this->droppedAbnormally($source, $run, $accepted)) {
+        if ($status === CrawlRunStatus::Succeeded && ! $dateLimited && $this->droppedAbnormally($source, $run, $accepted)) {
             $status = CrawlRunStatus::SuspectedPartial;
         }
 
@@ -223,8 +227,9 @@ class CrawlOrchestrator
         $this->storeErrors($run, $errors);
 
         $marked = 0;
-        // Only a complete run may say a listing disappeared.
-        if ($status === CrawlRunStatus::Succeeded) {
+        // Only a complete run may say a listing disappeared; a run limited to a
+        // date range did not look at everything.
+        if ($status === CrawlRunStatus::Succeeded && ! $dateLimited) {
             $marked = $this->ingestor->markUnseen($source, $run);
         }
 
@@ -233,6 +238,7 @@ class CrawlOrchestrator
             'stats' => $response['stats'] ?? [],
             // Postings outside Indonesia, dropped by the Indonesia-only rule.
             'filtered_outside_indonesia' => $counts['filtered'],
+            'filtered_by_date' => $counts['filtered_date'],
             'listings_marked_unseen' => $marked,
         ]);
     }

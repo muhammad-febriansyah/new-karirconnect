@@ -3,6 +3,7 @@
 use App\Enums\CrawlRunTrigger;
 use App\Enums\JobSourceStatus;
 use App\Enums\JobSourceType;
+use App\Enums\ScrapedJobListingStatus;
 use App\Jobs\RunCrawlJob;
 use App\Models\City;
 use App\Models\CrawlRun;
@@ -339,5 +340,78 @@ describe('Indonesia only', function () {
         ingestItems([['external_id' => 'a', 'location_text' => 'Jakarta, Indonesia', 'contact_email' => 'hr@tidak-ada.invalid']]);
 
         expect(ScrapedCompany::query()->where('name', 'PT Maju')->sole()->recruitment_email)->toBeNull();
+    });
+});
+
+describe('date range', function () {
+    function crawlDeallsWithRange(array $range, array $items): CrawlRun
+    {
+        $source = app(ExternalSourceCatalog::class)->sourceForEntry('dealls');
+        $run = app(CrawlOrchestrator::class)->queue($source, CrawlRunTrigger::Manual, dateRange: $range);
+        Process::fake(['*' => Process::result(output: json_encode([
+            'contract_version' => 1, 'run_uuid' => $run->uuid, 'status' => 'succeeded', 'engine_used' => 'http',
+            'engines_attempted' => [], 'errors' => [], 'stats' => [], 'company' => null,
+            'items' => array_map(fn (array $item) => [
+                'title' => 'Staff '.$item['external_id'], 'apply_url' => 'https://dealls.com/loker/'.$item['external_id'],
+                'source_url' => 'https://dealls.com/loker/'.$item['external_id'], 'company_name' => 'PT Maju',
+                'location_text' => 'Jakarta Selatan, Indonesia', 'description' => '<p>Kerja</p>', ...$item,
+            ], $items),
+        ]))]);
+        app(CrawlOrchestrator::class)->execute($run);
+
+        return $run->refresh();
+    }
+
+    it('stores only postings published in the chosen range', function () {
+        $run = crawlDeallsWithRange(['from' => '2026-10-01', 'to' => '2026-10-31'], [
+            ['external_id' => 'in', 'published_at' => '2026-10-15T08:00:00Z'],
+            ['external_id' => 'edge', 'published_at' => '2026-10-31T23:00:00+07:00'],
+            ['external_id' => 'before', 'published_at' => '2026-09-30T10:00:00Z'],
+            ['external_id' => 'undated'],
+        ]);
+
+        expect(ScrapedJobListing::query()->orderBy('external_id')->pluck('external_id')->all())->toBe(['edge', 'in'])
+            ->and($run->summary['filtered_by_date'])->toBe(2)
+            ->and($run->summary['date_range'])->toBe(['from' => '2026-10-01', 'to' => '2026-10-31']);
+    });
+
+    it('does not mark listings outside the range as gone', function () {
+        $old = ScrapedJobListing::factory()->create([
+            'job_source_id' => app(ExternalSourceCatalog::class)->sourceForEntry('dealls')->id,
+            'status' => ScrapedJobListingStatus::Active,
+            'last_seen_at' => now()->subDay(),
+        ]);
+
+        crawlDeallsWithRange(['from' => '2026-10-01'], [['external_id' => 'in', 'published_at' => '2026-10-15T08:00:00Z']]);
+
+        expect($old->refresh()->status)->toBe(ScrapedJobListingStatus::Active);
+    });
+
+    it('takes the range from the scrape dialog', function () {
+        Queue::fake();
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.scraper.scrape.start'), ['catalog' => ['dealls'], 'published_from' => '2026-10-01', 'published_to' => '2026-10-31'])
+            ->assertOk();
+
+        expect(CrawlRun::query()->sole()->summary['date_range'])->toBe(['from' => '2026-10-01', 'to' => '2026-10-31']);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.scraper.scrape.start'), ['catalog' => ['dealls'], 'published_from' => '2026-10-31', 'published_to' => '2026-10-01'])
+            ->assertJsonValidationErrors('published_to');
+    });
+
+    it('filters the table by publication date', function () {
+        $admin = User::factory()->admin()->create();
+        $source = app(ExternalSourceCatalog::class)->sourceForEntry('dealls');
+        ScrapedJobListing::factory()->create(['job_source_id' => $source->id, 'published_at' => '2026-10-10 09:00:00']);
+        ScrapedJobListing::factory()->create(['job_source_id' => $source->id, 'published_at' => '2026-08-10 09:00:00']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.scraper.listings.index', ['published_from' => '2026-10-01', 'published_to' => '2026-10-31']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('listings.total', 1)
+                ->where('filters.published_from', '2026-10-01'));
     });
 });

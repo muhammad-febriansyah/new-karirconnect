@@ -29,6 +29,8 @@ class BulkDeleteScrapedJobListingsRequest extends FormRequest
             'filters.category' => ['nullable', 'integer'],
             'filters.search' => ['nullable', 'string', 'max:200'],
             'filters.published' => ['nullable', 'string', 'in:yes,no'],
+            'filters.published_from' => ['nullable', 'date_format:Y-m-d'],
+            'filters.published_to' => ['nullable', 'date_format:Y-m-d'],
         ];
     }
 

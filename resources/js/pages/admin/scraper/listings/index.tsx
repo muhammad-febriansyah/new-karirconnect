@@ -39,6 +39,8 @@ type Filters = {
     category: string;
     published: string;
     search: string;
+    published_from: string;
+    published_to: string;
 };
 
 type Props = {
@@ -208,6 +210,39 @@ export default function ExternalJobsIndex({
                                 options={categoryOptions}
                                 allLabel="Semua kategori"
                             />
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="date"
+                                    aria-label="Tayang dari tanggal"
+                                    title="Tayang dari tanggal"
+                                    className="w-auto"
+                                    value={form.data.published_from}
+                                    max={form.data.published_to || undefined}
+                                    onChange={(event) =>
+                                        changeFilter(
+                                            'published_from',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                <span className="text-sm text-muted-foreground">
+                                    s/d
+                                </span>
+                                <Input
+                                    type="date"
+                                    aria-label="Tayang sampai tanggal"
+                                    title="Tayang sampai tanggal"
+                                    className="w-auto"
+                                    value={form.data.published_to}
+                                    min={form.data.published_from || undefined}
+                                    onChange={(event) =>
+                                        changeFilter(
+                                            'published_to',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                            </div>
                             <Button type="submit" variant="outline">
                                 Cari
                             </Button>

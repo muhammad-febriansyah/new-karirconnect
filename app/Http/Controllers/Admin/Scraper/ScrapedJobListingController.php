@@ -43,6 +43,8 @@ class ScrapedJobListingController extends Controller
             'category' => $request->integer('category') > 0 ? (string) $request->integer('category') : '',
             'published' => in_array($request->string('published')->toString(), ['yes', 'no'], true) ? $request->string('published')->toString() : '',
             'search' => trim($request->string('search')->toString()),
+            'published_from' => $this->dateFilter($request->string('published_from')->toString()),
+            'published_to' => $this->dateFilter($request->string('published_to')->toString()),
         ];
 
         $listings = ExternalListingFilter::apply(ScrapedJobListing::query(), $filters)
@@ -336,5 +338,10 @@ class ScrapedJobListingController extends Controller
             : ['type' => 'success', 'message' => 'Lowongan ditampilkan kembali.']);
 
         return back();
+    }
+
+    private function dateFilter(string $value): string
+    {
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? $value : '';
     }
 }

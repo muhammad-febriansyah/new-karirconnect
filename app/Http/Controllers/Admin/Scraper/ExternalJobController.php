@@ -55,7 +55,10 @@ class ExternalJobController extends Controller
             'urls.*' => ['string', 'distinct', 'max:2048', 'url:https'],
             'source_ids' => ['array', 'max:20'],
             'source_ids.*' => ['integer', 'distinct', 'exists:job_sources,id'],
+            'published_from' => ['nullable', 'date_format:Y-m-d'],
+            'published_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:published_from'],
         ], [
+            'published_to.after_or_equal' => 'Tanggal akhir harus sama atau setelah tanggal mulai.',
             'urls.*.url' => 'URL harus diawali https:// dan valid.',
         ]);
 
@@ -81,7 +84,10 @@ class ExternalJobController extends Controller
             $source = null;
             try {
                 $source = $resolve();
-                $run = $this->orchestrator->queue($source, CrawlRunTrigger::Manual, $request->user());
+                $run = $this->orchestrator->queue($source, CrawlRunTrigger::Manual, $request->user(), dateRange: [
+                    'from' => $data['published_from'] ?? null,
+                    'to' => $data['published_to'] ?? null,
+                ]);
                 $runs[] = ['id' => $run->id, 'source' => $source->name];
             } catch (CrawlNotAllowedException $exception) {
                 // An unfinished run of this source is followed instead of a new one.
@@ -94,7 +100,12 @@ class ExternalJobController extends Controller
             }
         }
 
-        $this->audit->record('external_jobs.scrape', null, null, ['runs' => array_column($runs, 'id'), 'urls' => $data['urls'] ?? []], $request->user());
+        $this->audit->record('external_jobs.scrape', null, null, [
+            'runs' => array_column($runs, 'id'),
+            'urls' => $data['urls'] ?? [],
+            'published_from' => $data['published_from'] ?? null,
+            'published_to' => $data['published_to'] ?? null,
+        ], $request->user());
 
         return response()->json(['runs' => $runs, 'skipped' => $skipped]);
     }
