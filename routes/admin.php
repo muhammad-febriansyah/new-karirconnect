@@ -137,6 +137,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
                 Route::post('sources/{jobSource}/run', [JobSourceController::class, 'run'])->name('sources.run');
 
                 Route::get('listings', [ScrapedJobListingController::class, 'index'])->name('listings.index');
+                Route::post('listings/bulk-delete', [ScrapedJobListingController::class, 'bulkDestroy'])->name('listings.bulk-destroy');
                 Route::get('listings/{listing}', [ScrapedJobListingController::class, 'show'])->name('listings.show');
                 Route::get('listings/{listing}/edit', [ScrapedJobListingController::class, 'edit'])->name('listings.edit');
                 Route::put('listings/{listing}', [ScrapedJobListingController::class, 'update'])->name('listings.update');

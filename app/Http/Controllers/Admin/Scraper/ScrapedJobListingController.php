@@ -8,6 +8,7 @@ use App\Enums\ExperienceLevel;
 use App\Enums\ScrapedJobListingStatus;
 use App\Enums\WorkArrangement;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\BulkDeleteScrapedJobListingsRequest;
 use App\Http\Requests\Admin\UpdateScrapedJobListingRequest;
 use App\Models\City;
 use App\Models\JobCategory;
@@ -63,6 +64,8 @@ class ScrapedJobListingController extends Controller
             'publishableCount' => ExternalListingFilter::apply(ScrapedJobListing::query(), [...$filters, 'published' => 'no'])
                 ->where('status', ScrapedJobListingStatus::Active)
                 ->count(),
+            // Published listings stay: their portal job points at them.
+            'deletableCount' => ExternalListingFilter::apply(ScrapedJobListing::query(), [...$filters, 'published' => 'no'])->count(),
             'scrapeSources' => app(ExternalJobController::class)->sourcesForDialog(),
             'statusOptions' => ScrapedJobListingStatus::selectItems(),
             'sourceOptions' => ScraperViewData::sourceOptions(),
@@ -273,6 +276,41 @@ class ScrapedJobListingController extends Controller
         $this->audit->record('scraped_listing.delete', null, $snapshot, null, $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "\"{$snapshot['title']}\" dihapus. Jika masih ada di sumbernya, crawl berikutnya akan mengambilnya lagi; pakai Sembunyikan agar tidak muncul."]);
+
+        return to_route('admin.scraper.listings.index');
+    }
+
+    /**
+     * Delete the checked listings, or every listing the filters match.
+     * Published listings are kept. Deleting also forgets their origins, so the
+     * next crawl reads those pages again first and stores them fresh.
+     */
+    public function bulkDestroy(BulkDeleteScrapedJobListingsRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $query = ($data['all_matching'] ?? false)
+            ? ExternalListingFilter::apply(ScrapedJobListing::query(), [...($data['filters'] ?? []), 'published' => 'no'])
+            : ScrapedJobListing::query()->whereKey($data['listing_ids'])->whereDoesntHave('publishedJob');
+
+        $requested = ($data['all_matching'] ?? false) ? null : count($data['listing_ids']);
+        $deleted = 0;
+        $query->select('id')->chunkById(500, function ($chunk) use (&$deleted): void {
+            $deleted += ScrapedJobListing::query()->whereKey($chunk->pluck('id'))->delete();
+        });
+
+        $this->audit->record('scraped_listing.bulk_delete', null, null, [
+            'deleted' => $deleted,
+            'all_matching' => (bool) ($data['all_matching'] ?? false),
+            'filters' => $data['filters'] ?? [],
+        ], $request->user());
+
+        $kept = $requested !== null ? $requested - $deleted : 0;
+        Inertia::flash('toast', match (true) {
+            $deleted === 0 => ['type' => 'warning', 'message' => 'Tidak ada lowongan yang dihapus. Lowongan yang sudah dipublish tidak bisa dihapus dari sini.'],
+            $kept > 0 => ['type' => 'success', 'message' => "{$deleted} lowongan dihapus; {$kept} dilewati karena sudah dipublish. Scrap ulang untuk mengambil yang terbaru."],
+            default => ['type' => 'success', 'message' => "{$deleted} lowongan dihapus. Scrap ulang untuk mengambil yang terbaru."],
+        });
 
         return to_route('admin.scraper.listings.index');
     }

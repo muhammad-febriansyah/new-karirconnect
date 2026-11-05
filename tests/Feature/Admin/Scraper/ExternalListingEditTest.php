@@ -160,6 +160,50 @@ it('refuses to delete a listing that is published on the portal', function () {
     expect($this->listing->fresh())->not->toBeNull();
 });
 
+describe('bulk delete', function () {
+    it('deletes the checked listings and skips published ones', function () {
+        $other = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id]);
+        $published = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id, 'job_category_id' => JobCategory::factory()->create()->id]);
+        $this->actingAs($this->admin)->postJson(route('admin.scraper.listings.publish'), ['listing_ids' => [$published->id]]);
+        $kept = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id]);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.scraper.listings.bulk-destroy'), ['listing_ids' => [$this->listing->id, $other->id, $published->id]])
+            ->assertRedirect(route('admin.scraper.listings.index'))
+            ->assertSessionHas('inertia.flash_data.toast.message', '2 lowongan dihapus; 1 dilewati karena sudah dipublish. Scrap ulang untuk mengambil yang terbaru.');
+
+        expect(ScrapedJobListing::query()->pluck('id')->sort()->values()->all())->toBe([$published->id, $kept->id])
+            ->and(ScrapedJobOrigin::query()->where('scraped_job_listing_id', $this->listing->id)->exists())->toBeFalse()
+            ->and(AuditLog::query()->where('action', 'scraped_listing.bulk_delete')->exists())->toBeTrue();
+    });
+
+    it('deletes everything the filters match', function () {
+        $match = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id, 'title' => 'Staf Gudang Malam']);
+        $other = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id, 'title' => 'Akuntan']);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.scraper.listings.bulk-destroy'), ['all_matching' => true, 'filters' => ['search' => 'gudang']])
+            ->assertSessionHas('inertia.flash_data.toast.type', 'success');
+
+        expect(ScrapedJobListing::query()->pluck('id')->all())->toBe([$other->id])
+            ->and(ScrapedJobListing::query()->find($match->id))->toBeNull();
+    });
+
+    it('shows how many listings can be deleted', function () {
+        $this->actingAs($this->admin)
+            ->get(route('admin.scraper.listings.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('deletableCount', 1));
+    });
+
+    it('is admin only', function () {
+        $this->actingAs(User::factory()->employer()->create())
+            ->post(route('admin.scraper.listings.bulk-destroy'), ['listing_ids' => [$this->listing->id]])
+            ->assertForbidden();
+
+        expect($this->listing->fresh())->not->toBeNull();
+    });
+});
+
 it('is admin only', function () {
     $employer = User::factory()->employer()->create();
 

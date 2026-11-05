@@ -48,6 +48,7 @@ type Props = {
     sourceOptions: Option[];
     categoryOptions: Option[];
     publishableCount: number;
+    deletableCount: number;
     scrapeSources: ScrapeSources;
 };
 
@@ -63,6 +64,7 @@ export default function ExternalJobsIndex({
     sourceOptions,
     categoryOptions,
     publishableCount,
+    deletableCount,
     scrapeSources,
 }: Props) {
     const form = useForm<Filters>(filters);
@@ -74,6 +76,10 @@ export default function ExternalJobsIndex({
         'selected' | 'all' | null
     >(null);
     const [deleting, setDeleting] = useState<ExternalListingRow | null>(null);
+    const [bulkDelete, setBulkDelete] = useState<'selected' | 'all' | null>(
+        null,
+    );
+    const [bulkDeleting, setBulkDeleting] = useState(false);
     const columns = useMemo(
         () => listingColumns({ onDelete: setDeleting }),
         [],
@@ -93,6 +99,28 @@ export default function ExternalJobsIndex({
         .filter((key) => selection[key])
         .map(Number);
 
+    const destroyMany = () => {
+        if (bulkDelete === null) {
+            return;
+        }
+
+        router.post(
+            ScrapedJobListingController.bulkDestroy().url,
+            bulkDelete === 'all'
+                ? { all_matching: true, filters }
+                : { listing_ids: selectedIds },
+            {
+                preserveScroll: true,
+                onStart: () => setBulkDeleting(true),
+                onSuccess: () => setSelection({}),
+                onFinish: () => {
+                    setBulkDeleting(false);
+                    setBulkDelete(null);
+                },
+            },
+        );
+    };
+
     const submit = (event: FormEvent) => {
         event.preventDefault();
         setSelection({});
@@ -108,7 +136,9 @@ export default function ExternalJobsIndex({
     const afterPublish = () => {
         setPublishTarget(null);
         setSelection({});
-        router.reload({ only: ['listings', 'publishableCount'] });
+        router.reload({
+            only: ['listings', 'publishableCount', 'deletableCount'],
+        });
     };
 
     return (
@@ -208,6 +238,26 @@ export default function ExternalJobsIndex({
                                 <Button
                                     variant="outline"
                                     size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    disabled={selectedIds.length === 0}
+                                    onClick={() => setBulkDelete('selected')}
+                                >
+                                    <Trash2 className="size-4" /> Hapus
+                                    terpilih ({selectedIds.length})
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    disabled={deletableCount === 0}
+                                    onClick={() => setBulkDelete('all')}
+                                >
+                                    <Trash2 className="size-4" /> Hapus semua (
+                                    {deletableCount})
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
                                     disabled={selectedIds.length === 0}
                                     onClick={() => setPublishTarget('selected')}
                                 >
@@ -282,6 +332,26 @@ export default function ExternalJobsIndex({
                 onConfirm={destroy}
             />
 
+            <ConfirmDialog
+                open={bulkDelete !== null}
+                onOpenChange={(open) => !open && setBulkDelete(null)}
+                title={
+                    bulkDelete === 'all'
+                        ? `Hapus ${deletableCount} lowongan?`
+                        : `Hapus ${selectedIds.length} lowongan terpilih?`
+                }
+                description={
+                    bulkDelete === 'all'
+                        ? `${hasFilters ? 'Semua lowongan yang cocok dengan filter saat ini' : 'Semua lowongan'} yang belum dipublish dihapus dari Jobs Eksternal. Lowongan yang sudah dipublish tetap disimpan. Scrap ulang akan mengambil lowongan yang masih ada di sumbernya.`
+                        : 'Lowongan terpilih dihapus dari Jobs Eksternal. Lowongan yang sudah dipublish tetap disimpan. Scrap ulang akan mengambil lowongan yang masih ada di sumbernya.'
+                }
+                confirmLabel="Hapus"
+                loading={bulkDeleting}
+                variant="destructive"
+                confirmIcon={Trash2}
+                onConfirm={destroyMany}
+            />
+
             <ScrapeDialog
                 key={scrapeOpen ? 'open' : 'closed'}
                 open={scrapeOpen}
@@ -302,8 +372,7 @@ export default function ExternalJobsIndex({
                         </DialogTitle>
                         <DialogDescription>
                             Lowongan menjadi job publik dengan nama dan logo
-                            perusahaannya. Isian di bawah hanya dipakai untuk
-                            data yang tidak disebut sumber.
+                            perusahaannya.
                         </DialogDescription>
                     </DialogHeader>
                     {publishTarget !== null && (
