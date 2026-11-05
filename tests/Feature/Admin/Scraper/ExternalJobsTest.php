@@ -395,7 +395,7 @@ describe('applying to external jobs', function () {
         (new RelayExternalApplicationJob($application->id))->handle();
 
         expect($application->refresh()->relayed_at)->toBeNull()
-            ->and($application->relay_error)->toContain('email rekrutmen');
+            ->and($application->relay_error)->toContain('email untuk menerima lamaran');
     });
 
     it('lets an admin set the recruitment email', function () {

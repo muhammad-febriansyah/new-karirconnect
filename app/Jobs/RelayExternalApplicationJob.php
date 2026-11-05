@@ -37,7 +37,7 @@ class RelayExternalApplicationJob implements ShouldQueue
 
         $email = $application->job->relayEmail();
         if ($email === null) {
-            $application->forceFill(['relay_error' => 'Perusahaan belum punya email rekrutmen.'])->save();
+            $application->forceFill(['relay_error' => 'Perusahaan belum punya email untuk menerima lamaran.'])->save();
 
             return;
         }

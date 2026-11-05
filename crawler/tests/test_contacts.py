@@ -142,3 +142,12 @@ def test_a_site_that_does_not_name_the_company_is_not_used(router, clock):
     )
 
     assert result.website is None and result.recruitment_email is None
+
+
+def test_prefers_the_main_mailbox_as_the_general_email():
+    from karir_crawler.contacts import best_general_mailbox
+
+    assert best_general_mailbox(["partnership@x.id", "info@x.id", "sales@x.id"]) == "info@x.id"
+    assert best_general_mailbox(["sales@x.id", "budi@x.id"]) == "budi@x.id"
+    assert best_general_mailbox(["press@x.id"]) == "press@x.id"
+    assert best_general_mailbox([]) is None

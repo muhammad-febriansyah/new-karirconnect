@@ -508,6 +508,7 @@ function RecruitmentEmailForm({
         recruitment_email_verified_at: string | null;
         contact_checked_at: string | null;
         website: string | null;
+        email: string | null;
     };
 }) {
     const [searching, setSearching] = useState(false);
@@ -551,7 +552,7 @@ function RecruitmentEmailForm({
                     }
                     error={form.errors.recruitment_email}
                     placeholder="rekrutmen@perusahaan.co.id"
-                    description="Isi hanya alamat yang dipublikasikan perusahaan untuk menerima lamaran. Kosong = kandidat melamar di situs perusahaan."
+                    description="Isi hanya alamat yang dipublikasikan perusahaan untuk menerima lamaran. Kosong = lamaran dikirim ke email perusahaan bila ada, atau kandidat melamar di situs perusahaan."
                 />
                 {company.recruitment_email_source && (
                     <p className="text-xs text-muted-foreground">
@@ -574,13 +575,22 @@ function RecruitmentEmailForm({
                         .
                     </p>
                 )}
-                {!company.recruitment_email && company.contact_checked_at && (
-                    <p className="text-xs text-muted-foreground">
-                        Situs perusahaan dicek{' '}
-                        {formatDateTime(company.contact_checked_at)}: tidak ada
-                        email rekrutmen yang dipublikasikan.
+                {!company.recruitment_email && company.email && (
+                    <p className="rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                        Tidak ada email khusus rekrutmen, jadi lamaran dikirim
+                        ke email perusahaan <strong>{company.email}</strong>.
                     </p>
                 )}
+                {!company.recruitment_email &&
+                    !company.email &&
+                    company.contact_checked_at && (
+                        <p className="text-xs text-muted-foreground">
+                            Situs perusahaan dicek{' '}
+                            {formatDateTime(company.contact_checked_at)}: tidak
+                            ada email yang dipublikasikan. Kandidat melamar di
+                            halaman lamaran aslinya.
+                        </p>
+                    )}
                 {!company.website && !company.recruitment_email && (
                     <p className="text-xs text-muted-foreground">
                         Sumber tidak mencantumkan website perusahaan; situs
@@ -595,7 +605,7 @@ function RecruitmentEmailForm({
                     >
                         Simpan
                     </Button>
-                    {!company.recruitment_email && (
+                    {!company.recruitment_email && !company.email && (
                         <Button
                             type="button"
                             size="sm"

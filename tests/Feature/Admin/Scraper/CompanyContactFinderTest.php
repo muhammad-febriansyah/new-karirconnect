@@ -166,3 +166,36 @@ it('queues a website search when a crawl brings a company without an email', fun
     // Two postings, one employer: searched once.
     Queue::assertPushed(FindCompanyContactJob::class, 1);
 });
+
+it('forwards applications to the company email when there is no recruitment one', function () {
+    $company = ScrapedCompany::factory()->create(['recruitment_email' => null, 'email' => 'Info@Contoh.co.id']);
+    expect($company->applicationEmail())->toBe('info@contoh.co.id');
+
+    $company->update(['recruitment_email' => 'hr@contoh.co.id']);
+    expect($company->refresh()->applicationEmail())->toBe('hr@contoh.co.id');
+
+    $company->update(['recruitment_email' => null, 'email' => null]);
+    expect($company->refresh()->applicationEmail())->toBeNull();
+});
+
+it('keeps the general email of a known website only when its domain takes mail', function () {
+    $company = ScrapedCompany::factory()->create(['website' => 'https://tanpa-mx.co.id', 'recruitment_email' => null, 'email' => null]);
+    fakeContactWorker(['general_email' => 'info@tanpa-mx.co.id']);
+
+    app(CompanyContactFinder::class)->find($company);
+
+    expect($company->refresh()->email)->toBeNull();
+});
+
+it('searches again with --force companies that still have no email', function () {
+    Queue::fake();
+    $checked = ScrapedCompany::factory()->create(['website' => 'https://contoh.co.id', 'recruitment_email' => null, 'email' => null, 'contact_checked_at' => now()]);
+    ScrapedCompany::factory()->create(['website' => 'https://lain.co.id', 'recruitment_email' => null, 'email' => 'info@lain.co.id', 'contact_checked_at' => now()]);
+
+    $this->artisan('crawler:find-contacts')->assertSuccessful();
+    Queue::assertNothingPushed();
+
+    $this->artisan('crawler:find-contacts --force')->assertSuccessful();
+    Queue::assertPushed(FindCompanyContactJob::class, 1);
+    Queue::assertPushed(FindCompanyContactJob::class, fn (FindCompanyContactJob $job) => $job->scrapedCompanyId === $checked->id && $job->force);
+});

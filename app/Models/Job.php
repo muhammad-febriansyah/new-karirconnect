@@ -224,8 +224,6 @@ class Job extends Model
             return null;
         }
 
-        $email = $this->scrapedListing?->company?->recruitment_email;
-
-        return filled($email) ? $email : null;
+        return $this->scrapedListing?->company?->applicationEmail();
     }
 }

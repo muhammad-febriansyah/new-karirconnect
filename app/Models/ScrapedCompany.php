@@ -84,6 +84,21 @@ class ScrapedCompany extends Model
     /**
      * The locally stored logo when we have one, otherwise the source's URL.
      */
+    /**
+     * Where applications for this company are forwarded: the recruitment
+     * mailbox, or else the company's own general email.
+     */
+    public function applicationEmail(): ?string
+    {
+        foreach ([$this->recruitment_email, $this->email] as $email) {
+            if (filled($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return strtolower((string) $email);
+            }
+        }
+
+        return null;
+    }
+
     public function logoUrl(): ?string
     {
         if (filled($this->logo_path)) {

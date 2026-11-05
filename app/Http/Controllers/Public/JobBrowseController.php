@@ -67,7 +67,7 @@ class JobBrowseController extends Controller
             'screeningQuestions',
             'scrapedListing:id,scraped_company_id,job_source_id,apply_url',
             'scrapedListing.origins:id,scraped_job_listing_id,job_source_id,source_url',
-            'scrapedListing.company:id,recruitment_email',
+            'scrapedListing.company:id,recruitment_email,email',
             'scrapedListing.source' => fn ($query) => $query->withTrashed(),
         ]);
 

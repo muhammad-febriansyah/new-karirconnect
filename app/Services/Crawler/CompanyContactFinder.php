@@ -28,6 +28,7 @@ class CompanyContactFinder
     public function __construct(
         private readonly CrawlerClient $client,
         private readonly ScrapedCompanyUpserter $companies,
+        private readonly DnsResolver $dns,
     ) {}
 
     /**
@@ -45,13 +46,24 @@ class CompanyContactFinder
 
     public function queueIfDue(ScrapedCompany $company): void
     {
-        if (! $this->isDue($company)) {
-            return;
+        if ($this->isDue($company)) {
+            $this->queue($company);
         }
+    }
 
-        FindCompanyContactJob::dispatch($company->id)
+    public function queue(ScrapedCompany $company, bool $force = false): void
+    {
+        FindCompanyContactJob::dispatch($company->id, $force)
             ->onConnection((string) config('crawler.connection'))
             ->onQueue((string) config('crawler.contact_queue'));
+    }
+
+    /**
+     * Has a website of its own, or a name a website can be found from.
+     */
+    public function isSearchable(ScrapedCompany $company): bool
+    {
+        return $this->searchable($company);
     }
 
     /**
@@ -81,6 +93,11 @@ class CompanyContactFinder
 
         $recruitment = is_string($response['recruitment_email'] ?? null) ? $response['recruitment_email'] : null;
         $general = filter_var($response['general_email'] ?? null, FILTER_VALIDATE_EMAIL) ?: null;
+        // Applications go here when there is no recruitment mailbox, so the
+        // domain must accept mail.
+        if ($general !== null && ! $this->dns->acceptsMail((string) substr((string) strrchr($general, '@'), 1))) {
+            $general = null;
+        }
 
         $this->companies->rememberContactEmail($company, $recruitment, $response['recruitment_email_url'] ?? null);
 
@@ -92,9 +109,10 @@ class CompanyContactFinder
             'contact_checked_at' => now(),
             // A website found from the name is kept only once it gave a recruitment email.
             'website' => blank($company->website) ? $guessedSite : null,
-            // A general mailbox (info@) is shown on the profile, never used to
-            // forward CVs; from a guessed site only once that site is confirmed.
-            'email' => blank($company->email) && ($website !== null || $guessedSite !== null) ? $general : null,
+            // The company's general mailbox (info@): used to forward applications
+            // when there is no recruitment one. From a guessed site only once
+            // that site is confirmed by a recruitment email.
+            'email' => blank($company->email) && ($website !== null || $guessedSite !== null) ? strtolower($general ?? '') : null,
         ]))->save();
 
         return [

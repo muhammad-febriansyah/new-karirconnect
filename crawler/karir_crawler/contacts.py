@@ -74,6 +74,25 @@ def is_recruitment_mailbox(email: str) -> bool:
     return any(token in RECRUITMENT_TOKENS or token.startswith(RECRUITMENT_PREFIXES) for token in tokens)
 
 
+# The company's main mailbox first; team mailboxes that are not about
+# hiring (sales, press, support) last.
+GENERAL_PRIORITY = ("info", "contact", "kontak", "hello", "halo", "hi", "admin", "office", "kantor", "cs", "customer", "corporate", "corsec", "mail", "email")
+GENERAL_LAST = ("sales", "marketing", "partner", "partnership", "press", "media", "pr", "support", "billing", "finance", "invoice", "order", "privacy", "legal", "abuse", "security", "webmaster", "career")
+
+
+def best_general_mailbox(emails: list[str]) -> str | None:
+    def rank(email: str) -> tuple[int, int]:
+        local = email.split("@", 1)[0].lower()
+        token = re.split(r"[._\-+\d]+", local)[0] if local else local
+        if token in GENERAL_PRIORITY:
+            return (0, GENERAL_PRIORITY.index(token))
+        if token in GENERAL_LAST or any(local.startswith(word) for word in GENERAL_LAST):
+            return (2, 0)
+        return (1, 0)  # a person or an unknown team
+
+    return min(emails, key=rank) if emails else None
+
+
 def emails_in(html: str, domain: str) -> list[str]:
     """Addresses on `domain` (or its subdomains), in page order."""
     text = unquote(html_lib.unescape(html)).replace("\\u003e", " ").replace("\\u003c", " ").replace("\\u0040", "@")
@@ -271,6 +290,7 @@ def find_contact(
     deadline = Deadline(clock or Clock(), request.timeout_s)
     queue = [request.website.rstrip("/") + "/"]
     seen: set[str] = set()
+    general: list[str] = []
 
     with SafeClient(
         UrlGuard([domain], resolver=resolver),
@@ -314,12 +334,13 @@ def find_contact(
                         result.recruitment_email = email
                         found_on = urlsplit(str(response.url))
                         result.recruitment_email_url = f"{found_on.scheme}://{found_on.netloc}{found_on.path}"
-                elif result.general_email is None:
-                    result.general_email = email
+                elif email not in general:
+                    general.append(email)
 
             if result.recruitment_email is not None:
                 break
 
+    result.general_email = best_general_mailbox(general)
     if result.pages == 0:
         result.status = "failed"
     return result
