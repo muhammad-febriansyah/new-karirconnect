@@ -87,7 +87,7 @@ class ExternalJobController extends Controller
                 $run = $this->orchestrator->queue($source, CrawlRunTrigger::Manual, $request->user(), dateRange: [
                     'from' => $data['published_from'] ?? null,
                     'to' => $data['published_to'] ?? null,
-                ]);
+                ], autoContinue: true);
                 $runs[] = ['id' => $run->id, 'source' => $source->name];
             } catch (CrawlNotAllowedException $exception) {
                 // An unfinished run of this source is followed instead of a new one.
@@ -167,7 +167,8 @@ class ExternalJobController extends Controller
 
         return response()->json([
             'runs' => $runs,
-            'finished' => $runs->isNotEmpty() && $runs->every(fn (array $run): bool => $run['is_finished']),
+            // A finished run about to be continued keeps the scrape going.
+            'finished' => $runs->isNotEmpty() && $runs->every(fn (array $run): bool => $run['is_finished'] && ! $run['continues']),
         ]);
     }
 
@@ -316,7 +317,14 @@ class ExternalJobController extends Controller
     {
         $ids = $request->input('runs', []);
         $ids = is_string($ids) ? explode(',', $ids) : (array) $ids;
+        $roots = array_slice(array_values(array_filter(array_map('intval', $ids))), 0, 50);
 
-        return array_slice(array_values(array_filter(array_map('intval', $ids))), 0, 50);
+        // Runs that continued these ones automatically belong to the same scrape.
+        $continued = $roots === [] ? [] : CrawlRun::query()
+            ->whereIn('summary->chain_root', $roots)
+            ->pluck('id')
+            ->all();
+
+        return array_values(array_unique([...$roots, ...$continued]));
     }
 }

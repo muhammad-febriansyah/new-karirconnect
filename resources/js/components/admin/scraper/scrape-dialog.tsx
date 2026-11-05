@@ -339,11 +339,24 @@ export function ScrapeDialog({
                                           <div>
                                               <p className="font-medium">
                                                   {run.source?.name}
+                                                  {run.chain_index > 1 && (
+                                                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                                          (lanjutan ke-
+                                                          {run.chain_index})
+                                                      </span>
+                                                  )}
                                               </p>
                                               <p className="text-xs text-muted-foreground">
-                                                  {run.items_found} ditemukan ·{' '}
+                                                  {run.items_found} dibaca ·{' '}
                                                   {run.items_created} baru ·{' '}
                                                   {run.items_updated} diperbarui
+                                                  {run.filtered_by_date > 0 &&
+                                                      ` · ${run.filtered_by_date} di luar rentang tanggal`}
+                                                  {run.filtered_outside_indonesia >
+                                                      0 &&
+                                                      ` · ${run.filtered_outside_indonesia} di luar Indonesia`}
+                                                  {run.continues &&
+                                                      ` · ${run.unread_left} halaman lagi, dilanjutkan otomatis`}
                                               </p>
                                           </div>
                                           <div className="flex items-center gap-2">
@@ -389,8 +402,8 @@ export function ScrapeDialog({
                             <EmptyState
                                 bare
                                 icon={CloudDownload}
-                                title="Tidak ada lowongan"
-                                description="Crawl selesai tanpa lowongan. Cek detail crawl untuk penyebabnya."
+                                title="Tidak ada lowongan yang disimpan"
+                                description={emptyReason(runs)}
                             />
                         ) : (
                             <div className="space-y-3">
@@ -493,4 +506,27 @@ export function ScrapeDialog({
             </DialogContent>
         </Dialog>
     );
+}
+
+/** Why a finished scrape stored nothing, from the runs' own counts. */
+function emptyReason(runs: RunRow[]): string {
+    const read = runs.reduce((sum, run) => sum + run.items_found, 0);
+    const byDate = runs.reduce((sum, run) => sum + run.filtered_by_date, 0);
+    const outside = runs.reduce(
+        (sum, run) => sum + run.filtered_outside_indonesia,
+        0,
+    );
+    const left = runs.at(-1)?.unread_left ?? 0;
+
+    if (read === 0) {
+        return 'Tidak ada lowongan yang terbaca. Buka Monitoring Crawl untuk melihat penyebabnya.';
+    }
+
+    const parts = [
+        `${read} lowongan dibaca`,
+        byDate > 0 ? `${byDate} di luar rentang tanggal` : null,
+        outside > 0 ? `${outside} di luar Indonesia` : null,
+    ].filter(Boolean);
+
+    return `${parts.join(', ')}.${left > 0 ? ` Masih ada ${left} halaman yang belum dibaca; Scrap lagi untuk melanjutkan.` : ''}`;
 }

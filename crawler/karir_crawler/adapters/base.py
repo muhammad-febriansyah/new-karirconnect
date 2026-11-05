@@ -15,6 +15,8 @@ class AdapterResult:
     pages: int = 0
     # More listings existed than max_items/max_pages allowed us to read.
     truncated: bool = False
+    # Pages not read in recent runs that this run did not get to.
+    unread_left: int = 0
     # A later page failed after earlier pages succeeded; items are kept.
     interrupted_by: CrawlFailure | None = None
     # Non-fatal problems (e.g. the company profile page could not be read).

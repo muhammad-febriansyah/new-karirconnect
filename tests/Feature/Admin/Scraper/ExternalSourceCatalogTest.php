@@ -427,3 +427,66 @@ it('remembers pages it read but did not store, so the next run reads new ones', 
     expect($request['recently_seen'])->toContain('https://dealls.com/loker/old')
         ->toContain('https://dealls.com/loker/new');
 });
+
+describe('auto continue', function () {
+    function deallsRunReturning(CrawlRun $run, array $stats, string $status = 'partial'): void
+    {
+        Process::fake(['*' => Process::result(output: json_encode([
+            'contract_version' => 1, 'run_uuid' => $run->uuid, 'status' => $status, 'engine_used' => 'http',
+            'engines_attempted' => [], 'errors' => [], 'company' => null, 'stats' => $stats,
+            'items' => [[
+                'external_id' => 'x'.$run->id, 'title' => 'Staff '.$run->id, 'apply_url' => 'https://dealls.com/loker/x'.$run->id,
+                'source_url' => 'https://dealls.com/loker/x'.$run->id, 'company_name' => 'PT Maju',
+                'location_text' => 'Jakarta Selatan, Indonesia', 'description' => '<p>Kerja</p>',
+            ]],
+        ]))]);
+        app(CrawlOrchestrator::class)->execute($run);
+    }
+
+    it('keeps reading the unread pages of a dialog scrape in follow-up runs', function () {
+        $admin = User::factory()->admin()->create();
+        $this->actingAs($admin)->postJson(route('admin.scraper.scrape.start'), ['catalog' => ['dealls'], 'published_from' => '2026-10-01'])->assertOk();
+        $first = CrawlRun::query()->sole();
+
+        deallsRunReturning($first, ['truncated' => 1, 'unread_left' => 300, 'pages' => 150]);
+
+        $second = CrawlRun::query()->whereKeyNot($first->id)->sole();
+        expect($first->refresh()->summary['continued_by'])->toBe($second->id)
+            ->and($second->summary['chain_root'])->toBe($first->id)
+            ->and($second->summary['chain_index'])->toBe(2)
+            ->and($second->summary['date_range'])->toBe(['from' => '2026-10-01']);
+
+        // The dialog follows the whole chain and keeps polling.
+        $this->actingAs($admin)
+            ->getJson(route('admin.scraper.scrape.status', ['runs' => [$first->id]]))
+            ->assertJsonCount(2, 'runs')
+            ->assertJsonPath('finished', false);
+
+        deallsRunReturning($second, ['truncated' => 0, 'unread_left' => 0, 'pages' => 120], 'succeeded');
+
+        expect(CrawlRun::query()->count())->toBe(2);
+        $this->actingAs($admin)
+            ->getJson(route('admin.scraper.scrape.status', ['runs' => [$first->id]]))
+            ->assertJsonPath('finished', true);
+    });
+
+    it('stops after the configured number of runs', function () {
+        config(['crawler.auto_continue_max_runs' => 2]);
+        $source = app(ExternalSourceCatalog::class)->sourceForEntry('dealls');
+        $first = app(CrawlOrchestrator::class)->queue($source, CrawlRunTrigger::Manual, autoContinue: true);
+        deallsRunReturning($first, ['truncated' => 1, 'unread_left' => 300]);
+        $second = CrawlRun::query()->latest('id')->first();
+        deallsRunReturning($second, ['truncated' => 1, 'unread_left' => 150]);
+
+        expect(CrawlRun::query()->count())->toBe(2)
+            ->and($second->refresh()->summary['will_continue'] ?? null)->toBeNull();
+    });
+
+    it('does not continue scheduled runs', function () {
+        $source = app(ExternalSourceCatalog::class)->sourceForEntry('dealls');
+        $run = app(CrawlOrchestrator::class)->queue($source, CrawlRunTrigger::Schedule);
+        deallsRunReturning($run, ['truncated' => 1, 'unread_left' => 300]);
+
+        expect(CrawlRun::query()->count())->toBe(1);
+    });
+});

@@ -403,6 +403,10 @@ def test_unread_pages_are_visited_first(router, clock):
 
     assert [item.title for item in response.items] == ["Backend Engineer"]
     assert not any(call.request.url.path == "/jobs/data-analyst" for call in router.calls)
+    # The budget ran out with the designer page still unread: a follow-up
+    # run has something to read.
+    assert response.status == "partial"
+    assert response.stats["unread_left"] == 1
 
 
 def test_dealls_next_data_enriches_the_posting():

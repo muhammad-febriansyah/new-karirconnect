@@ -107,7 +107,9 @@ def run(
             response.items = items
             response.errors.extend(result.warnings)
             response.errors.extend(rejected)
-            response.stats.update(pages=result.pages, rejected=len(rejected), truncated=int(result.truncated))
+            response.stats.update(
+                pages=result.pages, rejected=len(rejected), truncated=int(result.truncated), unread_left=result.unread_left,
+            )
 
             if result.interrupted_by is not None:
                 response.errors.append(_record(result.interrupted_by, engine))

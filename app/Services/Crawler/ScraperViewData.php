@@ -39,6 +39,11 @@ class ScraperViewData
             'finished_at' => $run->finished_at?->toIso8601String(),
             'created_at' => $run->created_at?->toIso8601String(),
             'cancel_requested' => (bool) ($run->summary['cancel_requested'] ?? false),
+            'filtered_by_date' => (int) ($run->summary['filtered_by_date'] ?? 0),
+            'filtered_outside_indonesia' => (int) ($run->summary['filtered_outside_indonesia'] ?? 0),
+            'unread_left' => (int) ($run->summary['stats']['unread_left'] ?? 0),
+            'chain_index' => (int) ($run->summary['chain_index'] ?? 1),
+            'continues' => ($run->summary['will_continue'] ?? false) === true && empty($run->summary['continued_by']),
             'source' => $run->relationLoaded('source') && $run->source ? self::sourceRef($run->source) : null,
             'triggered_by' => $run->relationLoaded('triggeredBy') ? $run->triggeredBy?->name : null,
         ];

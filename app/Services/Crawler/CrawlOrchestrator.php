@@ -39,6 +39,8 @@ class CrawlOrchestrator
         ?User $triggeredBy = null,
         ?CrawlRun $retryOf = null,
         ?array $dateRange = null,
+        bool $autoContinue = false,
+        ?CrawlRun $continues = null,
     ): CrawlRun {
         if (! $source->isRunnable()) {
             throw new CrawlNotAllowedException("Sumber \"{$source->name}\" tidak aktif sehingga tidak bisa di-crawl.");
@@ -59,8 +61,15 @@ class CrawlOrchestrator
             'trigger' => $trigger,
             'triggered_by_user_id' => $triggeredBy?->id,
             'retry_of_crawl_run_id' => $retryOf?->id,
-            // Only postings published in this range are stored (see ListingIngestor).
-            'summary' => array_filter(['date_range' => $dateRange ? array_filter($dateRange) : null]) ?: null,
+            'summary' => array_filter([
+                // Only postings published in this range are stored (see ListingIngestor).
+                'date_range' => $dateRange ? array_filter($dateRange) : null,
+                // A scrape started from the dialog keeps going until every page
+                // of the source was read (see continueIfMoreToRead).
+                'auto_continue' => $autoContinue ?: null,
+                'chain_root' => $continues ? ($continues->summary['chain_root'] ?? $continues->id) : null,
+                'chain_index' => $continues ? ((int) ($continues->summary['chain_index'] ?? 1)) + 1 : null,
+            ]) ?: null,
         ]);
 
         RunCrawlJob::dispatch($run->id)
@@ -233,14 +242,56 @@ class CrawlOrchestrator
             $marked = $this->ingestor->markUnseen($source, $run);
         }
 
+        $stats = is_array($response['stats'] ?? null) ? $response['stats'] : [];
+        $willContinue = $this->hasMoreToRead($run, $status, $stats);
+
         $this->finishAndSettle($run, $source, $status, $errors, [
             'company' => $company['name'] ?? null,
-            'stats' => $response['stats'] ?? [],
+            'stats' => $stats,
+            'will_continue' => $willContinue ?: null,
             // Postings outside Indonesia, dropped by the Indonesia-only rule.
             'filtered_outside_indonesia' => $counts['filtered'],
             'filtered_by_date' => $counts['filtered_date'],
             'listings_marked_unseen' => $marked,
         ]);
+
+        if ($willContinue) {
+            $this->continueRun($run, $source);
+        }
+    }
+
+    /**
+     * A dialog scrape stopped by the page budget with unread pages left goes
+     * on with another run, up to crawler.auto_continue_max_runs runs.
+     *
+     * @param  array<string, mixed>  $stats
+     */
+    private function hasMoreToRead(CrawlRun $run, CrawlRunStatus $status, array $stats): bool
+    {
+        return ($run->summary['auto_continue'] ?? false) === true
+            && $status === CrawlRunStatus::Partial
+            && (int) ($stats['truncated'] ?? 0) === 1
+            && (int) ($stats['unread_left'] ?? 0) > 0
+            && (int) ($run->summary['chain_index'] ?? 1) < (int) config('crawler.auto_continue_max_runs', 20)
+            && ! ($run->summary['cancel_requested'] ?? false);
+    }
+
+    private function continueRun(CrawlRun $run, JobSource $source): void
+    {
+        try {
+            $next = $this->queue(
+                $source->refresh(),
+                $run->trigger,
+                $run->triggeredBy,
+                dateRange: $run->summary['date_range'] ?? null,
+                autoContinue: true,
+                continues: $run,
+            );
+            $run->forceFill(['summary' => [...$run->summary, 'continued_by' => $next->id]])->save();
+        } catch (CrawlNotAllowedException) {
+            // Cooling down or circuit open: the chain ends here.
+            $run->forceFill(['summary' => [...$run->summary, 'will_continue' => null]])->save();
+        }
     }
 
     /**

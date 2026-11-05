@@ -84,13 +84,21 @@ def unread_first(urls: list[str], request: CrawlRequest) -> list[str]:
 
 def crawl_detail_pages(fetcher, urls: list[str], request: CrawlRequest, result: AdapterResult, budget: Budget, seen: set[str]) -> None:
     rules = selectors(request)
+    recent = {clean_url(url) for url in request.recently_seen}
+    unread = {clean_url(url) for url in urls} - recent - seen
+    try:
+        _crawl_detail_pages(fetcher, urls, request, result, budget, seen, rules)
+    finally:
+        result.unread_left = len(unread - seen)
+
+
+def _crawl_detail_pages(fetcher, urls: list[str], request: CrawlRequest, result: AdapterResult, budget: Budget, seen: set[str], rules) -> None:
     for url in unread_first(urls, request):
         if budget.items_full() or result.interrupted_by is not None:
             return
         url = clean_url(url)
         if url in seen:
             continue
-        seen.add(url)
         # Stop cleanly before the run's time budget runs out, instead of
         # logging a timeout for every page left.
         if fetcher.client.deadline.remaining() < 15:
@@ -98,6 +106,7 @@ def crawl_detail_pages(fetcher, urls: list[str], request: CrawlRequest, result: 
             return
         if not budget.take():
             return
+        seen.add(url)
         try:
             final_url, markup = fetcher.html(url)
         except CrawlFailure as failure:

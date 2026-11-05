@@ -49,6 +49,11 @@ export type RunRow = {
     finished_at: string | null;
     created_at: string | null;
     cancel_requested: boolean;
+    filtered_by_date: number;
+    filtered_outside_indonesia: number;
+    unread_left: number;
+    chain_index: number;
+    continues: boolean;
     source: SourceRef | null;
     triggered_by: string | null;
 };

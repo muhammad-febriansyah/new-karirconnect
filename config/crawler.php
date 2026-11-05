@@ -76,6 +76,10 @@ return [
 
     // A company website searched for a recruitment email without result is
     // searched again after this many days.
+    // A scrape from the dialog that hit the page budget queues another run
+    // for the unread pages, at most this many runs in a row.
+    'auto_continue_max_runs' => (int) env('CRAWLER_AUTO_CONTINUE_MAX_RUNS', 20),
+
     'contact_recheck_days' => (int) env('CRAWLER_CONTACT_RECHECK_DAYS', 30),
 
     /*
