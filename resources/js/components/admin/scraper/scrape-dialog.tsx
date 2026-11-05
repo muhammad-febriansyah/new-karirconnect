@@ -1,5 +1,4 @@
 import { router, useHttp } from '@inertiajs/react';
-import type { RowSelectionState } from '@tanstack/react-table';
 import { CheckCircle2, CloudDownload, Loader2, RotateCw } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -11,7 +10,6 @@ import {
     listingColumns,
 } from '@/components/admin/scraper/listing-columns';
 import type { ExternalListingRow } from '@/components/admin/scraper/listing-columns';
-import { PublishPanel } from '@/components/admin/scraper/publish-panel';
 import { ToneBadge } from '@/components/admin/scraper/scraper-ui';
 import {
     parseUrls,
@@ -38,7 +36,8 @@ const POLL_MS = 3000;
 
 /**
  * "Scrap" flow: pick sources -> queue a crawl per source -> follow progress
- * -> review what was found in a data table -> publish all or a selection.
+ * -> review what was found. Nothing is published here: listings are chosen
+ * and published from the Jobs Eksternal list.
  */
 export function ScrapeDialog({
     open,
@@ -70,7 +69,6 @@ export function ScrapeDialog({
     const [runs, setRuns] = useState<RunRow[]>([]);
     const [results, setResults] = useState<ExternalListingRow[] | null>(null);
     const [resultTotal, setResultTotal] = useState(0);
-    const [selection, setSelection] = useState<RowSelectionState>({});
     const timer = useRef<number | null>(null);
 
     const start = useHttp<
@@ -117,7 +115,7 @@ export function ScrapeDialog({
         [],
     );
 
-    const loadResults = (ids: number[], preselect = true) => {
+    const loadResults = (ids: number[]) => {
         fetchResults.get(
             ExternalJobController.results({ query: { runs: ids.join(',') } })
                 .url,
@@ -125,17 +123,6 @@ export function ScrapeDialog({
                 onSuccess: (response) => {
                     setResults(response.listings);
                     setResultTotal(response.total);
-                    // Preselect everything that can still be published, but
-                    // only on the first load: after a publish, start clean.
-                    setSelection(
-                        preselect
-                            ? Object.fromEntries(
-                                  response.listings
-                                      .filter(canPublish)
-                                      .map((row) => [String(row.id), true]),
-                              )
-                            : {},
-                    );
                     setStep('results');
                 },
             },
@@ -216,15 +203,11 @@ export function ScrapeDialog({
 
             setStep('choose');
             setResults(null);
-            setSelection({});
         }
 
         onOpenChange(next);
     };
 
-    const selectedIds = Object.keys(selection)
-        .filter((key) => selection[key])
-        .map(Number);
     const publishable = results?.filter(canPublish).length ?? 0;
     const columns = useMemo(() => listingColumns({ showSource: false }), []);
 
@@ -241,7 +224,7 @@ export function ScrapeDialog({
                         {step === 'running' &&
                             'Crawl berjalan di antrean "crawler". Jendela ini diperbarui otomatis.'}
                         {step === 'results' &&
-                            'Lowongan yang ditemukan. Pilih yang akan dipublish ke portal, atau publish semuanya.'}
+                            'Lowongan yang ditemukan. Belum ada yang dipublish: pilih lalu publish dari daftar Jobs Eksternal.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -388,7 +371,7 @@ export function ScrapeDialog({
                                     Masih antre? Pastikan worker berjalan:{' '}
                                     <code>
                                         php artisan queue:work crawler
-                                        --queue=crawler
+                                        --queue=crawler,crawler-contacts
                                     </code>
                                 </p>
                             )}
@@ -410,8 +393,7 @@ export function ScrapeDialog({
                                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                                     <span>
                                         {resultTotal} lowongan · {publishable}{' '}
-                                        bisa dipublish · {selectedIds.length}{' '}
-                                        dipilih
+                                        belum dipublish
                                     </span>
                                     {resultTotal > results.length && (
                                         <span className="text-amber-700">
@@ -424,9 +406,6 @@ export function ScrapeDialog({
                                     columns={columns}
                                     data={results}
                                     getRowId={(row) => String(row.id)}
-                                    rowSelection={selection}
-                                    onRowSelectionChange={setSelection}
-                                    canSelect={canPublish}
                                     minWidth={820}
                                     className="max-h-[48vh] overflow-y-auto"
                                 />
@@ -466,40 +445,18 @@ export function ScrapeDialog({
                             </Button>
                         </div>
                     )}
-                    {step === 'results' && results && results.length > 0 && (
-                        <div className="space-y-3">
-                            <PublishPanel
-                                target={{ listingIds: selectedIds }}
-                                onPublished={() => loadResults(runIds, false)}
-                            />
-                            <div className="flex flex-wrap justify-between gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                        setSelection(
-                                            Object.fromEntries(
-                                                results
-                                                    .filter(canPublish)
-                                                    .map((row) => [
-                                                        String(row.id),
-                                                        true,
-                                                    ]),
-                                            ),
-                                        )
-                                    }
-                                >
-                                    Pilih semua yang bisa dipublish (
-                                    {publishable})
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setStep('choose')}
-                                >
-                                    <RotateCw className="size-4" /> Scrap lagi
-                                </Button>
-                            </div>
+                    {step === 'results' && (
+                        <div className="flex flex-wrap justify-between gap-2">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setStep('choose')}
+                            >
+                                <RotateCw className="size-4" /> Scrap lagi
+                            </Button>
+                            <Button onClick={() => close(false)}>
+                                Pilih & publish di daftar
+                            </Button>
                         </div>
                     )}
                 </DialogFooter>
