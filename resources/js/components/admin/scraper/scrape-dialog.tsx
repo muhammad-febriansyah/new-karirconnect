@@ -12,7 +12,6 @@ import {
 } from '@/components/admin/scraper/listing-columns';
 import type { ExternalListingRow } from '@/components/admin/scraper/listing-columns';
 import { PublishPanel } from '@/components/admin/scraper/publish-panel';
-import type { PublishDefaults } from '@/components/admin/scraper/publish-panel';
 import { ToneBadge } from '@/components/admin/scraper/scraper-ui';
 import {
     parseUrls,
@@ -30,7 +29,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Option, RunRow } from '@/types/scraper';
+import type { RunRow } from '@/types/scraper';
 
 type Step = 'choose' | 'running' | 'results';
 
@@ -44,14 +43,10 @@ export function ScrapeDialog({
     open,
     onOpenChange,
     sources,
-    categoryOptions,
-    publishDefaults,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     sources: ScrapeSources;
-    categoryOptions: Option[];
-    publishDefaults: PublishDefaults;
 }) {
     const [step, setStep] = useState<Step>('choose');
     // The parent remounts this dialog (key) each time it opens, so the
@@ -377,8 +372,6 @@ export function ScrapeDialog({
                         <div className="space-y-3">
                             <PublishPanel
                                 target={{ listingIds: selectedIds }}
-                                categoryOptions={categoryOptions}
-                                defaults={publishDefaults}
                                 onPublished={() => loadResults(runIds, false)}
                             />
                             <div className="flex flex-wrap justify-between gap-2">

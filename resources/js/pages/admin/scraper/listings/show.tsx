@@ -12,9 +12,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
-import CrawlRunController from '@/actions/App/Http/Controllers/Admin/Scraper/CrawlRunController';
 import ExternalJobController from '@/actions/App/Http/Controllers/Admin/Scraper/ExternalJobController';
-import JobSourceController from '@/actions/App/Http/Controllers/Admin/Scraper/JobSourceController';
 import ScrapedJobListingController from '@/actions/App/Http/Controllers/Admin/Scraper/ScrapedJobListingController';
 import { CompanyLogo, ToneBadge } from '@/components/admin/scraper/scraper-ui';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
@@ -442,98 +440,6 @@ export default function ScrapedListingShow({ listing }: { listing: Listing }) {
                                         />
                                     </div>
                                 )}
-                            </Section>
-                        )}
-
-                        <Section
-                            title="Asal data"
-                            description="Setiap sumber yang menayangkan lowongan ini."
-                        >
-                            <ul className="space-y-3">
-                                {listing.origins.map((origin) => (
-                                    <li
-                                        key={origin.id}
-                                        className="rounded-lg border p-3 text-sm"
-                                    >
-                                        <div className="flex items-center justify-between gap-2">
-                                            {origin.source ? (
-                                                <Link
-                                                    href={
-                                                        JobSourceController.edit(
-                                                            origin.source.id,
-                                                        ).url
-                                                    }
-                                                    className="font-medium hover:underline"
-                                                >
-                                                    {origin.source.name}
-                                                </Link>
-                                            ) : (
-                                                <span className="font-medium">
-                                                    Sumber dihapus
-                                                </span>
-                                            )}
-                                            <span className="text-xs text-muted-foreground">
-                                                ID {origin.external_id}
-                                            </span>
-                                        </div>
-                                        <a
-                                            href={origin.source_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer nofollow"
-                                            className="mt-1 block truncate text-xs text-primary hover:underline"
-                                        >
-                                            {origin.source_url}
-                                        </a>
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            Pertama{' '}
-                                            {formatDate(origin.first_seen_at)} ·
-                                            terakhir{' '}
-                                            {formatDateTime(
-                                                origin.last_seen_at,
-                                            )}
-                                            {origin.last_crawl_run_id && (
-                                                <>
-                                                    {' · '}
-                                                    <Link
-                                                        href={
-                                                            CrawlRunController.show(
-                                                                origin.last_crawl_run_id,
-                                                            ).url
-                                                        }
-                                                        className="underline"
-                                                    >
-                                                        crawl
-                                                    </Link>
-                                                </>
-                                            )}
-                                        </p>
-                                    </li>
-                                ))}
-                            </ul>
-                        </Section>
-
-                        {Object.keys(listing.raw_attributes).length > 0 && (
-                            <Section
-                                title="Nilai asli dari sumber"
-                                description="Dipakai untuk pemetaan; ditampilkan apa adanya."
-                            >
-                                <dl className="space-y-2 text-sm">
-                                    {Object.entries(listing.raw_attributes).map(
-                                        ([key, value]) => (
-                                            <div
-                                                key={key}
-                                                className="flex justify-between gap-3"
-                                            >
-                                                <dt className="text-muted-foreground">
-                                                    {key}
-                                                </dt>
-                                                <dd className="text-right break-all">
-                                                    {String(value)}
-                                                </dd>
-                                            </div>
-                                        ),
-                                    )}
-                                </dl>
                             </Section>
                         )}
                     </div>

@@ -50,6 +50,47 @@ def _html(value) -> str | None:
     return cleaned or None
 
 
+# Dealls lists company benefits as codes; unknown codes are spelled out.
+COMPANY_BENEFITS = {
+    "competitivesalary": "Gaji kompetitif",
+    "medicalleave": "Cuti sakit",
+    "bonussystem": "Sistem bonus",
+    "healthinsurance": "Asuransi kesehatan",
+    "lifeinsurance": "Asuransi jiwa",
+    "bpjs": "BPJS",
+    "flexibleworkinghours": "Jam kerja fleksibel",
+    "flexiblehours": "Jam kerja fleksibel",
+    "remotework": "Kerja remote",
+    "workfromhome": "Kerja dari rumah",
+    "paidleave": "Cuti berbayar",
+    "annualleave": "Cuti tahunan",
+    "maternityleave": "Cuti melahirkan",
+    "thr": "THR",
+    "transportallowance": "Tunjangan transportasi",
+    "mealallowance": "Tunjangan makan",
+    "trainingdevelopment": "Pelatihan & pengembangan",
+    "careerdevelopment": "Pengembangan karier",
+    "stockoption": "Opsi saham",
+    "freelunch": "Makan siang gratis",
+    "gym": "Fasilitas olahraga",
+}
+
+
+def _benefit_label(code: str) -> str:
+    key = re.sub(r"[^a-z]", "", code.lower())
+    if key in COMPANY_BENEFITS:
+        return COMPANY_BENEFITS[key]
+    words = re.sub(r"(?<!^)(?=[A-Z])", " ", code).replace("_", " ").strip()
+    return words[:1].upper() + words[1:].lower()
+
+
+def _benefits_html(codes) -> str | None:
+    labels = [_benefit_label(str(code)) for code in codes or [] if str(code).strip()]
+    if not labels:
+        return None
+    return "<ul>" + "".join(f"<li>{html_lib.escape(label)}</li>" for label in dict.fromkeys(labels)) + "</ul>"
+
+
 WORKPLACE = {"onsite": "onsite", "remote": "remote", "hybrid": "hybrid"}
 EMPLOYMENT = {"fulltime": "Full-time", "parttime": "Part-time", "contract": "Contract", "internship": "Internship", "freelance": "Freelance"}
 
@@ -101,6 +142,18 @@ def dealls(item: JobItem, soup: BeautifulSoup) -> JobItem | None:
     item.company_website = company.get("website") or None
     item.company_about = _html(company.get("description"))
     item.company_industry_raw = company.get("sector") or None
+    item.company_culture = _html(company.get("whatSpecial"))
+    item.company_benefits = _benefits_html((company.get("insight") or {}).get("benefits"))
+    company_city = ((company.get("location") or {}).get("city") or {}).get("name")
+    if company_city:
+        item.company_location_raw = str(company_city)
+
+    # Skills the employer asks for, as Dealls tags them.
+    preference = job.get("candidatePreference") or {}
+    named = [str(skill.get("name")).strip() for skill in preference.get("skills") or [] if isinstance(skill, dict) and skill.get("name")]
+    if named:
+        item.skills_raw = list(dict.fromkeys([*item.skills_raw, *named]))
+
     size = company.get("size") or {}
     if size.get("start") or size.get("end"):
         item.company_size_raw = f"{size.get('start') or ''}-{size.get('end') or ''}".strip("-")

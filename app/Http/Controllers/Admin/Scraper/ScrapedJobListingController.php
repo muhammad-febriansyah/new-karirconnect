@@ -64,11 +64,6 @@ class ScrapedJobListingController extends Controller
                 ->where('status', ScrapedJobListingStatus::Active)
                 ->count(),
             'scrapeSources' => app(ExternalJobController::class)->sourcesForDialog(),
-            'publishDefaults' => [
-                'employmentTypes' => EmploymentType::selectItems(),
-                'workArrangements' => WorkArrangement::selectItems(),
-                'experienceLevels' => ExperienceLevel::selectItems(),
-            ],
             'statusOptions' => ScrapedJobListingStatus::selectItems(),
             'sourceOptions' => ScraperViewData::sourceOptions(),
             'categoryOptions' => JobCategory::query()->orderBy('name')->get(['id', 'name'])

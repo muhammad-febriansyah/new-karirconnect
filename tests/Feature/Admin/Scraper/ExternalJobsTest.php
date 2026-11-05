@@ -102,8 +102,30 @@ describe('publishing', function () {
             ->and(Job::query()->count())->toBe(1);
     });
 
-    it('needs a category, from the listing or the dialog default', function () {
-        $listing = externalListing(['job_category_id' => null]);
+    it('publishes with only a selection, filling in what the source did not state', function () {
+        $retail = JobCategory::factory()->create(['name' => 'Retail', 'is_active' => true]);
+        $listing = externalListing([
+            'title' => 'Retail Manager (Palembang)',
+            'job_category_id' => null,
+            'employment_type' => null,
+            'work_arrangement' => null,
+            'experience_level' => null,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('admin.scraper.listings.publish'), ['listing_ids' => [$listing->id]])
+            ->assertJsonPath('type', 'success');
+
+        $job = Job::query()->sole();
+        expect($job->job_category_id)->toBe($retail->id)
+            ->and($job->employment_type)->toBe(EmploymentType::FullTime)
+            ->and($job->work_arrangement->value)->toBe('onsite')
+            ->and($job->experience_level->value)->toBe('mid')
+            ->and($listing->refresh()->job_category_id)->toBe($retail->id);
+    });
+
+    it('skips a listing whose category cannot be told from the title', function () {
+        $listing = externalListing(['title' => 'Penjaga Mercusuar', 'job_category_id' => null]);
 
         $this->actingAs($this->admin)
             ->postJson(route('admin.scraper.listings.publish'), publishDefaults(['listing_ids' => [$listing->id]]))
@@ -228,7 +250,6 @@ describe('scrape dialog endpoints', function () {
                 ->where('publishableCount', 1)
                 ->has('scrapeSources.catalog', collect(config('job_catalog.sources'))->reject(fn ($entry) => $entry['hidden'] ?? false)->count())
                 ->where('scrapeSources.catalog.0.key', 'dealls')
-                ->has('publishDefaults.employmentTypes')
                 ->where('filters.published', 'no'));
     });
 });

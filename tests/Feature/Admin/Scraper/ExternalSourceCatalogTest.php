@@ -13,6 +13,7 @@ use App\Models\Province;
 use App\Models\ScrapedCompany;
 use App\Models\ScrapedJobListing;
 use App\Models\ScrapedJobOrigin;
+use App\Models\Skill;
 use App\Models\User;
 use App\Services\Crawler\CrawlerClient;
 use App\Services\Crawler\CrawlOrchestrator;
@@ -232,6 +233,35 @@ it('files a job board listing under its own employer, not the board', function (
     $company = ScrapedJobListing::query()->sole()->company;
     expect($company->name)->toBe('Vidio')
         ->and($company->logo_url)->toBe('https://cdn.example.com/vidio.png');
+});
+
+it('keeps the employer profile and tagged skills the job board gives', function () {
+    $skill = Skill::factory()->create(['name' => 'Retail Operation', 'slug' => 'retail-operation', 'is_active' => true]);
+    $jakarta = City::factory()->create(['name' => 'Kota Jakarta Selatan']);
+    $source = app(ExternalSourceCatalog::class)->sourceForEntry('dealls');
+    $run = app(CrawlOrchestrator::class)->queue($source, CrawlRunTrigger::Manual);
+    Process::fake(['*' => Process::result(output: json_encode([
+        'contract_version' => 1, 'run_uuid' => $run->uuid, 'status' => 'succeeded', 'engine_used' => 'http',
+        'engines_attempted' => [], 'errors' => [], 'stats' => [], 'company' => null,
+        'items' => [[
+            'external_id' => 'm1', 'title' => 'Retail Manager', 'apply_url' => 'https://dealls.com/loker/rm~mr-diy',
+            'source_url' => 'https://dealls.com/loker/rm~mr-diy', 'company_name' => 'MR.DIY Indonesia',
+            'company_about' => '<p>Ritel</p>', 'company_culture' => '<p>Speed</p>',
+            'company_benefits' => '<ul><li>Gaji kompetitif</li></ul>', 'company_location_raw' => 'Jakarta Selatan',
+            'skills_raw' => ['Retail Operation'], 'description' => '<p>Kelola toko</p>', 'location_text' => 'Palembang, Indonesia',
+        ]],
+    ]))]);
+
+    app(CrawlOrchestrator::class)->execute($run);
+
+    $listing = ScrapedJobListing::query()->sole();
+    $company = $listing->company;
+    expect($company->culture)->toContain('Speed')
+        ->and($company->benefits)->toContain('Gaji kompetitif')
+        ->and($company->about)->toContain('Ritel')
+        ->and($company->city_id)->toBe($jakarta->id)
+        ->and($listing->skills->pluck('id')->all())->toBe([$skill->id])
+        ->and((bool) $listing->skills->first()->pivot->is_required)->toBeTrue();
 });
 
 describe('Indonesia only', function () {

@@ -11,6 +11,7 @@ use App\Models\Job;
 use App\Models\ScrapedJobListing;
 use App\Models\User;
 use App\Services\Audit\AuditLogService;
+use App\Services\Crawler\ListingAttributeMapper;
 use App\Services\Jobs\JobService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -29,19 +30,24 @@ class ExternalJobPublisher
         private readonly ExternalCompanyProvisioner $companies,
         private readonly JobService $jobs,
         private readonly AuditLogService $audit,
+        private readonly ListingAttributeMapper $mapper,
     ) {}
 
     /**
      * @param  iterable<ScrapedJobListing>  $listings
-     * @param  array{job_category_id: int|null, employment_type: string, work_arrangement: string, experience_level: string}  $defaults
+     *                                                 Values the source did not state are filled in automatically: the
+     *                                                 category from the job title, then full-time, on-site and mid level.
+     *                                                 `$defaults` can override those fallbacks.
+     * @param  array{job_category_id?: int|null, employment_type?: string|null, work_arrangement?: string|null, experience_level?: string|null}  $defaults
      * @return array{published: list<array{listing_id: int, job_id: int, slug: string}>, skipped: list<array{listing_id: int, title: string, reason: string}>}
      */
-    public function publish(iterable $listings, User $admin, array $defaults): array
+    public function publish(iterable $listings, User $admin, array $defaults = []): array
     {
         $result = ['published' => [], 'skipped' => []];
 
         foreach ($listings as $listing) {
-            $reason = $this->skipReason($listing, $defaults);
+            $this->fillCategory($listing, $defaults);
+            $reason = $this->skipReason($listing);
             if ($reason !== null) {
                 $result['skipped'][] = ['listing_id' => $listing->id, 'title' => $listing->title, 'reason' => $reason];
 
@@ -68,15 +74,36 @@ class ExternalJobPublisher
     }
 
     /**
-     * @param  array{job_category_id: int|null}  $defaults
+     * A listing without a category gets one from its title (and keeps it),
+     * or the default category when one was given.
+     *
+     * @param  array{job_category_id?: int|null}  $defaults
      */
-    private function skipReason(ScrapedJobListing $listing, array $defaults): ?string
+    private function fillCategory(ScrapedJobListing $listing, array $defaults): void
+    {
+        if ($listing->job_category_id !== null) {
+            return;
+        }
+
+        $categoryId = $this->mapper->categoryFromTitle($listing->title);
+        if ($categoryId !== null) {
+            $listing->forceFill(['job_category_id' => $categoryId])->save();
+
+            return;
+        }
+
+        if (! empty($defaults['job_category_id'])) {
+            $listing->job_category_id = (int) $defaults['job_category_id'];
+        }
+    }
+
+    private function skipReason(ScrapedJobListing $listing): ?string
     {
         return match (true) {
             $listing->publishedJob()->exists() => 'Sudah dipublish.',
             $listing->status !== ScrapedJobListingStatus::Active => "Status {$listing->status->label()}, hanya lowongan aktif yang dipublish.",
             $listing->application_deadline !== null && $listing->application_deadline->isPast() => 'Batas lamaran sudah lewat.',
-            $listing->job_category_id === null && empty($defaults['job_category_id']) => 'Belum punya kategori dan kategori default tidak dipilih.',
+            $listing->job_category_id === null => 'Kategori tidak dikenali dari judul. Pilih kategori lewat Edit, lalu publish lagi.',
             $listing->company === null => 'Perusahaan tidak diketahui.',
             $this->duplicateOnPortal($listing) => 'Lowongan dengan judul yang sama sudah tayang untuk perusahaan ini.',
             default => null,
@@ -98,7 +125,7 @@ class ExternalJobPublisher
     }
 
     /**
-     * @param  array{job_category_id: int|null, employment_type: string, work_arrangement: string, experience_level: string}  $defaults
+     * @param  array{employment_type?: string|null, work_arrangement?: string|null, experience_level?: string|null}  $defaults
      */
     private function publishOne(ScrapedJobListing $listing, array $defaults): Job
     {
@@ -106,17 +133,19 @@ class ExternalJobPublisher
 
         $job = $this->jobs->create($company->id, $this->companies->owner(), [
             'scraped_job_listing_id' => $listing->id,
-            'job_category_id' => $listing->job_category_id ?? $defaults['job_category_id'],
+            'job_category_id' => $listing->job_category_id,
             'title' => $listing->title,
             'description' => $listing->description,
             'responsibilities' => $listing->responsibilities,
             'requirements' => $listing->requirements,
             'benefits' => $listing->benefits,
-            // job_posts requires these. The admin picks the fallback in the
-            // publish dialog; the source's own value always wins.
-            'employment_type' => $listing->employment_type ?? EmploymentType::from($defaults['employment_type']),
-            'work_arrangement' => $listing->work_arrangement ?? WorkArrangement::from($defaults['work_arrangement']),
-            'experience_level' => $listing->experience_level ?? ExperienceLevel::from($defaults['experience_level']),
+            // job_posts requires these; the source's own value always wins.
+            'employment_type' => $listing->employment_type
+                ?? EmploymentType::tryFrom((string) ($defaults['employment_type'] ?? '')) ?? EmploymentType::FullTime,
+            'work_arrangement' => $listing->work_arrangement
+                ?? WorkArrangement::tryFrom((string) ($defaults['work_arrangement'] ?? '')) ?? WorkArrangement::Onsite,
+            'experience_level' => $listing->experience_level
+                ?? ExperienceLevel::tryFrom((string) ($defaults['experience_level'] ?? '')) ?? ExperienceLevel::Mid,
             'min_education' => $listing->min_education,
             // job_posts amounts are rupiah; other currencies are not converted.
             'salary_min' => $this->rupiah($listing, $listing->salary_min),

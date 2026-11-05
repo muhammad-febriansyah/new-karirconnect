@@ -78,6 +78,9 @@ class ScrapedCompanyUpserter
         $company->fill(array_filter([
             'tagline' => $this->clean($profile['tagline'] ?? null, 255),
             'about' => filled($profile['about'] ?? null) ? $this->sanitizer->clean($profile['about']) : null,
+            'culture' => filled($profile['culture'] ?? null) ? $this->sanitizer->clean($profile['culture']) : null,
+            'benefits' => filled($profile['benefits'] ?? null) ? $this->sanitizer->clean($profile['benefits']) : null,
+            ...$this->mapper->location(is_string($profile['location_raw'] ?? null) ? $profile['location_raw'] : null),
             'website' => $this->url($profile['website'] ?? ($config['company_website'] ?? null)),
             'logo_url' => $this->url($profile['logo_url'] ?? null),
             'cover_url' => $this->url($profile['cover_url'] ?? null),

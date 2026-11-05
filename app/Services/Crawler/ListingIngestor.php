@@ -71,7 +71,8 @@ class ListingIngestor
             $boardName = is_string($companyProfile['name'] ?? null) ? $companyProfile['name'] : null;
             $ownEmployer = $itemCompany !== null && (
                 $source->type === JobSourceType::JobFeed
-                || ($boardName !== null && ScrapedCompany::normalizeName($boardName) !== ScrapedCompany::normalizeName($itemCompany))
+                || $boardName === null
+                || ScrapedCompany::normalizeName($boardName) !== ScrapedCompany::normalizeName($itemCompany)
             );
 
             if ($ownEmployer) {
@@ -84,6 +85,9 @@ class ListingIngestor
                     'about' => $item['company_about'] ?? null,
                     'size_raw' => $item['company_size_raw'] ?? null,
                     'industry_raw' => $item['company_industry_raw'] ?? null,
+                    'culture' => $item['company_culture'] ?? null,
+                    'benefits' => $item['company_benefits'] ?? null,
+                    'location_raw' => $item['company_location_raw'] ?? null,
                 ], $itemCompany);
             } elseif ($itemCompany === null) {
                 $company = $boardCompany ??= $this->companies->upsert($source, $companyProfile, null);
@@ -166,9 +170,10 @@ class ListingIngestor
         $externalId = trim($item['external_id']);
         $sourceUrl = ResultValidator::isHttpUrl($item['source_url'] ?? null) ? $item['source_url'] : $attributes['apply_url'];
         $now = now();
+        $taggedSkills = is_array($item['skills_raw'] ?? null) ? $item['skills_raw'] : [];
 
         try {
-            return DB::transaction(function () use ($source, $run, $attributes, $externalId, $sourceUrl, $now): string {
+            return DB::transaction(function () use ($source, $run, $attributes, $externalId, $sourceUrl, $now, $taggedSkills): string {
                 $origin = ScrapedJobOrigin::query()
                     ->where('job_source_id', $source->id)
                     ->where('external_id', $externalId)
@@ -194,7 +199,7 @@ class ListingIngestor
                         'first_seen_at' => $now,
                         'last_seen_at' => $now,
                     ]);
-                    $this->syncSkills($listing, $attributes);
+                    $this->syncSkills($listing, $attributes, $taggedSkills);
                     $outcome = 'created';
                 } elseif ($listing->job_source_id === $source->id && $listing->edited_at !== null) {
                     // Edited by an admin: keep their content, only note it was seen.
@@ -212,8 +217,8 @@ class ListingIngestor
                         $listing->status = ScrapedJobListingStatus::Active;
                     }
                     $listing->save();
+                    $this->syncSkills($listing, $attributes, $taggedSkills);
                     if ($changed) {
-                        $this->syncSkills($listing, $attributes);
                         $outcome = 'updated';
                     }
                 } else {
@@ -261,7 +266,7 @@ class ListingIngestor
 
         return [
             'scraped_company_id' => $company->id,
-            'job_category_id' => $this->mapper->categoryId($item['department_raw'] ?? null),
+            'job_category_id' => $this->mapper->categoryId($item['department_raw'] ?? null) ?? $this->mapper->categoryFromTitle($title),
             'title' => $title,
             ...$sections,
             'employment_type' => $employmentType,
@@ -298,12 +303,17 @@ class ListingIngestor
     }
 
     /**
+     * Skills named in the text, plus the skills the source tags the posting
+     * with (counted as required).
+     *
      * @param  array<string, mixed>  $attributes
+     * @param  mixed  $taggedSkills  the item's `skills_raw`
      */
-    private function syncSkills(ScrapedJobListing $listing, array $attributes): void
+    private function syncSkills(ScrapedJobListing $listing, array $attributes, mixed $taggedSkills = []): void
     {
-        $ids = $this->mapper->skillIds($attributes['requirements'] ?? null, $attributes['responsibilities'] ?? null);
-        $requirementIds = $this->mapper->skillIds($attributes['requirements'] ?? null);
+        $tagged = implode(', ', array_filter(is_array($taggedSkills) ? $taggedSkills : [], 'is_string'));
+        $ids = $this->mapper->skillIds($attributes['requirements'] ?? null, $attributes['responsibilities'] ?? null, $tagged);
+        $requirementIds = $this->mapper->skillIds($attributes['requirements'] ?? null, $tagged);
 
         $listing->skills()->sync(collect($ids)->mapWithKeys(fn (int $id): array => [
             $id => ['is_required' => in_array($id, $requirementIds, true)],

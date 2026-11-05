@@ -178,6 +178,9 @@ class JobItem:
     company_about: str | None = None
     company_size_raw: str | None = None
     company_industry_raw: str | None = None
+    company_culture: str | None = None
+    company_benefits: str | None = None
+    company_location_raw: str | None = None
     # An application email the posting itself publishes, if any.
     contact_email: str | None = None
     description: str | None = None

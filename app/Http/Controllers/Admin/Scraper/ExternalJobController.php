@@ -200,9 +200,9 @@ class ExternalJobController extends Controller
 
         $result = $this->publisher->publish($listings, $request->user(), [
             'job_category_id' => $data['job_category_id'] ?? null,
-            'employment_type' => $data['employment_type'],
-            'work_arrangement' => $data['work_arrangement'],
-            'experience_level' => $data['experience_level'],
+            'employment_type' => $data['employment_type'] ?? null,
+            'work_arrangement' => $data['work_arrangement'] ?? null,
+            'experience_level' => $data['experience_level'] ?? null,
         ]);
 
         $published = count($result['published']);

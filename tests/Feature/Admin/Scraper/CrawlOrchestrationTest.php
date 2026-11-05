@@ -227,7 +227,7 @@ describe('a successful run', function () {
             'workplace_type_raw' => null,
             'department_raw' => 'Underwater Basket Weaving',
             'salary' => null,
-            'title' => 'Backend Engineer',
+            'title' => 'Penjaga Mercusuar',
             'published_at' => null,
             'application_deadline' => null,
         ])]));

@@ -11,7 +11,6 @@ import {
 } from '@/components/admin/scraper/listing-columns';
 import type { ExternalListingRow } from '@/components/admin/scraper/listing-columns';
 import { PublishPanel } from '@/components/admin/scraper/publish-panel';
-import type { PublishDefaults } from '@/components/admin/scraper/publish-panel';
 import { ScrapeDialog } from '@/components/admin/scraper/scrape-dialog';
 import {
     applyFilters,
@@ -50,7 +49,6 @@ type Props = {
     categoryOptions: Option[];
     publishableCount: number;
     scrapeSources: ScrapeSources;
-    publishDefaults: PublishDefaults;
 };
 
 const PUBLISHED_OPTIONS: Option[] = [
@@ -66,7 +64,6 @@ export default function ExternalJobsIndex({
     categoryOptions,
     publishableCount,
     scrapeSources,
-    publishDefaults,
 }: Props) {
     const form = useForm<Filters>(filters);
     const indexUrl = ScrapedJobListingController.index().url;
@@ -290,8 +287,6 @@ export default function ExternalJobsIndex({
                 open={scrapeOpen}
                 onOpenChange={setScrapeOpen}
                 sources={scrapeSources}
-                categoryOptions={categoryOptions}
-                publishDefaults={publishDefaults}
             />
 
             <Dialog
@@ -322,8 +317,6 @@ export default function ExternalJobsIndex({
                                       }
                                     : { listingIds: selectedIds }
                             }
-                            categoryOptions={categoryOptions}
-                            defaults={publishDefaults}
                             onPublished={afterPublish}
                         />
                     )}

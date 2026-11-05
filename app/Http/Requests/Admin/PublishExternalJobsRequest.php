@@ -38,9 +38,9 @@ class PublishExternalJobsRequest extends FormRequest
             'filters.runs' => ['nullable', 'array', 'max:50'],
             'filters.runs.*' => ['integer'],
             'job_category_id' => ['nullable', 'integer', 'exists:job_categories,id'],
-            'employment_type' => ['required', Rule::enum(EmploymentType::class)],
-            'work_arrangement' => ['required', Rule::enum(WorkArrangement::class)],
-            'experience_level' => ['required', Rule::enum(ExperienceLevel::class)],
+            'employment_type' => ['nullable', Rule::enum(EmploymentType::class)],
+            'work_arrangement' => ['nullable', Rule::enum(WorkArrangement::class)],
+            'experience_level' => ['nullable', Rule::enum(ExperienceLevel::class)],
         ];
     }
 

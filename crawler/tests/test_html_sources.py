@@ -415,7 +415,10 @@ def test_dealls_next_data_enriches_the_posting():
         "location": {"country": {"name": "Indonesia"}, "city": {"name": "Sorong"}},
         "salaryRange": {"start": 5000000, "end": 7000000},
         "company": {"name": "Contoh Tek", "logoUrl": "https://cdn.example/logo.png", "website": "https://contohtek.co.id",
-                    "description": "<p>Tentang kami</p>", "sector": "Education", "size": {"start": 50, "end": 100}},
+                    "description": "<p>Tentang kami</p>", "sector": "Education", "size": {"start": 50, "end": 100},
+                    "whatSpecial": "<p><br></p><p>Kolaboratif</p>", "insight": {"benefits": ["competitiveSalary", "petFriendly"]},
+                    "location": {"city": {"name": "Jakarta Selatan"}}},
+        "candidatePreference": {"skills": [{"name": "Public Speaking"}, {"name": "Microsoft Excel"}]},
     }
     page = (
         '<script type="application/ld+json">{"@type":"JobPosting","title":"Pengajar","url":"https://dealls.com/loker/pengajar",'
@@ -435,6 +438,10 @@ def test_dealls_next_data_enriches_the_posting():
     assert (item.workplace_type_raw, item.employment_type_raw, item.location_text) == ("onsite", "Full-time", "Sorong, Indonesia")
     assert (item.salary.min, item.salary.max, item.salary.currency) == (5000000, 7000000, "IDR")
     assert item.contact_email == "rekrut@contohtek.co.id"
+    assert item.company_culture == "<p>Kolaboratif</p>"
+    assert item.company_benefits == "<ul><li>Gaji kompetitif</li><li>Pet friendly</li></ul>"
+    assert item.company_location_raw == "Jakarta Selatan"
+    assert item.skills_raw == ["Public Speaking", "Microsoft Excel"]
 
 
 def test_closed_dealls_posting_is_dropped():

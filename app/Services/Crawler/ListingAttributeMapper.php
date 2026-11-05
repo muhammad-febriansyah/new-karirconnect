@@ -119,6 +119,38 @@ class ListingAttributeMapper
     }
 
     /**
+     * Category from keywords in the job title (config crawler.category_keywords),
+     * for sources without a department. The first listed category whose
+     * keyword appears as a whole word wins; nothing matching maps to null.
+     */
+    public function categoryFromTitle(?string $title): ?int
+    {
+        if (blank($title)) {
+            return null;
+        }
+
+        $this->categories ??= JobCategory::query()->where('is_active', true)->get(['id', 'name']);
+        $haystack = ' '.Str::lower((string) $title).' ';
+
+        foreach ((array) config('crawler.category_keywords', []) as $categoryName => $keywords) {
+            foreach ((array) $keywords as $keyword) {
+                if (preg_match('/(?<![\p{L}\p{N}])'.preg_quote(Str::lower($keyword), '/').'(?![\p{L}\p{N}])/u', $haystack) !== 1) {
+                    continue;
+                }
+
+                $category = $this->categories->first(
+                    fn (JobCategory $category): bool => Str::lower(trim($category->name, " '")) === Str::lower($categoryName),
+                );
+                if ($category !== null) {
+                    return $category->id;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Match "Jakarta Selatan, Indonesia" / "Kota Bandung" / "DKI Jakarta" to
      * a city and province. A city name that exists both as Kota and Kabupaten
      * resolves to the Kota.
