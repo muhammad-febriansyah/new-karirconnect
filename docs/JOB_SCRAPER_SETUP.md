@@ -87,7 +87,7 @@ php artisan db:seed --class=JobSourceSeeder
 Crawl berjalan di connection antrean khusus `crawler`. Jalankan worker tersendiri:
 
 ```bash
-php artisan queue:work crawler --queue=crawler --timeout=390 --tries=1
+php artisan queue:work crawler --queue=crawler,crawler-contacts --timeout=390 --tries=1
 ```
 
 - `--timeout` = `CRAWLER_TIMEOUT` + 90.
@@ -96,7 +96,7 @@ php artisan queue:work crawler --queue=crawler --timeout=390 --tries=1
 
 ```ini
 [program:karirconnect-crawler]
-command=php /var/www/karirconnect/artisan queue:work crawler --queue=crawler --timeout=390 --tries=1 --max-time=3600
+command=php /var/www/karirconnect/artisan queue:work crawler --queue=crawler,crawler-contacts --timeout=390 --tries=1 --max-time=3600
 numprocs=1
 autostart=true
 autorestart=true

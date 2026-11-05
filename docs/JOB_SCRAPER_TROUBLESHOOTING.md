@@ -6,7 +6,7 @@ Mulai dari **Monitoring Crawl → detail run**: status, engine yang dicoba, dan 
 
 - Worker antrean `crawler` belum jalan. `composer dev` hanya menjalankan antrean `default`. Jalankan:
   ```bash
-  php artisan queue:work crawler --queue=crawler --timeout=390 --tries=1
+  php artisan queue:work crawler --queue=crawler,crawler-contacts --timeout=390 --tries=1
   ```
 - Untuk tes cepat tanpa worker:
   ```bash

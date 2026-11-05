@@ -51,7 +51,7 @@ class CompanyContactFinder
 
         FindCompanyContactJob::dispatch($company->id)
             ->onConnection((string) config('crawler.connection'))
-            ->onQueue((string) config('crawler.queue'));
+            ->onQueue((string) config('crawler.contact_queue'));
     }
 
     /**

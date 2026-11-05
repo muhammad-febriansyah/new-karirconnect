@@ -104,7 +104,7 @@ RUN chmod +x /usr/local/bin/entrypoint \
 
 USER www-data
 ENTRYPOINT ["entrypoint"]
-CMD ["php", "artisan", "queue:work", "crawler", "--queue=crawler", "--timeout=390", "--tries=1", "--max-time=3600"]
+CMD ["php", "artisan", "queue:work", "crawler", "--queue=crawler,crawler-contacts", "--timeout=390", "--tries=1", "--max-time=3600"]
 
 # ------------------------------------------------------------------- web
 FROM caddy:2.8.4-alpine AS web

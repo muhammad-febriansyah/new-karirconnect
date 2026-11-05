@@ -271,7 +271,7 @@ class ExternalJobController extends Controller
 
         FindCompanyContactJob::dispatch($company->id, force: true)
             ->onConnection((string) config('crawler.connection'))
-            ->onQueue((string) config('crawler.queue'));
+            ->onQueue((string) config('crawler.contact_queue'));
 
         $this->audit->record('scraped_company.find_contact', $company, null, null, $request->user());
         Inertia::flash('toast', ['type' => 'info', 'message' => filled($company->website)

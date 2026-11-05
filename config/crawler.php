@@ -43,6 +43,10 @@ return [
 
     'queue' => env('CRAWLER_QUEUE', 'crawler'),
 
+    // Website searches for recruitment emails. Workers list it after the
+    // crawl queue, so a backlog of searches never delays a scrape.
+    'contact_queue' => env('CRAWLER_CONTACT_QUEUE', 'crawler-contacts'),
+
     /*
     |--------------------------------------------------------------------------
     | Failure handling
