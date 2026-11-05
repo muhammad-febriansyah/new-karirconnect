@@ -7,10 +7,8 @@ use App\Enums\CrawlRunTrigger;
 use App\Exceptions\Crawler\CrawlNotAllowedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PublishExternalJobsRequest;
-use App\Jobs\FindCompanyContactJob;
 use App\Models\CrawlRun;
 use App\Models\JobSource;
-use App\Models\ScrapedCompany;
 use App\Models\ScrapedJobListing;
 use App\Services\Audit\AuditLogService;
 use App\Services\Crawler\CrawlOrchestrator;
@@ -126,8 +124,6 @@ class ExternalJobController extends Controller
                 'key' => $key,
                 'name' => $entry['name'],
                 'group' => $entry['group'],
-                'description' => $entry['description'],
-                'warning' => $entry['warning'] ?? null,
                 'attribution' => $entry['config']['rules']['attribution']['name'] ?? null,
                 'default_selected' => (bool) ($entry['default_selected'] ?? false),
                 'cooldown_until' => $source?->isCoolingDown() ? $source->cooldown_until?->toIso8601String() : null,
@@ -233,51 +229,6 @@ class ExternalJobController extends Controller
         }
 
         Inertia::flash('toast', ['type' => $type, 'message' => $message]);
-
-        return back();
-    }
-
-    /**
-     * Set where applications for this company's external jobs are forwarded.
-     */
-    public function updateRecruitmentEmail(Request $request, ScrapedCompany $company): RedirectResponse
-    {
-        Gate::authorize('viewAny', JobSource::class);
-
-        $data = $request->validate(['recruitment_email' => ['nullable', 'email:rfc', 'max:191']]);
-        $before = $company->recruitment_email;
-
-        $company->forceFill([
-            'recruitment_email' => $data['recruitment_email'] ?: null,
-            // Entered by hand: no longer an automatically found address.
-            'recruitment_email_source' => null,
-            'recruitment_email_verified_at' => null,
-        ])->save();
-
-        $this->audit->record('scraped_company.recruitment_email', $company, ['recruitment_email' => $before], ['recruitment_email' => $company->recruitment_email], $request->user());
-
-        Inertia::flash('toast', $company->recruitment_email
-            ? ['type' => 'success', 'message' => "Lamaran untuk {$company->name} akan diteruskan ke {$company->recruitment_email}."]
-            : ['type' => 'info', 'message' => "Email rekrutmen {$company->name} dihapus. Kandidat akan diarahkan ke situs perusahaan."]);
-
-        return back();
-    }
-
-    /**
-     * Search the company's own website for its recruitment email now.
-     */
-    public function findRecruitmentEmail(Request $request, ScrapedCompany $company): RedirectResponse
-    {
-        Gate::authorize('viewAny', JobSource::class);
-
-        FindCompanyContactJob::dispatch($company->id, force: true)
-            ->onConnection((string) config('crawler.connection'))
-            ->onQueue((string) config('crawler.contact_queue'));
-
-        $this->audit->record('scraped_company.find_contact', $company, null, null, $request->user());
-        Inertia::flash('toast', ['type' => 'info', 'message' => filled($company->website)
-            ? "Mencari email rekrutmen di {$company->website}. Muat ulang halaman ini sekitar satu menit lagi."
-            : "Mencari situs resmi {$company->name} lalu email rekrutmennya. Muat ulang halaman ini sekitar satu menit lagi."]);
 
         return back();
     }

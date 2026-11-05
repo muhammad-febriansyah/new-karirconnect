@@ -3,7 +3,6 @@
 use App\Enums\CrawlRunTrigger;
 use App\Jobs\FindCompanyContactJob;
 use App\Models\ScrapedCompany;
-use App\Models\User;
 use App\Services\Crawler\CompanyContactFinder;
 use App\Services\Crawler\CrawlOrchestrator;
 use App\Services\Crawler\DnsResolver;
@@ -110,24 +109,7 @@ it('queues searches for companies without an email from the command', function (
     Queue::assertPushed(FindCompanyContactJob::class, fn (FindCompanyContactJob $job) => $job->scrapedCompanyId === $byName->id);
 });
 
-it('lets an admin start a search from the listing page', function () {
-    Queue::fake();
-    $admin = User::factory()->admin()->create();
-    $company = ScrapedCompany::factory()->create(['website' => 'https://contoh.co.id', 'contact_checked_at' => now()]);
-
-    $this->actingAs($admin)
-        ->post(route('admin.scraper.companies.find-recruitment-email', $company))
-        ->assertSessionHas('inertia.flash_data.toast.type', 'info');
-
-    // A manual search runs even when the company was checked recently.
-    Queue::assertPushed(FindCompanyContactJob::class, fn (FindCompanyContactJob $job) => $job->force);
-
-    $this->actingAs(User::factory()->employer()->create())
-        ->post(route('admin.scraper.companies.find-recruitment-email', $company))
-        ->assertForbidden();
-});
-
-it('finds the website from the name, keeping it only when it gave an email', function () {
+it('finds the website from the name and keeps its emails', function () {
     $company = ScrapedCompany::factory()->create(['name' => 'PT Contoh Karya', 'website' => null, 'recruitment_email' => null]);
     fakeContactWorker(['website' => 'https://contohkarya.id/', 'website_guessed' => true, 'recruitment_email' => 'hrd@contohkarya.id', 'recruitment_email_url' => 'https://contohkarya.id/karir']);
 
@@ -137,13 +119,14 @@ it('finds the website from the name, keeping it only when it gave an email', fun
     expect($company->refresh()->website)->toBe('https://contohkarya.id/')
         ->and($company->recruitment_email)->toBe('hrd@contohkarya.id');
 
-    $other = ScrapedCompany::factory()->create(['name' => 'PT Lain Sekali', 'website' => null, 'recruitment_email' => null]);
+    $other = ScrapedCompany::factory()->withoutEmail()->create(['name' => 'PT Lain Sekali', 'website' => null]);
     fakeContactWorker(['website' => 'https://lainsekali.id/', 'website_guessed' => true, 'general_email' => 'info@lainsekali.id']);
 
     app(CompanyContactFinder::class)->find($other);
 
-    expect($other->refresh()->website)->toBeNull()
-        ->and($other->email)->toBeNull();
+    expect($other->refresh()->website)->toBe('https://lainsekali.id/')
+        ->and($other->email)->toBe('info@lainsekali.id')
+        ->and($other->applicationEmail())->toBe('info@lainsekali.id');
 });
 
 it('queues a website search when a crawl brings a company without an email', function () {

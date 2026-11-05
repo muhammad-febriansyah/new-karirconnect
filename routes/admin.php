@@ -156,8 +156,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])
                 Route::get('scrape/status', [ExternalJobController::class, 'status'])->name('scrape.status');
                 Route::get('scrape/results', [ExternalJobController::class, 'results'])->name('scrape.results');
                 Route::post('listings/publish', [ExternalJobController::class, 'publish'])->name('listings.publish');
-                Route::patch('companies/{company}/recruitment-email', [ExternalJobController::class, 'updateRecruitmentEmail'])->name('companies.recruitment-email');
-                Route::post('companies/{company}/find-recruitment-email', [ExternalJobController::class, 'findRecruitmentEmail'])->name('companies.find-recruitment-email');
             });
 
         Route::prefix('companies')

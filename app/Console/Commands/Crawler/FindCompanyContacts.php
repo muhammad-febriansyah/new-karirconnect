@@ -4,6 +4,7 @@ namespace App\Console\Commands\Crawler;
 
 use App\Models\ScrapedCompany;
 use App\Services\Crawler\CompanyContactFinder;
+use App\Services\ExternalJobs\ExternalJobEmailGate;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -12,8 +13,13 @@ use Illuminate\Console\Command;
 #[Description('Queue a website search for the recruitment email of companies that have none yet.')]
 class FindCompanyContacts extends Command
 {
-    public function handle(CompanyContactFinder $finder): int
+    public function handle(CompanyContactFinder $finder, ExternalJobEmailGate $gate): int
     {
+        $hidden = $gate->hideAllWithoutEmail();
+        if ($hidden > 0) {
+            $this->info("{$hidden} lowongan eksternal tanpa email disembunyikan dari portal.");
+        }
+
         $queued = 0;
 
         ScrapedCompany::query()

@@ -277,8 +277,8 @@ export default function ExternalJobsIndex({
                                     disabled={selectedIds.length === 0}
                                     onClick={() => setBulkDelete('selected')}
                                 >
-                                    <Trash2 className="size-4" /> Hapus
-                                    terpilih ({selectedIds.length})
+                                    <Trash2 className="size-4" /> Hapus terpilih
+                                    ({selectedIds.length})
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -358,7 +358,7 @@ export default function ExternalJobsIndex({
                 title="Hapus lowongan ini?"
                 description={
                     deleting
-                        ? `"${deleting.title}" dihapus dari Jobs Eksternal. Jika lowongan ini masih ada di sumbernya, crawl berikutnya akan mengambilnya lagi — pakai Sembunyikan di halaman detail agar tidak muncul lagi.`
+                        ? `"${deleting.title}" dihapus dari Jobs Eksternal${deleting.published_job ? ' beserta lowongannya di portal (hanya bila belum ada pelamar)' : ''}. Jika lowongan ini masih ada di sumbernya, crawl berikutnya akan mengambilnya lagi — pakai Sembunyikan di halaman detail agar tidak muncul lagi.`
                         : ''
                 }
                 confirmLabel="Hapus"
@@ -377,8 +377,8 @@ export default function ExternalJobsIndex({
                 }
                 description={
                     bulkDelete === 'all'
-                        ? `${hasFilters ? 'Semua lowongan yang cocok dengan filter saat ini' : 'Semua lowongan'} yang belum dipublish dihapus dari Jobs Eksternal. Lowongan yang sudah dipublish tetap disimpan. Scrap ulang akan mengambil lowongan yang masih ada di sumbernya.`
-                        : 'Lowongan terpilih dihapus dari Jobs Eksternal. Lowongan yang sudah dipublish tetap disimpan. Scrap ulang akan mengambil lowongan yang masih ada di sumbernya.'
+                        ? `${hasFilters ? 'Semua lowongan yang cocok dengan filter saat ini' : 'Semua lowongan'} dihapus dari Jobs Eksternal, termasuk lowongan portalnya bila sudah dipublish. Lowongan yang sudah dilamar kandidat tetap disimpan. Scrap ulang akan mengambil lowongan yang masih ada di sumbernya.`
+                        : 'Lowongan terpilih dihapus dari Jobs Eksternal, termasuk lowongan portalnya bila sudah dipublish. Lowongan yang sudah dilamar kandidat tetap disimpan. Scrap ulang akan mengambil lowongan yang masih ada di sumbernya.'
                 }
                 confirmLabel="Hapus"
                 loading={bulkDeleting}

@@ -20,7 +20,7 @@ class CompanyContactFinder
      * @var list<string>
      */
     private const NOT_A_COMPANY_SITE = [
-        'dealls.com', 'sejutacita.id', 'linkedin.com', 'instagram.com', 'facebook.com', 'twitter.com', 'x.com',
+        'dealls.com', 'sejutacita.id', 'pintarnya.com', 'linkedin.com', 'instagram.com', 'facebook.com', 'twitter.com', 'x.com',
         'tiktok.com', 'youtube.com', 'wa.me', 'whatsapp.com', 'google.com', 'bit.ly', 'linktr.ee',
         'greenhouse.io', 'lever.co', 'workable.com', 'jobs.lever.co',
     ];
@@ -101,17 +101,16 @@ class CompanyContactFinder
 
         $this->companies->rememberContactEmail($company, $recruitment, $response['recruitment_email_url'] ?? null);
 
-        $guessedSite = ($response['website_guessed'] ?? false) === true && filled($company->recruitment_email)
-            ? (is_string($response['website'] ?? null) ? $response['website'] : null)
+        // The worker only guesses a site whose home page names the company.
+        $guessedSite = ($response['website_guessed'] ?? false) === true && is_string($response['website'] ?? null)
+            ? $response['website']
             : null;
 
         $company->forceFill(array_filter([
             'contact_checked_at' => now(),
-            // A website found from the name is kept only once it gave a recruitment email.
             'website' => blank($company->website) ? $guessedSite : null,
             // The company's general mailbox (info@): used to forward applications
-            // when there is no recruitment one. From a guessed site only once
-            // that site is confirmed by a recruitment email.
+            // when there is no recruitment one.
             'email' => blank($company->email) && ($website !== null || $guessedSite !== null) ? strtolower($general ?? '') : null,
         ]))->save();
 

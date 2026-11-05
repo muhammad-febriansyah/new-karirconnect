@@ -345,6 +345,16 @@ def test_invisible_recaptcha_on_a_real_page_is_not_a_block():
     assert detect_block_page(f"<html><body>{article}<script src='https://challenges.cloudflare.com/x.js'></script></body></html>") is not None
 
 
+
+def test_a_short_page_with_job_posting_data_is_not_a_block():
+    from karir_crawler.classifier import detect_block_page
+
+    csp = '<meta http-equiv="Content-Security-Policy" content="script-src https://www.google.com/recaptcha/api.js">'
+    data = '<script type="application/ld+json">{"@context":"https://schema.org","@type":"JobPosting","title":"Driver"}</script>'
+
+    assert detect_block_page(f"<html><head>{csp}{data}</head><body><div id=app></div></body></html>") is None
+    assert detect_block_page(f"<html><head>{csp}</head><body><div id=app></div></body></html>") is not None
+
 class FakeFrame:
     def __init__(self, parent=None):
         self.parent_frame = parent

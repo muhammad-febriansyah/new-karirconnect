@@ -105,6 +105,7 @@ class ExternalJobPublisher
             $listing->application_deadline !== null && $listing->application_deadline->isPast() => 'Batas lamaran sudah lewat.',
             $listing->job_category_id === null => 'Kategori tidak dikenali dari judul. Pilih kategori lewat Edit, lalu publish lagi.',
             $listing->company === null => 'Perusahaan tidak diketahui.',
+            $listing->company->applicationEmail() === null => 'Belum ada email HRD atau email perusahaan. Email dicari otomatis; publish lagi setelah ditemukan.',
             $this->duplicateOnPortal($listing) => 'Lowongan dengan judul yang sama sudah tayang untuk perusahaan ini.',
             default => null,
         };

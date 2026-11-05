@@ -10,8 +10,6 @@ export type CatalogEntry = {
     key: string;
     name: string;
     group: string;
-    description: string;
-    warning: string | null;
     attribution: string | null;
     default_selected: boolean;
     cooldown_until: string | null;
@@ -55,7 +53,7 @@ function Choice({
     disabled?: boolean;
     onChange: (checked: boolean) => void;
     title: string;
-    subtitle: React.ReactNode;
+    subtitle?: React.ReactNode;
     badge?: React.ReactNode;
 }) {
     return (
@@ -72,9 +70,11 @@ function Choice({
                     <span className="font-medium">{title}</span>
                     {badge}
                 </span>
-                <span className="block text-xs text-muted-foreground">
-                    {subtitle}
-                </span>
+                {subtitle && (
+                    <span className="block text-xs text-muted-foreground">
+                        {subtitle}
+                    </span>
+                )}
             </span>
         </label>
     );
@@ -144,18 +144,8 @@ export function SourcePicker({
                                             )
                                         }
                                         subtitle={
-                                            <>
-                                                {entry.description}
-                                                {entry.warning && (
-                                                    <span className="mt-1 block text-amber-700">
-                                                        {entry.warning}
-                                                    </span>
-                                                )}
-                                                {entry.attribution &&
-                                                    ` Wajib mencantumkan ${entry.attribution} sebagai sumber.`}
-                                                {entry.cooldown_until &&
-                                                    ` Jeda sampai ${formatDateTime(entry.cooldown_until)}.`}
-                                            </>
+                                            entry.cooldown_until &&
+                                            `Jeda sampai ${formatDateTime(entry.cooldown_until)}.`
                                         }
                                     />
                                 </li>

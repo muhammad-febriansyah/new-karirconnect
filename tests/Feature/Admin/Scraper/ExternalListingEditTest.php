@@ -2,6 +2,7 @@
 
 use App\Enums\CrawlRunTrigger;
 use App\Enums\EmploymentType;
+use App\Models\Application;
 use App\Models\AuditLog;
 use App\Models\City;
 use App\Models\Job;
@@ -147,32 +148,54 @@ it('deletes a listing and its origins', function () {
         ->and(AuditLog::query()->where('action', 'scraped_listing.delete')->exists())->toBeTrue();
 });
 
-it('refuses to delete a listing that is published on the portal', function () {
+it('deletes a published listing with its portal job while nobody has applied', function () {
     $this->listing->update(['job_category_id' => JobCategory::factory()->create()->id]);
     $this->actingAs($this->admin)->postJson(route('admin.scraper.listings.publish'), [
         'listing_ids' => [$this->listing->id], 'employment_type' => 'full_time', 'work_arrangement' => 'onsite', 'experience_level' => 'mid',
     ]);
+    $job = Job::query()->where('scraped_job_listing_id', $this->listing->id)->sole();
+
+    $this->actingAs($this->admin)
+        ->delete(route('admin.scraper.listings.destroy', $this->listing))
+        ->assertRedirect(route('admin.scraper.listings.index'));
+
+    expect($this->listing->fresh())->toBeNull()
+        ->and(Job::query()->find($job->id))->toBeNull()
+        ->and(Job::withTrashed()->find($job->id)->scraped_job_listing_id)->toBeNull();
+});
+
+it('refuses to delete a published listing that already has applicants', function () {
+    $this->listing->update(['job_category_id' => JobCategory::factory()->create()->id]);
+    $this->actingAs($this->admin)->postJson(route('admin.scraper.listings.publish'), [
+        'listing_ids' => [$this->listing->id], 'employment_type' => 'full_time', 'work_arrangement' => 'onsite', 'experience_level' => 'mid',
+    ]);
+    $job = Job::query()->where('scraped_job_listing_id', $this->listing->id)->sole();
+    Application::factory()->create(['job_id' => $job->id]);
 
     $this->actingAs($this->admin)
         ->delete(route('admin.scraper.listings.destroy', $this->listing))
         ->assertSessionHas('inertia.flash_data.toast.type', 'error');
 
-    expect($this->listing->fresh())->not->toBeNull();
+    expect($this->listing->fresh())->not->toBeNull()
+        ->and($job->fresh())->not->toBeNull();
 });
 
 describe('bulk delete', function () {
-    it('deletes the checked listings and skips published ones', function () {
-        $other = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id]);
-        $published = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id, 'job_category_id' => JobCategory::factory()->create()->id]);
-        $this->actingAs($this->admin)->postJson(route('admin.scraper.listings.publish'), ['listing_ids' => [$published->id]]);
+    it('deletes the checked listings and skips ones with applicants', function () {
+        $category = JobCategory::factory()->create()->id;
+        $published = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id, 'job_category_id' => $category]);
+        $applied = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id, 'job_category_id' => $category]);
+        $this->actingAs($this->admin)->postJson(route('admin.scraper.listings.publish'), ['listing_ids' => [$published->id, $applied->id]]);
+        Application::factory()->create(['job_id' => Job::query()->where('scraped_job_listing_id', $applied->id)->value('id')]);
         $kept = ScrapedJobListing::factory()->create(['job_source_id' => $this->source->id]);
 
         $this->actingAs($this->admin)
-            ->post(route('admin.scraper.listings.bulk-destroy'), ['listing_ids' => [$this->listing->id, $other->id, $published->id]])
+            ->post(route('admin.scraper.listings.bulk-destroy'), ['listing_ids' => [$this->listing->id, $published->id, $applied->id]])
             ->assertRedirect(route('admin.scraper.listings.index'))
-            ->assertSessionHas('inertia.flash_data.toast.message', '2 lowongan dihapus; 1 dilewati karena sudah dipublish. Scrap ulang untuk mengambil yang terbaru.');
+            ->assertSessionHas('inertia.flash_data.toast.message', '2 lowongan dihapus; 1 dilewati karena sudah dilamar kandidat. Scrap ulang untuk mengambil yang terbaru.');
 
-        expect(ScrapedJobListing::query()->pluck('id')->sort()->values()->all())->toBe([$published->id, $kept->id])
+        expect(ScrapedJobListing::query()->pluck('id')->sort()->values()->all())->toBe([$applied->id, $kept->id])
+            ->and(Job::query()->where('title', $published->title)->whereNull('scraped_job_listing_id')->exists())->toBeFalse()
             ->and(ScrapedJobOrigin::query()->where('scraped_job_listing_id', $this->listing->id)->exists())->toBeFalse()
             ->and(AuditLog::query()->where('action', 'scraped_listing.bulk_delete')->exists())->toBeTrue();
     });

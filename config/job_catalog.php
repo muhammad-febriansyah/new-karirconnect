@@ -107,6 +107,28 @@ return [
             'rate_limit_per_minute' => 60,
             'schedule_minutes' => 120,
         ],
+        'pintarnya' => [
+            'name' => 'Pintarnya',
+            'group' => 'Job board Indonesia',
+            'default_selected' => true,
+            'description' => 'Lowongan operasional dan entry-level Indonesia, dibaca dari sitemap dan data JobPosting di tiap halaman (robots.txt Pintarnya mengizinkan).',
+            'warning' => 'Syarat layanan Pintarnya belum ditemukan. Sebaiknya minta izin atau kerja sama ke Pintarnya.',
+            // Checked 2026-11-05: robots.txt allows /lowongan/ for every
+            // crawler and each job page carries JobPosting data. No public
+            // terms page was found; ask Pintarnya before relying on it.
+            'type' => 'sitemap',
+            'base_url' => 'https://pintarnya.com/sitemap_index.xml',
+            'allowed_domains' => ['pintarnya.com'],
+            'config' => [
+                // Job pages only: /lowongan/<title>-<id>. Category pages
+                // (/loker-...) and company pages are skipped.
+                'url_pattern' => '^https://pintarnya\\.com/lowongan/[^/?#]+-\\d+$',
+            ],
+            // The index lists 24 sitemaps; they count against the page budget.
+            'max_pages' => 180,
+            'rate_limit_per_minute' => 60,
+            'schedule_minutes' => 120,
+        ],
         'jobicy-apac' => [
             'name' => 'Jobicy (remote Asia-Pasifik)',
             'group' => 'Feed lowongan remote',

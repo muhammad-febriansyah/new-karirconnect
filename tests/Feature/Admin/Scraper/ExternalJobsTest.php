@@ -368,46 +368,48 @@ describe('applying to external jobs', function () {
             ->assertSeeInText('Riwayat pekerjaan:');
     });
 
-    it('sends candidates to the company site when there is no recruitment email', function () {
-        Storage::fake('public');
-        $job = publishedExternalJob(null);
-        $candidate = readyCandidate();
+    it('keeps an external job off the portal while its company has no email', function () {
+        $this->company->update(['recruitment_email' => null, 'email' => null]);
+        $listing = externalListing();
 
-        $this->get(route('public.jobs.show', $job->slug))
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('job.external.relay_enabled', false)
-                ->where('job.external.apply_url', $job->external_apply_url));
+        $this->actingAs($this->admin)
+            ->postJson(route('admin.scraper.listings.publish'), publishDefaults(['listing_ids' => [$listing->id]]))
+            ->assertJsonCount(0, 'published')
+            ->assertJsonPath('skipped.0.reason', fn (string $reason) => str_contains($reason, 'Belum ada email'));
 
-        $this->actingAs($candidate)->get(route('public.jobs.apply.create', $job->slug))->assertRedirect($job->external_apply_url);
+        expect(Job::query()->count())->toBe(0);
+    });
 
-        $this->actingAs($candidate)
-            ->post(route('public.jobs.apply.store', $job->slug), ['cover_letter' => 'Halo'])
-            ->assertSessionHasErrors('job');
+    it('hides a published job when the email goes and shows it again when one is found', function () {
+        $job = publishedExternalJob('rekrutmen@contohtek.co.id');
 
-        expect(Application::query()->count())->toBe(0);
+        $this->company->update(['recruitment_email' => null, 'email' => null]);
+        expect($job->refresh()->status)->toBe(JobStatus::Draft);
+        $this->get(route('public.jobs.show', $job->slug))->assertNotFound();
+
+        $this->company->update(['email' => 'info@contohtek.co.id']);
+        expect($job->refresh()->status)->toBe(JobStatus::Published);
+    });
+
+    it('hides already published jobs without an email from the daily command', function () {
+        Queue::fake();
+        $job = publishedExternalJob('rekrutmen@contohtek.co.id');
+        ScrapedCompany::query()->whereKey($this->company->id)->update(['recruitment_email' => null, 'email' => null]);
+
+        $this->artisan('crawler:find-contacts')->assertSuccessful();
+
+        expect($job->refresh()->status)->toBe(JobStatus::Draft);
     });
 
     it('records why a relay could not be sent', function () {
         $job = publishedExternalJob('rekrutmen@contohtek.co.id');
         $application = Application::factory()->create(['job_id' => $job->id]);
-        $this->company->update(['recruitment_email' => null]);
+        $this->company->update(['recruitment_email' => null, 'email' => null]);
 
         (new RelayExternalApplicationJob($application->id))->handle();
 
         expect($application->refresh()->relayed_at)->toBeNull()
             ->and($application->relay_error)->toContain('email untuk menerima lamaran');
-    });
-
-    it('lets an admin set the recruitment email', function () {
-        $this->actingAs($this->admin)
-            ->patch(route('admin.scraper.companies.recruitment-email', $this->company), ['recruitment_email' => 'hr@contohtek.co.id'])
-            ->assertSessionHas('inertia.flash_data.toast.type', 'success');
-
-        expect($this->company->refresh()->recruitment_email)->toBe('hr@contohtek.co.id');
-
-        $this->actingAs($this->admin)
-            ->patch(route('admin.scraper.companies.recruitment-email', $this->company), ['recruitment_email' => 'bukan-email'])
-            ->assertSessionHasErrors('recruitment_email');
     });
 });
 

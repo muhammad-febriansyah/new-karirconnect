@@ -2,9 +2,10 @@
 
 Reads a handful of pages on the company's domain (home, then contact and
 careers pages it links to or that commonly exist), with the same SSRF guard,
-robots.txt and throttling as a crawl. Only addresses on the company's own
-domain count, and only a recruitment-looking one (hr@, recruitment@,
-careers@, ...) is offered for forwarding applications.
+robots.txt and throttling as a crawl. Addresses on the company's own domain
+come first; free mailboxes (gmail, yahoo, ...) the site publishes are used
+when it has none. A recruitment-looking one (hr@, recruitment@, careers@,
+...) is preferred for forwarding applications.
 
 Request (stdin)::
 
@@ -38,6 +39,9 @@ from .http import Clock, Deadline, SafeClient
 from .safety import UrlGuard, system_resolver
 
 MAX_PAGES = 8
+
+# Small companies often publish a free mailbox on their own site.
+FREE_MAIL_DOMAINS = {"gmail.com", "yahoo.com", "yahoo.co.id", "ymail.com", "outlook.com", "hotmail.com", "live.com", "icloud.com"}
 RATE_PER_MINUTE = 30
 
 # Common paths, tried after the links the home page offers.
@@ -93,8 +97,18 @@ def best_general_mailbox(emails: list[str]) -> str | None:
     return min(emails, key=rank) if emails else None
 
 
+def same_brand(email_domain: str, domain: str) -> bool:
+    """intikom.co.id and intikom.com: one name under another ending. Not for
+    free-mail domains (gmail.com is not the company's)."""
+    if domain in FREE_MAIL_DOMAINS or email_domain in FREE_MAIL_DOMAINS:
+        return False
+    brand = registrable_domain(domain).split(".")[0]
+    return len(brand) >= 4 and registrable_domain(email_domain).split(".")[0] == brand
+
+
 def emails_in(html: str, domain: str) -> list[str]:
-    """Addresses on `domain` (or its subdomains), in page order."""
+    """Addresses on `domain`, its subdomains or the same name under another
+    ending (contoh.co.id for contoh.com), in page order."""
     text = unquote(html_lib.unescape(html)).replace("\\u003e", " ").replace("\\u003c", " ").replace("\\u0040", "@")
     found: list[str] = []
     for match in EMAIL.finditer(text):
@@ -102,11 +116,21 @@ def emails_in(html: str, domain: str) -> list[str]:
         email_domain = email.rsplit("@", 1)[1]
         if NOT_A_MAILBOX.search(email):
             continue
-        if email_domain != domain and not email_domain.endswith("." + domain):
+        if email_domain != domain and not email_domain.endswith("." + domain) and not same_brand(email_domain, domain):
             continue
         if email not in found:
             found.append(email)
     return found
+
+
+def free_mail_in(html: str) -> list[str]:
+    """Free-mail addresses (gmail, yahoo, ...) on a page, in page order."""
+    found: list[str] = []
+    for domain in sorted(FREE_MAIL_DOMAINS):
+        for email in emails_in(html, domain):
+            if email.rsplit("@", 1)[1] == domain and email not in found:
+                found.append(email)
+    return sorted(found, key=lambda email: html.lower().find(email))
 
 
 def candidate_links(html: str, base_url: str, domain: str) -> list[str]:
@@ -154,6 +178,17 @@ def core_variants(name: str) -> list[str]:
     return [v for v in dict.fromkeys(variants) if len(v) >= 6]
 
 
+def short_variants(name: str) -> list[str]:
+    """Shorter forms a company's domain often uses: the first word, or the
+    first two ("PT Intikom Berlian Mustika" -> intikom, intikomberlian). A
+    site found this way must also show the full name (see site_belongs_to)."""
+    words = [w for w in re.findall(r"[a-z0-9]+", re.sub(r"[.'’]", "", name.lower())) if w not in LEGAL_WORDS]
+    if len(words) < 2:
+        return []
+    shorts = [words[0], words[0] + words[1]]
+    return [v for v in dict.fromkeys(shorts) if len(v) >= 6 and v not in GENERIC_WORDS and v not in core_variants(name)]
+
+
 def candidate_sites(name: str) -> list[str]:
     hosts: list[str] = []
     if match := NAME_AS_DOMAIN.search(name):
@@ -162,7 +197,11 @@ def candidate_sites(name: str) -> list[str]:
         hosts += [f"{core}.co.id", f"{core}.id", f"{core}.com"]
     if "indonesia" in name.lower() and core_variants(name):
         hosts.append(f"{core_variants(name)[0]}indonesia.com")
-    return [f"https://{host}/" for host in dict.fromkeys(hosts)][:8]
+    if core_variants(name):
+        hosts.append(f"{core_variants(name)[0]}.net")
+    for short in short_variants(name):
+        hosts += [f"{short}.co.id", f"{short}.com", f"{short}.id"]
+    return [f"https://{host}/" for host in dict.fromkeys(hosts)][:16]
 
 
 def site_belongs_to(html: str, name: str) -> bool:
@@ -181,9 +220,15 @@ def site_belongs_to(html: str, name: str) -> bool:
     if not text.strip() or PARKED.search(text) or PARKED.search(soup.get_text(" ", strip=True)[:3000]):
         return False
     page = core_name(text)
-    return any(variant in page for variant in core_variants(name)) or bool(
+    if any(variant in page for variant in core_variants(name)) or bool(
         (match := NAME_AS_DOMAIN.search(name)) and core_name(match.group(1).split(".")[0]) in page
-    )
+    ):
+        return True
+    # A site named after a shorter form must show the full name somewhere.
+    if any(short in page for short in short_variants(name)):
+        full = core_variants(name)
+        return bool(full) and full[0] in core_name(soup.get_text(" ", strip=True)[:200_000])
+    return False
 
 
 @dataclass
@@ -291,6 +336,8 @@ def find_contact(
     queue = [request.website.rstrip("/") + "/"]
     seen: set[str] = set()
     general: list[str] = []
+    free: list[str] = []
+    free_recruitment: tuple[str, str] | None = None
 
     with SafeClient(
         UrlGuard([domain], resolver=resolver),
@@ -336,11 +383,22 @@ def find_contact(
                         result.recruitment_email_url = f"{found_on.scheme}://{found_on.netloc}{found_on.path}"
                 elif email not in general:
                     general.append(email)
+            for email in free_mail_in(page):
+                if email not in free:
+                    free.append(email)
+                    if is_recruitment_mailbox(email) and free_recruitment is None:
+                        found_on = urlsplit(str(response.url))
+                        free_recruitment = (email, f"{found_on.scheme}://{found_on.netloc}{found_on.path}")
 
             if result.recruitment_email is not None:
                 break
 
-    result.general_email = best_general_mailbox(general)
+    # Mailboxes on the company's own domain first, then free mail it publishes.
+    if result.recruitment_email is None and free_recruitment is not None:
+        result.recruitment_email, result.recruitment_email_url = free_recruitment
+    result.general_email = best_general_mailbox(general) or next(
+        (email for email in free if email != result.recruitment_email), None
+    )
     if result.pages == 0:
         result.status = "failed"
     return result

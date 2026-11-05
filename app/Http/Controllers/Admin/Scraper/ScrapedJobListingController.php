@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BulkDeleteScrapedJobListingsRequest;
 use App\Http\Requests\Admin\UpdateScrapedJobListingRequest;
 use App\Models\City;
+use App\Models\Job;
 use App\Models\JobCategory;
 use App\Models\JobSource;
 use App\Models\Province;
@@ -20,8 +21,10 @@ use App\Services\Audit\AuditLogService;
 use App\Services\Crawler\ScraperViewData;
 use App\Services\ExternalJobs\ExternalListingFilter;
 use App\Services\Sanitizer\HtmlSanitizerService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -66,8 +69,10 @@ class ScrapedJobListingController extends Controller
             'publishableCount' => ExternalListingFilter::apply(ScrapedJobListing::query(), [...$filters, 'published' => 'no'])
                 ->where('status', ScrapedJobListingStatus::Active)
                 ->count(),
-            // Published listings stay: their portal job points at them.
-            'deletableCount' => ExternalListingFilter::apply(ScrapedJobListing::query(), [...$filters, 'published' => 'no'])->count(),
+            // Listings whose portal job has applicants stay.
+            'deletableCount' => ExternalListingFilter::apply(ScrapedJobListing::query(), $filters)
+                ->whereDoesntHave('publishedJob', fn (Builder $job) => $job->has('applications'))
+                ->count(),
             'scrapeSources' => app(ExternalJobController::class)->sourcesForDialog(),
             'statusOptions' => ScrapedJobListingStatus::selectItems(),
             'sourceOptions' => ScraperViewData::sourceOptions(),
@@ -138,6 +143,7 @@ class ScrapedJobListingController extends Controller
                 ])->values(),
                 'published_job' => $listing->publishedJob ? [
                     'slug' => $listing->publishedJob->slug,
+                    'applications_count' => $listing->publishedJob->applications()->count(),
                     'status' => $listing->publishedJob->status?->value,
                     'published_at' => $listing->publishedJob->published_at?->toIso8601String(),
                 ] : null,
@@ -267,14 +273,19 @@ class ScrapedJobListingController extends Controller
     {
         Gate::authorize('viewAny', JobSource::class);
 
-        if ($listing->publishedJob()->exists()) {
-            Inertia::flash('toast', ['type' => 'error', 'message' => 'Lowongan ini sudah dipublish ke portal. Tutup atau hapus lowongan portalnya dulu dari menu Lowongan.']);
+        $job = $listing->publishedJob;
+        if ($job !== null && $job->applications()->exists()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Lowongan ini sudah dilamar kandidat, jadi tidak bisa dihapus. Tutup lowongan portalnya dari menu Lowongan.']);
 
             return back();
         }
 
-        $snapshot = $listing->only(['id', 'title', 'external_id', 'job_source_id']);
-        $listing->delete();
+        $snapshot = $listing->only(['id', 'title', 'external_id', 'job_source_id']) + ['job_id' => $job?->id];
+        DB::transaction(function () use ($listing, $job): void {
+            // Published but nobody applied yet: the portal job goes too.
+            $job?->delete();
+            $listing->delete();
+        });
 
         $this->audit->record('scraped_listing.delete', null, $snapshot, null, $request->user());
 
@@ -284,22 +295,28 @@ class ScrapedJobListingController extends Controller
     }
 
     /**
-     * Delete the checked listings, or every listing the filters match.
-     * Published listings are kept. Deleting also forgets their origins, so the
-     * next crawl reads those pages again first and stores them fresh.
+     * Delete the checked listings, or every listing the filters match, with
+     * their portal job when published. Listings whose portal job already has
+     * applicants are kept. Deleting also forgets their origins, so the next
+     * crawl reads those pages again first and stores them fresh.
      */
     public function bulkDestroy(BulkDeleteScrapedJobListingsRequest $request): RedirectResponse
     {
         $data = $request->validated();
 
         $query = ($data['all_matching'] ?? false)
-            ? ExternalListingFilter::apply(ScrapedJobListing::query(), [...($data['filters'] ?? []), 'published' => 'no'])
-            : ScrapedJobListing::query()->whereKey($data['listing_ids'])->whereDoesntHave('publishedJob');
+            ? ExternalListingFilter::apply(ScrapedJobListing::query(), $data['filters'] ?? [])
+            : ScrapedJobListing::query()->whereKey($data['listing_ids']);
+        $query->whereDoesntHave('publishedJob', fn (Builder $job) => $job->has('applications'));
 
         $requested = ($data['all_matching'] ?? false) ? null : count($data['listing_ids']);
         $deleted = 0;
         $query->select('id')->chunkById(500, function ($chunk) use (&$deleted): void {
-            $deleted += ScrapedJobListing::query()->whereKey($chunk->pluck('id'))->delete();
+            $deleted += DB::transaction(function () use ($chunk): int {
+                Job::query()->whereIn('scraped_job_listing_id', $chunk->pluck('id'))->delete();
+
+                return ScrapedJobListing::query()->whereKey($chunk->pluck('id'))->delete();
+            });
         });
 
         $this->audit->record('scraped_listing.bulk_delete', null, null, [
@@ -310,8 +327,8 @@ class ScrapedJobListingController extends Controller
 
         $kept = $requested !== null ? $requested - $deleted : 0;
         Inertia::flash('toast', match (true) {
-            $deleted === 0 => ['type' => 'warning', 'message' => 'Tidak ada lowongan yang dihapus. Lowongan yang sudah dipublish tidak bisa dihapus dari sini.'],
-            $kept > 0 => ['type' => 'success', 'message' => "{$deleted} lowongan dihapus; {$kept} dilewati karena sudah dipublish. Scrap ulang untuk mengambil yang terbaru."],
+            $deleted === 0 => ['type' => 'warning', 'message' => 'Tidak ada lowongan yang dihapus. Lowongan yang sudah dilamar kandidat tidak bisa dihapus.'],
+            $kept > 0 => ['type' => 'success', 'message' => "{$deleted} lowongan dihapus; {$kept} dilewati karena sudah dilamar kandidat. Scrap ulang untuk mengambil yang terbaru."],
             default => ['type' => 'success', 'message' => "{$deleted} lowongan dihapus. Scrap ulang untuk mengambil yang terbaru."],
         });
 

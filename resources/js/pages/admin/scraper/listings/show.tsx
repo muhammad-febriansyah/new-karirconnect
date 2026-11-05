@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     ExternalLink,
@@ -9,15 +9,12 @@ import {
     MapPin,
     Pencil,
     Phone,
-    Search,
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
-import ExternalJobController from '@/actions/App/Http/Controllers/Admin/Scraper/ExternalJobController';
 import ScrapedJobListingController from '@/actions/App/Http/Controllers/Admin/Scraper/ScrapedJobListingController';
 import { CompanyLogo, ToneBadge } from '@/components/admin/scraper/scraper-ui';
 import { ConfirmDialog } from '@/components/feedback/confirm-dialog';
-import { InputField } from '@/components/form/input-field';
 import { PageHeader } from '@/components/layout/page-header';
 import { Section } from '@/components/layout/section';
 import { SafeHtml } from '@/components/shared/safe-html';
@@ -70,6 +67,7 @@ type Listing = {
     }>;
     published_job: {
         slug: string;
+        applications_count: number;
         status: string | null;
         published_at: string | null;
     } | null;
@@ -135,6 +133,7 @@ const SECTIONS: Array<{
 export default function ScrapedListingShow({ listing }: { listing: Listing }) {
     const [confirming, setConfirming] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const hasApplicants = (listing.published_job?.applications_count ?? 0) > 0;
     const [processing, setProcessing] = useState(false);
     const hidden = listing.status === 'hidden';
     const salary = formatSalary(listing);
@@ -216,10 +215,10 @@ export default function ScrapedListingShow({ listing }: { listing: Listing }) {
                                 variant="outline"
                                 className="text-destructive hover:text-destructive"
                                 onClick={() => setConfirmDelete(true)}
-                                disabled={listing.published_job !== null}
+                                disabled={hasApplicants}
                                 title={
-                                    listing.published_job
-                                        ? 'Sudah dipublish: tutup lowongan portalnya dulu'
+                                    hasApplicants
+                                        ? 'Sudah ada pelamar: tutup lowongan portalnya dari menu Lowongan'
                                         : undefined
                                 }
                             >
@@ -322,10 +321,19 @@ export default function ScrapedListingShow({ listing }: { listing: Listing }) {
                                         {formatDateTime(
                                             listing.published_job.published_at,
                                         )}
-                                        {listing.published_job.status !==
-                                            'published' && ' (sudah ditutup)'}
+                                        {listing.published_job.status ===
+                                            'closed' && ' (sudah ditutup)'}
                                         .
                                     </p>
+                                    {listing.published_job.status ===
+                                        'draft' && (
+                                        <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                            Disembunyikan dari portal karena
+                                            belum ada email HRD atau email
+                                            perusahaan. Tayang lagi otomatis
+                                            setelah email ditemukan.
+                                        </p>
+                                    )}
                                     <a
                                         href={`/jobs/${listing.published_job.slug}`}
                                         target="_blank"
@@ -452,7 +460,7 @@ export default function ScrapedListingShow({ listing }: { listing: Listing }) {
                 open={confirmDelete}
                 onOpenChange={setConfirmDelete}
                 title="Hapus lowongan ini?"
-                description="Lowongan dihapus dari Jobs Eksternal. Jika masih ada di sumbernya, crawl berikutnya akan mengambilnya lagi — pakai Sembunyikan agar tidak muncul lagi."
+                description={`Lowongan dihapus dari Jobs Eksternal${listing.published_job ? ' beserta lowongannya di portal, karena belum ada pelamar' : ''}. Jika masih ada di sumbernya, crawl berikutnya akan mengambilnya lagi — pakai Sembunyikan agar tidak muncul lagi.`}
                 confirmLabel="Hapus"
                 variant="destructive"
                 confirmIcon={Trash2}
@@ -511,52 +519,29 @@ function RecruitmentEmailForm({
         email: string | null;
     };
 }) {
-    const [searching, setSearching] = useState(false);
-    const findOnWebsite = () =>
-        router.post(
-            ExternalJobController.findRecruitmentEmail(company.id).url,
-            {},
-            {
-                preserveScroll: true,
-                onStart: () => setSearching(true),
-                onFinish: () => setSearching(false),
-            },
-        );
-    const form = useForm({
-        recruitment_email: company.recruitment_email ?? '',
-    });
+    const sendsTo = company.recruitment_email ?? company.email;
 
     return (
         <Section
-            title="Email rekrutmen"
-            description="Lamaran lewat KarirConnect untuk lowongan perusahaan ini diteruskan ke alamat ini via SMTP."
+            title="Email lamaran"
+            description="Diambil otomatis saat scrape dari iklan lowongan dan situs perusahaan. Lamaran lewat KarirConnect diteruskan via SMTP."
         >
-            <form
-                onSubmit={(event) => {
-                    event.preventDefault();
-                    form.patch(
-                        ExternalJobController.updateRecruitmentEmail(company.id)
-                            .url,
-                        { preserveScroll: true },
-                    );
-                }}
-                className="space-y-3"
-            >
-                <InputField
-                    id="recruitment_email"
-                    type="email"
-                    label="Email rekrutmen"
-                    value={form.data.recruitment_email}
-                    onChange={(event) =>
-                        form.setData('recruitment_email', event.target.value)
-                    }
-                    error={form.errors.recruitment_email}
-                    placeholder="rekrutmen@perusahaan.co.id"
-                    description="Isi hanya alamat yang dipublikasikan perusahaan untuk menerima lamaran. Kosong = lamaran dikirim ke email perusahaan bila ada, atau kandidat melamar di situs perusahaan."
+            <dl className="space-y-3 text-sm">
+                <EmailRow
+                    label="Email HRD"
+                    email={company.recruitment_email}
+                    sendsTo={sendsTo}
                 />
+                <EmailRow
+                    label="Email perusahaan"
+                    email={company.email}
+                    sendsTo={sendsTo}
+                />
+            </dl>
+            <div className="mt-3 space-y-2 text-xs text-muted-foreground">
                 {company.recruitment_email_source && (
-                    <p className="text-xs text-muted-foreground">
-                        Diambil otomatis dari{' '}
+                    <p>
+                        Email HRD dari{' '}
                         <a
                             href={company.recruitment_email_source}
                             target="_blank"
@@ -575,53 +560,51 @@ function RecruitmentEmailForm({
                         .
                     </p>
                 )}
-                {!company.recruitment_email && company.email && (
-                    <p className="rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900">
-                        Tidak ada email khusus rekrutmen, jadi lamaran dikirim
-                        ke email perusahaan <strong>{company.email}</strong>.
+                {!sendsTo && !company.contact_checked_at && (
+                    <p>Email sedang dicari otomatis di situs perusahaan.</p>
+                )}
+                {!sendsTo && company.contact_checked_at && (
+                    <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-900">
+                        Dicek {formatDateTime(company.contact_checked_at)}:
+                        iklan dan situs perusahaan tidak mencantumkan email.
+                        Kandidat melamar di halaman lamaran aslinya.
                     </p>
                 )}
-                {!company.recruitment_email &&
-                    !company.email &&
-                    company.contact_checked_at && (
-                        <p className="text-xs text-muted-foreground">
-                            Situs perusahaan dicek{' '}
-                            {formatDateTime(company.contact_checked_at)}: tidak
-                            ada email yang dipublikasikan. Kandidat melamar di
-                            halaman lamaran aslinya.
-                        </p>
-                    )}
-                {!company.website && !company.recruitment_email && (
-                    <p className="text-xs text-muted-foreground">
-                        Sumber tidak mencantumkan website perusahaan; situs
-                        resminya dicari dari nama perusahaan.
-                    </p>
-                )}
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                        type="submit"
-                        size="sm"
-                        disabled={form.processing || !form.isDirty}
-                    >
-                        Simpan
-                    </Button>
-                    {!company.recruitment_email && !company.email && (
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={searching}
-                            onClick={findOnWebsite}
-                        >
-                            <Search className="size-4" />
-                            {searching
-                                ? 'Mencari…'
-                                : 'Cari di situs perusahaan'}
-                        </Button>
-                    )}
-                </div>
-            </form>
+            </div>
         </Section>
+    );
+}
+
+function EmailRow({
+    label,
+    email,
+    sendsTo,
+}: {
+    label: string;
+    email: string | null;
+    sendsTo: string | null;
+}) {
+    return (
+        <div>
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="flex flex-wrap items-center gap-2 font-medium">
+                {email ? (
+                    <a
+                        href={`mailto:${email}`}
+                        className="break-all hover:underline"
+                    >
+                        {email}
+                    </a>
+                ) : (
+                    <span className="font-normal text-muted-foreground">
+                        Tidak ditemukan
+                    </span>
+                )}
+                {email && email === sendsTo && (
+                    <Badge variant="secondary">Tujuan lamaran</Badge>
+                )}
+            </dd>
+        </div>
     );
 }
 

@@ -21,7 +21,7 @@ from .extract import clean_url
 
 _EMAIL = re.compile(r"(?<![\w.+-])([A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})(?![\w-])")
 # Addresses that belong to a platform or are placeholders, never the employer's.
-_NOT_EMPLOYER = re.compile(r"@(dealls\.com|sejutacita\.id|example\.(com|org)|email\.com|domain\.com|glints\.com|jobstreet\.)|noreply|no-reply", re.I)
+_NOT_EMPLOYER = re.compile(r"@(dealls\.com|sejutacita\.id|pintarnya\.com|example\.(com|org)|email\.com|domain\.com|glints\.com|jobstreet\.)|noreply|no-reply", re.I)
 
 
 def find_contact_email(*texts: str | None) -> str | None:

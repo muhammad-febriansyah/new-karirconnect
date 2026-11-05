@@ -34,6 +34,7 @@ WEAK_CAPTCHA_MARKERS = (
 
 CONTENT_TEXT_THRESHOLD = 1500
 
+_JOB_POSTING = re.compile(r"[\"']@type[\"']\s*:\s*\[?\s*[\"']jobposting[\"']")
 _TITLE = re.compile(r"<title[^>]*>(.*?)</title>", re.I | re.S)
 _PASSWORD_INPUT = re.compile(r"<input[^>]+type=[\"']?password", re.I)
 _LOGIN_WORDS = re.compile(r"\b(sign in|log in|login|masuk)\b", re.I)
@@ -68,7 +69,13 @@ def detect_block_page(body: str) -> type[AccessRestricted] | None:
     lowered = body[:200_000].lower()
     if any(marker in lowered for marker in STRONG_CAPTCHA_MARKERS):
         return CaptchaDetected
-    if any(marker in lowered for marker in WEAK_CAPTCHA_MARKERS) and visible_text_length(body) < CONTENT_TEXT_THRESHOLD:
+    # A page that carries JobPosting data was served in full, whatever widget
+    # (or Content-Security-Policy entry) mentions a CAPTCHA.
+    if (
+        any(marker in lowered for marker in WEAK_CAPTCHA_MARKERS)
+        and visible_text_length(body) < CONTENT_TEXT_THRESHOLD
+        and not _JOB_POSTING.search(lowered)
+    ):
         return CaptchaDetected
     title_match = _TITLE.search(body[:20_000])
     title = title_match.group(1) if title_match else ""

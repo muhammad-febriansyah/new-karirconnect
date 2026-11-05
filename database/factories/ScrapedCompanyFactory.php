@@ -27,7 +27,16 @@ class ScrapedCompanyFactory extends Factory
             'tagline' => fake()->catchPhrase(),
             'logo_url' => "https://{$domain}/logo.png",
             'website' => "https://{$domain}",
+            'email' => "info@{$domain}",
             'about' => fake()->paragraph(),
         ];
+    }
+
+    /**
+     * Neither an HRD nor a company email was found.
+     */
+    public function withoutEmail(): static
+    {
+        return $this->state(fn (): array => ['email' => null, 'recruitment_email' => null]);
     }
 }

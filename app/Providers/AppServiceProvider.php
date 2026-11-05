@@ -5,10 +5,12 @@ namespace App\Providers;
 use App\Mail\Transport\MailketingTransport;
 use App\Models\EmployeeProfile;
 use App\Models\Job;
+use App\Models\ScrapedCompany;
 use App\Models\User;
 use App\Notifications\Channels\FcmChannel;
 use App\Observers\EmployeeProfileObserver;
 use App\Observers\JobObserver;
+use App\Observers\ScrapedCompanyObserver;
 use App\Services\Ai\Clients\FakeAiClient;
 use App\Services\Ai\Contracts\AiClient;
 use App\Services\Billing\Clients\FakeMidtransClient;
@@ -181,5 +183,6 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(! app()->isProduction());
         Job::observe(JobObserver::class);
         EmployeeProfile::observe(EmployeeProfileObserver::class);
+        ScrapedCompany::observe(ScrapedCompanyObserver::class);
     }
 }

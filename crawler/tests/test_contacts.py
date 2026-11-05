@@ -6,8 +6,10 @@ import httpx
 from karir_crawler.cli import main
 from karir_crawler.contacts import (
     ContactRequest,
+    candidate_sites,
     emails_in,
     find_contact,
+    site_belongs_to,
     is_recruitment_mailbox,
     registrable_domain,
 )
@@ -135,6 +137,9 @@ def test_a_site_that_does_not_name_the_company_is_not_used(router, clock):
     router.route(host="contohkarya.co.id").respond(200, html="<title>Toko Bunga Melati</title>hr@contohkarya.co.id")
     router.route(host="contohkarya.id").respond(404)
     router.route(host="contohkarya.com").respond(404)
+    router.route(host="contohkarya.net").respond(404)
+    for host in ("contoh.co.id", "contoh.com", "contoh.id"):
+        router.route(host=host).respond(404)
 
     result = find_contact(
         ContactRequest.from_dict({"contract_version": 1, "mode": "company_contact", "run_uuid": "g", "company_name": "PT Contoh Karya"}),
@@ -142,6 +147,32 @@ def test_a_site_that_does_not_name_the_company_is_not_used(router, clock):
     )
 
     assert result.website is None and result.recruitment_email is None
+
+
+def test_guesses_a_shorter_domain_only_when_the_site_shows_the_full_name():
+    sites = candidate_sites("PT Intikom Berlian Mustika")
+    assert "https://intikom.co.id/" in sites and "https://intikom.com/" in sites
+
+    assert site_belongs_to("<title>Intikom</title><footer>PT Intikom Berlian Mustika</footer>", "PT Intikom Berlian Mustika")
+    # "Bintang" alone names many unrelated sites.
+    assert not site_belongs_to("<title>Bintang</title><p>Toko bintang</p>", "PT. Bintang Semesta Motor")
+
+
+def test_reads_the_same_name_under_another_ending_and_free_mail():
+    page = "marcom@intikom.co.id rekrutmen.contoh@gmail.com someone@other.com"
+    assert emails_in(page, "intikom.com") == ["marcom@intikom.co.id"]
+    assert emails_in(page, "gmail.com") == ["rekrutmen.contoh@gmail.com"]
+
+
+def test_uses_a_free_mailbox_the_company_site_publishes(router, clock):
+    router.get(f"{SITE}/").respond(200, html='<a href="/kontak">Kontak</a>')
+    router.get(f"{SITE}/kontak").respond(200, html="Lamaran: hrd.contoh@gmail.com, info lain: contoh.office@yahoo.co.id")
+    router.route(host="www.contoh.co.id").respond(404)
+
+    result = find_contact(request(), resolver=public_resolver, clock=clock)
+
+    assert result.recruitment_email == "hrd.contoh@gmail.com"
+    assert result.general_email == "contoh.office@yahoo.co.id"
 
 
 def test_prefers_the_main_mailbox_as_the_general_email():
