@@ -61,12 +61,14 @@ class CrawlerClient
             return [];
         }
 
-        return $source->origins()
+        $stored = $source->origins()
             ->where('last_seen_at', '>=', now()->subDays(3))
             ->latest('last_seen_at')
             ->limit(10000)
             ->pluck('source_url')
             ->all();
+
+        return array_values(array_unique([...$stored, ...app(SeenPages::class)->recent($source)]));
     }
 
     /**

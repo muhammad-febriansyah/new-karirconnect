@@ -267,7 +267,11 @@ export function ScrapeDialog({
                                 <p className="text-xs text-muted-foreground">
                                     Hanya lowongan yang ditayangkan di rentang
                                     ini yang disimpan. Kosongkan untuk mengambil
-                                    semua.
+                                    semua. Tanggal tayang baru terlihat setelah
+                                    halamannya dibuka, jadi rentang ini tidak
+                                    mempercepat scrape: tiap run membaca halaman
+                                    yang belum dibaca, sampai seluruh sumber
+                                    tercakup setelah beberapa run.
                                 </p>
                             </div>
                             <div className="grid gap-3 sm:grid-cols-2">

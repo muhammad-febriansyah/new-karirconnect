@@ -415,3 +415,15 @@ describe('date range', function () {
                 ->where('filters.published_from', '2026-10-01'));
     });
 });
+
+it('remembers pages it read but did not store, so the next run reads new ones', function () {
+    $run = crawlDeallsWithRange(['from' => '2026-10-01'], [
+        ['external_id' => 'old', 'published_at' => '2025-01-10T08:00:00Z'],
+        ['external_id' => 'new', 'published_at' => '2026-10-15T08:00:00Z'],
+    ]);
+
+    $request = app(CrawlerClient::class)->buildRequest($run->source, $run);
+
+    expect($request['recently_seen'])->toContain('https://dealls.com/loker/old')
+        ->toContain('https://dealls.com/loker/new');
+});

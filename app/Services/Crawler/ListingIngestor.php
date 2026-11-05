@@ -33,6 +33,7 @@ class ListingIngestor
         private readonly ScrapedCompanyUpserter $companies,
         private readonly HtmlSanitizerService $sanitizer,
         private readonly CompanyContactFinder $contacts,
+        private readonly SeenPages $seenPages,
     ) {}
 
     /**
@@ -47,6 +48,7 @@ class ListingIngestor
         $indonesiaOnly = (bool) config('job_catalog.indonesia_only');
         $boardCompany = null;
         $contactsQueued = [];
+        $notStored = [];
 
         foreach ($items as $item) {
             if (! is_array($item)) {
@@ -60,18 +62,21 @@ class ListingIngestor
                     'url' => is_string($item['source_url'] ?? null) ? $item['source_url'] : null,
                     'problems' => $problems,
                 ];
+                $notStored[] = $item['source_url'] ?? null;
 
                 continue;
             }
 
             if (($publishedFrom || $publishedTo) && ! $this->inDateRange($item, $publishedFrom, $publishedTo)) {
                 $counts['filtered_date']++;
+                $notStored[] = $item['source_url'] ?? null;
 
                 continue;
             }
 
             if ($indonesiaOnly && ! $this->isInIndonesia($item)) {
                 $counts['filtered']++;
+                $notStored[] = $item['source_url'] ?? null;
 
                 continue;
             }
@@ -116,6 +121,8 @@ class ListingIngestor
                 $this->contacts->queueIfDue($company->refresh());
             }
         }
+
+        $this->seenPages->remember($source, array_values(array_filter($notStored, fn (mixed $url): bool => ResultValidator::isHttpUrl($url))));
 
         return $counts;
     }
