@@ -104,3 +104,41 @@ def test_plain_http_websites_are_read_over_https():
 
 
 _ = httpx  # respx fixtures patch httpx
+
+
+def test_guesses_the_website_from_the_company_name(router, clock):
+    from karir_crawler.contacts import candidate_sites
+
+    assert candidate_sites("PT Akasha Wira International, Tbk")[:3] == [
+        "https://akashawirainternational.co.id/", "https://akashawirainternational.id/", "https://akashawirainternational.com/",
+    ]
+    assert "https://akashawira.co.id/" in candidate_sites("PT Akasha Wira International, Tbk")
+    assert candidate_sites("Jakmall.com")[0] == "https://jakmall.com/"
+    # Short names are too ambiguous to guess.
+    assert candidate_sites("Zone & Co") == []
+
+    router.get("https://contohkarya.co.id/").respond(200, html="<title>Domain contohkarya.co.id is for sale</title>")
+    router.get("https://contohkarya.id/").respond(200, html='<title>PT Contoh Karya</title><a href="/karir">Karir</a>')
+    router.get("https://contohkarya.id/karir").respond(200, html="Kirim CV ke hrd@contohkarya.id")
+    router.route(host="contohkarya.id").respond(404)
+    router.route(host="contohkarya.com").respond(404)
+
+    result = find_contact(
+        ContactRequest.from_dict({"contract_version": 1, "mode": "company_contact", "run_uuid": "g", "company_name": "PT Contoh Karya"}),
+        resolver=public_resolver, clock=clock,
+    )
+
+    assert (result.website, result.website_guessed, result.recruitment_email) == ("https://contohkarya.id/", True, "hrd@contohkarya.id")
+
+
+def test_a_site_that_does_not_name_the_company_is_not_used(router, clock):
+    router.route(host="contohkarya.co.id").respond(200, html="<title>Toko Bunga Melati</title>hr@contohkarya.co.id")
+    router.route(host="contohkarya.id").respond(404)
+    router.route(host="contohkarya.com").respond(404)
+
+    result = find_contact(
+        ContactRequest.from_dict({"contract_version": 1, "mode": "company_contact", "run_uuid": "g", "company_name": "PT Contoh Karya"}),
+        resolver=public_resolver, clock=clock,
+    )
+
+    assert result.website is None and result.recruitment_email is None

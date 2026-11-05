@@ -31,12 +31,13 @@ class CompanyContactFinder
     ) {}
 
     /**
-     * Whether the company should be searched now: it has a website of its own,
-     * no recruitment email yet, and was not searched recently.
+     * Whether the company should be searched now: it has a website of its own
+     * (or a name to find one from), no recruitment email yet, and was not
+     * searched recently.
      */
     public function isDue(ScrapedCompany $company): bool
     {
-        return $this->website($company) !== null
+        return $this->searchable($company)
             && blank($company->recruitment_email)
             && ($company->contact_checked_at === null
                 || $company->contact_checked_at->lt(now()->subDays((int) config('crawler.contact_recheck_days', 30))));
@@ -60,16 +61,19 @@ class CompanyContactFinder
      */
     public function find(ScrapedCompany $company): array
     {
-        $website = $this->website($company);
-        if ($website === null) {
+        if (! $this->searchable($company)) {
             return ['status' => 'skipped', 'recruitment_email' => null, 'general_email' => null];
         }
 
+        $website = $this->website($company);
         $response = $this->client->run([
             'contract_version' => CrawlerClient::CONTRACT_VERSION,
             'mode' => 'company_contact',
             'run_uuid' => (string) Str::uuid(),
+            // Without a website the worker looks for one from the name and
+            // only uses a site whose title names the company.
             'website' => $website,
+            'company_name' => $website === null ? $company->name : null,
             'user_agent' => (string) config('crawler.user_agent'),
             'respect_robots' => true,
             'timeout_s' => 60,
@@ -80,10 +84,17 @@ class CompanyContactFinder
 
         $this->companies->rememberContactEmail($company, $recruitment, $response['recruitment_email_url'] ?? null);
 
+        $guessedSite = ($response['website_guessed'] ?? false) === true && filled($company->recruitment_email)
+            ? (is_string($response['website'] ?? null) ? $response['website'] : null)
+            : null;
+
         $company->forceFill(array_filter([
             'contact_checked_at' => now(),
-            // A general mailbox (info@) is shown on the profile, never used to forward CVs.
-            'email' => blank($company->email) ? $general : null,
+            // A website found from the name is kept only once it gave a recruitment email.
+            'website' => blank($company->website) ? $guessedSite : null,
+            // A general mailbox (info@) is shown on the profile, never used to
+            // forward CVs; from a guessed site only once that site is confirmed.
+            'email' => blank($company->email) && ($website !== null || $guessedSite !== null) ? $general : null,
         ]))->save();
 
         return [
@@ -91,6 +102,17 @@ class CompanyContactFinder
             'recruitment_email' => $company->recruitment_email,
             'general_email' => $general,
         ];
+    }
+
+    private function searchable(ScrapedCompany $company): bool
+    {
+        if ($this->website($company) !== null) {
+            return true;
+        }
+
+        // A job board or social profile given as the website is not searched,
+        // and neither is a company whose name cannot yield a site.
+        return blank($company->website) && mb_strlen(preg_replace('/[^a-z0-9]/', '', Str::lower($company->name)) ?? '') >= 6;
     }
 
     private function website(ScrapedCompany $company): ?string

@@ -18,7 +18,6 @@ class FindCompanyContacts extends Command
 
         ScrapedCompany::query()
             ->whereNull('recruitment_email')
-            ->whereNotNull('website')
             ->orderBy('id')
             ->each(function (ScrapedCompany $company) use ($finder, &$queued): bool {
                 if ($finder->isDue($company)) {

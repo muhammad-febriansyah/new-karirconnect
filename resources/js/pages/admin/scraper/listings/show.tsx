@@ -583,8 +583,8 @@ function RecruitmentEmailForm({
                 )}
                 {!company.website && !company.recruitment_email && (
                     <p className="text-xs text-muted-foreground">
-                        Sumber tidak mencantumkan website perusahaan, jadi email
-                        tidak bisa dicari otomatis.
+                        Sumber tidak mencantumkan website perusahaan; situs
+                        resminya dicari dari nama perusahaan.
                     </p>
                 )}
                 <div className="flex flex-wrap gap-2">
@@ -595,7 +595,7 @@ function RecruitmentEmailForm({
                     >
                         Simpan
                     </Button>
-                    {company.website && (
+                    {!company.recruitment_email && (
                         <Button
                             type="button"
                             size="sm"

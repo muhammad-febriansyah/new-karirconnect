@@ -107,29 +107,94 @@ def candidate_links(html: str, base_url: str, domain: str) -> list[str]:
     return links
 
 
+LEGAL_WORDS = {
+    "pt", "tbk", "cv", "persero", "perseroan", "terbatas", "indonesia", "indonesian", "group", "grup", "holding",
+    "company", "co", "ltd", "inc", "corp", "corporation", "the", "and", "dan", "official", "id",
+}
+
+PARKED = re.compile(r"for sale|is for sale|buy this domain|domain (is )?(parked|for sale)|hugedomains|sedo|dan\.com|afternic|parkingcrew|domain dijual", re.I)
+
+
+def core_name(name: str) -> str:
+    """'PT. MR.DIY Indonesia Tbk' -> 'mrdiy'; letters and digits only."""
+    words = re.findall(r"[a-z0-9]+", re.sub(r"[.'’]", "", name.lower()))
+    return "".join(word for word in words if word not in LEGAL_WORDS)
+
+
+GENERIC_WORDS = {"international", "internasional", "global", "nusantara", "teknologi", "technology", "digital", "services", "solutions"}
+
+NAME_AS_DOMAIN = re.compile(r"\b([a-z0-9][a-z0-9-]*\.(?:co\.id|or\.id|ac\.id|com|id|net|org|io|co))\b", re.I)
+
+
+def core_variants(name: str) -> list[str]:
+    """The core name, then the same without generic words ("Akasha Wira
+    International" -> akashawirainternational, akashawira)."""
+    words = [w for w in re.findall(r"[a-z0-9]+", re.sub(r"[.'’]", "", name.lower())) if w not in LEGAL_WORDS]
+    variants = ["".join(words), "".join(w for w in words if w not in GENERIC_WORDS)]
+    # Short one-word names ("Zone", "Dandy") match unrelated sites.
+    return [v for v in dict.fromkeys(variants) if len(v) >= 6]
+
+
+def candidate_sites(name: str) -> list[str]:
+    hosts: list[str] = []
+    if match := NAME_AS_DOMAIN.search(name):
+        hosts.append(match.group(1).lower())  # "Jakmall.com"
+    for core in core_variants(name):
+        hosts += [f"{core}.co.id", f"{core}.id", f"{core}.com"]
+    if "indonesia" in name.lower() and core_variants(name):
+        hosts.append(f"{core_variants(name)[0]}indonesia.com")
+    return [f"https://{host}/" for host in dict.fromkeys(hosts)][:8]
+
+
+def site_belongs_to(html: str, name: str) -> bool:
+    """The page's title, site name or main heading names the company, and it
+    is not a parked or for-sale domain."""
+    soup = BeautifulSoup(html, "html.parser")
+    labels = [soup.title.get_text(" ", strip=True) if soup.title else ""]
+    for key in ("og:site_name", "og:title", "application-name"):
+        tag = soup.find("meta", attrs={"property": key}) or soup.find("meta", attrs={"name": key})
+        if tag and tag.get("content"):
+            labels.append(str(tag["content"]))
+    heading = soup.find("h1")
+    if heading:
+        labels.append(heading.get_text(" ", strip=True))
+    text = " ".join(labels)
+    if not text.strip() or PARKED.search(text) or PARKED.search(soup.get_text(" ", strip=True)[:3000]):
+        return False
+    page = core_name(text)
+    return any(variant in page for variant in core_variants(name)) or bool(
+        (match := NAME_AS_DOMAIN.search(name)) and core_name(match.group(1).split(".")[0]) in page
+    )
+
+
 @dataclass
 class ContactRequest:
     run_uuid: str
-    website: str
+    website: str | None
     user_agent: str = DEFAULT_USER_AGENT
     respect_robots: bool = True
     timeout_s: int = 60
+    company_name: str | None = None
 
     @classmethod
     def from_dict(cls, data: Any) -> "ContactRequest":
         if not isinstance(data, dict) or data.get("contract_version") != CONTRACT_VERSION:
             raise InvalidRequest("unsupported contract_version")
         website = data.get("website")
-        if not isinstance(website, str) or not website.startswith(("https://", "http://")):
+        name = data.get("company_name")
+        if website is not None and (not isinstance(website, str) or not website.startswith(("https://", "http://"))):
             raise InvalidRequest("website must be an http(s) URL")
+        if website is None and not (isinstance(name, str) and name.strip()):
+            raise InvalidRequest("website or company_name is required")
         timeout = data.get("timeout_s", 60)
         return cls(
             run_uuid=str(data.get("run_uuid") or ""),
             # The guard only allows https; plain-http sites are tried over https.
-            website="https://" + website.split("://", 1)[1],
+            website=("https://" + website.split("://", 1)[1]) if website else None,
             user_agent=str(data.get("user_agent") or DEFAULT_USER_AGENT),
             respect_robots=bool(data.get("respect_robots", True)),
             timeout_s=max(10, min(int(timeout) if isinstance(timeout, int) else 60, 120)),
+            company_name=name.strip() if isinstance(name, str) and name.strip() else None,
         )
 
 
@@ -141,11 +206,43 @@ class ContactResult:
     recruitment_email: str | None = None
     recruitment_email_url: str | None = None
     general_email: str | None = None
+    # True when the website was found from the company name, not given.
+    website_guessed: bool = False
     pages: int = 0
     errors: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {"contract_version": CONTRACT_VERSION, **self.__dict__}
+
+
+def guess_website(
+    request: ContactRequest,
+    *,
+    resolver: Callable[[str], list[str]] = system_resolver,
+    transport: httpx.BaseTransport | None = None,
+    clock: Clock | None = None,
+) -> str | None:
+    """The first candidate domain whose home page names the company."""
+    name = request.company_name or ""
+    deadline = Deadline(clock or Clock(), min(request.timeout_s, 30))
+    for url in candidate_sites(name):
+        domain = registrable_domain(urlsplit(url).hostname or "")
+        with SafeClient(
+            UrlGuard([domain], resolver=resolver),
+            user_agent=request.user_agent,
+            rate_per_minute=RATE_PER_MINUTE,
+            deadline=deadline,
+            respect_robots=request.respect_robots,
+            transport=transport,
+        ) as client:
+            try:
+                response = client.get(url)
+            except CrawlFailure:
+                continue
+        final_host = (urlsplit(str(response.url)).hostname or "").lower()
+        if registrable_domain(final_host) == domain and site_belongs_to(response.text, name):
+            return f"https://{final_host}/"
+    return None
 
 
 def find_contact(
@@ -156,6 +253,14 @@ def find_contact(
     clock: Clock | None = None,
 ) -> ContactResult:
     result = ContactResult(run_uuid=request.run_uuid)
+    if request.website is None:
+        website = guess_website(request, resolver=resolver, transport=transport, clock=clock)
+        if website is None:
+            result.status = "failed"
+            result.errors.append({"category": "not_found", "message": "no website of this company was found from its name"})
+            return result
+        request.website = website
+        result.website_guessed = True
     host = (urlsplit(request.website).hostname or "").lower()
     if not host:
         result.status = "failed"

@@ -269,18 +269,14 @@ class ExternalJobController extends Controller
     {
         Gate::authorize('viewAny', JobSource::class);
 
-        if (blank($company->website)) {
-            Inertia::flash('toast', ['type' => 'warning', 'message' => "Website {$company->name} tidak diketahui, jadi tidak ada situs yang bisa dicari. Isi email rekrutmen secara manual."]);
-
-            return back();
-        }
-
         FindCompanyContactJob::dispatch($company->id, force: true)
             ->onConnection((string) config('crawler.connection'))
             ->onQueue((string) config('crawler.queue'));
 
         $this->audit->record('scraped_company.find_contact', $company, null, null, $request->user());
-        Inertia::flash('toast', ['type' => 'info', 'message' => "Mencari email rekrutmen di {$company->website}. Muat ulang halaman ini sekitar satu menit lagi."]);
+        Inertia::flash('toast', ['type' => 'info', 'message' => filled($company->website)
+            ? "Mencari email rekrutmen di {$company->website}. Muat ulang halaman ini sekitar satu menit lagi."
+            : "Mencari situs resmi {$company->name} lalu email rekrutmennya. Muat ulang halaman ini sekitar satu menit lagi."]);
 
         return back();
     }
