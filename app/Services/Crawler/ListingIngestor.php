@@ -31,6 +31,7 @@ class ListingIngestor
         private readonly ListingAttributeMapper $mapper,
         private readonly ScrapedCompanyUpserter $companies,
         private readonly HtmlSanitizerService $sanitizer,
+        private readonly CompanyContactFinder $contacts,
     ) {}
 
     /**
@@ -43,6 +44,7 @@ class ListingIngestor
         $counts = ['created' => 0, 'updated' => 0, 'unchanged' => 0, 'filtered' => 0, 'rejected' => []];
         $indonesiaOnly = (bool) config('job_catalog.indonesia_only');
         $boardCompany = null;
+        $contactsQueued = [];
 
         foreach ($items as $item) {
             if (! is_array($item)) {
@@ -99,6 +101,12 @@ class ListingIngestor
             $counts[$outcome]++;
 
             $this->companies->rememberContactEmail($company, $item['contact_email'] ?? null, $item['source_url'] ?? null);
+
+            // No email in the posting: look on the company's own website, once per run.
+            if (! isset($contactsQueued[$company->id])) {
+                $contactsQueued[$company->id] = true;
+                $this->contacts->queueIfDue($company->refresh());
+            }
         }
 
         return $counts;

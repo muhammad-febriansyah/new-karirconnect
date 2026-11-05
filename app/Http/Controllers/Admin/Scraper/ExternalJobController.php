@@ -7,6 +7,7 @@ use App\Enums\CrawlRunTrigger;
 use App\Exceptions\Crawler\CrawlNotAllowedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PublishExternalJobsRequest;
+use App\Jobs\FindCompanyContactJob;
 use App\Models\CrawlRun;
 use App\Models\JobSource;
 use App\Models\ScrapedCompany;
@@ -246,6 +247,29 @@ class ExternalJobController extends Controller
         Inertia::flash('toast', $company->recruitment_email
             ? ['type' => 'success', 'message' => "Lamaran untuk {$company->name} akan diteruskan ke {$company->recruitment_email}."]
             : ['type' => 'info', 'message' => "Email rekrutmen {$company->name} dihapus. Kandidat akan diarahkan ke situs perusahaan."]);
+
+        return back();
+    }
+
+    /**
+     * Search the company's own website for its recruitment email now.
+     */
+    public function findRecruitmentEmail(Request $request, ScrapedCompany $company): RedirectResponse
+    {
+        Gate::authorize('viewAny', JobSource::class);
+
+        if (blank($company->website)) {
+            Inertia::flash('toast', ['type' => 'warning', 'message' => "Website {$company->name} tidak diketahui, jadi tidak ada situs yang bisa dicari. Isi email rekrutmen secara manual."]);
+
+            return back();
+        }
+
+        FindCompanyContactJob::dispatch($company->id, force: true)
+            ->onConnection((string) config('crawler.connection'))
+            ->onQueue((string) config('crawler.queue'));
+
+        $this->audit->record('scraped_company.find_contact', $company, null, null, $request->user());
+        Inertia::flash('toast', ['type' => 'info', 'message' => "Mencari email rekrutmen di {$company->website}. Muat ulang halaman ini sekitar satu menit lagi."]);
 
         return back();
     }

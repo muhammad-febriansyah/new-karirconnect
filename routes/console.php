@@ -37,3 +37,10 @@ Schedule::command('crawler:dispatch-due')
     ->withoutOverlapping()
     ->onOneServer()
     ->name('crawler:dispatch-due');
+
+// Companies whose website was not searched for a recruitment email yet.
+Schedule::command('crawler:find-contacts')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->name('crawler:find-contacts');

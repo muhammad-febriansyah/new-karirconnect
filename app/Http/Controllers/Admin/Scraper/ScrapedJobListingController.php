@@ -144,6 +144,7 @@ class ScrapedJobListingController extends Controller
                     'recruitment_email' => $company->recruitment_email,
                     'recruitment_email_source' => $company->recruitment_email_source,
                     'recruitment_email_verified_at' => $company->recruitment_email_verified_at?->toIso8601String(),
+                    'contact_checked_at' => $company->contact_checked_at?->toIso8601String(),
                     'name' => $company->name,
                     'tagline' => $company->tagline,
                     'logo_url' => $company->logoUrl(),

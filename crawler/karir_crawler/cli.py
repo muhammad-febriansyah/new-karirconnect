@@ -13,6 +13,7 @@ import sys
 import traceback
 from typing import TextIO
 
+from .contacts import ContactRequest, find_contact
 from .contract import CONTRACT_VERSION, CrawlRequest, InvalidRequest
 from .runner import run
 
@@ -35,7 +36,7 @@ def _error_response(run_uuid: str, message: str) -> dict:
     }
 
 
-def main(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout, runner=run) -> int:
+def main(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout, runner=run, contact_finder=find_contact) -> int:
     raw = stdin.read(MAX_REQUEST_BYTES + 1)
     run_uuid = ""
     try:
@@ -47,13 +48,17 @@ def main(stdin: TextIO = sys.stdin, stdout: TextIO = sys.stdout, runner=run) -> 
             raise InvalidRequest(f"request is not valid JSON: {exc}") from exc
         if isinstance(data, dict) and isinstance(data.get("run_uuid"), str):
             run_uuid = data["run_uuid"]
-        request = CrawlRequest.from_dict(data)
+        if isinstance(data, dict) and data.get("mode") == "company_contact":
+            contact_request = ContactRequest.from_dict(data)
+        else:
+            contact_request = None
+            request = CrawlRequest.from_dict(data)
     except InvalidRequest as exc:
         json.dump(_error_response(run_uuid, f"invalid request: {exc}"), stdout)
         return 2
 
     try:
-        response = runner(request).to_dict()
+        response = (contact_finder(contact_request) if contact_request is not None else runner(request)).to_dict()
     except Exception as exc:  # noqa: BLE001 - report any crash as JSON
         traceback.print_exc(file=sys.stderr)
         json.dump(_error_response(run_uuid, f"worker crashed: {type(exc).__name__}: {exc}"), stdout)

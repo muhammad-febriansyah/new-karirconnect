@@ -9,6 +9,7 @@ import {
     MapPin,
     Pencil,
     Phone,
+    Search,
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -92,6 +93,7 @@ type Listing = {
         recruitment_email: string | null;
         recruitment_email_source: string | null;
         recruitment_email_verified_at: string | null;
+        contact_checked_at: string | null;
     } | null;
 };
 
@@ -479,6 +481,22 @@ export default function ScrapedListingShow({ listing }: { listing: Listing }) {
  * Where applications to this company's external jobs are forwarded. Empty
  * means candidates apply on the company's own site instead.
  */
+/** Whether `url` is on the company's website (ignoring www.). */
+function sameSite(url: string, website: string | null): boolean {
+    if (!website) {
+        return false;
+    }
+
+    try {
+        const host = (value: string) =>
+            new URL(value).hostname.replace(/^www\./, '');
+
+        return host(url).endsWith(host(website));
+    } catch {
+        return false;
+    }
+}
+
 function RecruitmentEmailForm({
     company,
 }: {
@@ -488,8 +506,21 @@ function RecruitmentEmailForm({
         recruitment_email: string | null;
         recruitment_email_source: string | null;
         recruitment_email_verified_at: string | null;
+        contact_checked_at: string | null;
+        website: string | null;
     };
 }) {
+    const [searching, setSearching] = useState(false);
+    const findOnWebsite = () =>
+        router.post(
+            ExternalJobController.findRecruitmentEmail(company.id).url,
+            {},
+            {
+                preserveScroll: true,
+                onStart: () => setSearching(true),
+                onFinish: () => setSearching(false),
+            },
+        );
     const form = useForm({
         recruitment_email: company.recruitment_email ?? '',
     });
@@ -531,20 +562,54 @@ function RecruitmentEmailForm({
                             rel="noopener noreferrer"
                             className="underline"
                         >
-                            iklan lowongan
+                            {sameSite(
+                                company.recruitment_email_source,
+                                company.website,
+                            )
+                                ? 'situs perusahaan'
+                                : 'iklan lowongan'}
                         </a>
                         {company.recruitment_email_verified_at &&
                             ' · domain dapat menerima email'}
                         .
                     </p>
                 )}
-                <Button
-                    type="submit"
-                    size="sm"
-                    disabled={form.processing || !form.isDirty}
-                >
-                    Simpan
-                </Button>
+                {!company.recruitment_email && company.contact_checked_at && (
+                    <p className="text-xs text-muted-foreground">
+                        Situs perusahaan dicek{' '}
+                        {formatDateTime(company.contact_checked_at)}: tidak ada
+                        email rekrutmen yang dipublikasikan.
+                    </p>
+                )}
+                {!company.website && !company.recruitment_email && (
+                    <p className="text-xs text-muted-foreground">
+                        Sumber tidak mencantumkan website perusahaan, jadi email
+                        tidak bisa dicari otomatis.
+                    </p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                    <Button
+                        type="submit"
+                        size="sm"
+                        disabled={form.processing || !form.isDirty}
+                    >
+                        Simpan
+                    </Button>
+                    {company.website && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={searching}
+                            onClick={findOnWebsite}
+                        >
+                            <Search className="size-4" />
+                            {searching
+                                ? 'Mencari…'
+                                : 'Cari di situs perusahaan'}
+                        </Button>
+                    )}
+                </div>
             </form>
         </Section>
     );

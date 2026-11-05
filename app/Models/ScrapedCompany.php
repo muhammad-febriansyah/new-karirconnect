@@ -29,6 +29,7 @@ use Illuminate\Support\Str;
     'recruitment_email',
     'recruitment_email_source',
     'recruitment_email_verified_at',
+    'contact_checked_at',
     'phone',
     'industry_id',
     'company_size_id',
@@ -59,6 +60,7 @@ class ScrapedCompany extends Model
             'profile_fetched_at' => 'datetime',
             'logo_fetched_at' => 'datetime',
             'recruitment_email_verified_at' => 'datetime',
+            'contact_checked_at' => 'datetime',
         ];
     }
 

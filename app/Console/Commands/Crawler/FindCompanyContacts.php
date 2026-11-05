@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Console\Commands\Crawler;
+
+use App\Models\ScrapedCompany;
+use App\Services\Crawler\CompanyContactFinder;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
+use Illuminate\Console\Command;
+
+#[Signature('crawler:find-contacts {--limit=200 : At most this many companies}')]
+#[Description('Queue a website search for the recruitment email of companies that have none yet.')]
+class FindCompanyContacts extends Command
+{
+    public function handle(CompanyContactFinder $finder): int
+    {
+        $queued = 0;
+
+        ScrapedCompany::query()
+            ->whereNull('recruitment_email')
+            ->whereNotNull('website')
+            ->orderBy('id')
+            ->each(function (ScrapedCompany $company) use ($finder, &$queued): bool {
+                if ($finder->isDue($company)) {
+                    $finder->queueIfDue($company);
+                    $queued++;
+                }
+
+                return $queued < (int) $this->option('limit');
+            });
+
+        $this->info("{$queued} perusahaan diantrikan untuk dicari email rekrutmennya.");
+
+        return self::SUCCESS;
+    }
+}

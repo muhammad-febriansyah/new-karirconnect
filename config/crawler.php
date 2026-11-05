@@ -70,6 +70,10 @@ return [
     // Errors stored per run; the rest are counted in the run summary.
     'max_errors_per_run' => 200,
 
+    // A company website searched for a recruitment email without result is
+    // searched again after this many days.
+    'contact_recheck_days' => (int) env('CRAWLER_CONTACT_RECHECK_DAYS', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Category from job title
