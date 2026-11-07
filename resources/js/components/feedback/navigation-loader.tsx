@@ -1,8 +1,23 @@
+import type { PendingVisit } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const LOADER_DELAY = 150;
+
+/**
+ * Polls, prefetches, partial reloads and other async requests refresh data in
+ * the background, so they must not cover the page with the blocking overlay.
+ */
+function isBackgroundVisit(visit: PendingVisit): boolean {
+    return (
+        visit.async ||
+        visit.prefetch ||
+        !visit.showProgress ||
+        visit.only.length > 0 ||
+        visit.except.length > 0
+    );
+}
 
 export function NavigationLoader() {
     const [isVisible, setIsVisible] = useState(false);
@@ -17,7 +32,11 @@ export function NavigationLoader() {
             }
         };
 
-        const offStart = router.on('start', () => {
+        const offStart = router.on('start', (event) => {
+            if (isBackgroundVisit(event.detail.visit)) {
+                return;
+            }
+
             pendingVisits.current += 1;
 
             if (pendingVisits.current === 1) {
@@ -29,7 +48,11 @@ export function NavigationLoader() {
             }
         });
 
-        const offFinish = router.on('finish', () => {
+        const offFinish = router.on('finish', (event) => {
+            if (isBackgroundVisit(event.detail.visit)) {
+                return;
+            }
+
             pendingVisits.current = Math.max(0, pendingVisits.current - 1);
 
             if (pendingVisits.current === 0) {
