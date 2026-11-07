@@ -222,4 +222,20 @@ class Company extends Model
                     ->orWhere('verification_status', CompanyVerificationStatus::Verified);
             });
     }
+
+    /**
+     * Limit the query to companies that belong in public listings (the
+     * directory, search, sitemap). Employers created from scraped Jobs
+     * Eksternal stay reachable from their jobs but are never listed.
+     *
+     * @param  Builder<Company>  $query
+     */
+    public function scopeListedInDirectory(Builder $query): void
+    {
+        $query
+            ->recruiterActive()
+            ->whereDoesntHave('owner', function (Builder $owner): void {
+                $owner->where('email', config('external_jobs.owner_email'));
+            });
+    }
 }

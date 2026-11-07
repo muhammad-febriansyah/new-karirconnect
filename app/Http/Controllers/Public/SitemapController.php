@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Public;
 
-use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Job;
@@ -28,7 +27,7 @@ class SitemapController extends Controller
             ->push(['loc' => route('public.salary-insight'), 'changefreq' => 'weekly', 'priority' => '0.7']);
 
         Job::query()
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->whereNotNull('published_at')
             ->latest('published_at')
             ->limit(self::MAX_PER_SECTION)
@@ -43,7 +42,7 @@ class SitemapController extends Controller
             });
 
         Company::query()
-            ->recruiterActive()
+            ->listedInDirectory()
             ->latest('updated_at')
             ->limit(self::MAX_PER_SECTION)
             ->get(['slug', 'updated_at'])

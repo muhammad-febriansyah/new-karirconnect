@@ -21,4 +21,11 @@ return [
     */
     'relay_from_address' => env('EXTERNAL_JOBS_RELAY_FROM_ADDRESS'),
 
+    /*
+    | Whether published external jobs appear on public pages (job browse,
+    | home, company pages, search, sitemap, API, alerts, recommendations).
+    | Off: they stay in the admin only.
+    */
+    'publicly_visible' => (bool) env('EXTERNAL_JOBS_PUBLICLY_VISIBLE', false),
+
 ];

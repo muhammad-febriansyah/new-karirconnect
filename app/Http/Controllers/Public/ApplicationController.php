@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Public;
 
 use App\Actions\Applications\SubmitApplicationAction;
-use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Applications\SubmitApplicationRequest;
 use App\Models\Application;
@@ -24,7 +23,7 @@ class ApplicationController extends Controller
 
     public function create(Request $request, Job $job): Response|RedirectResponse|SymfonyResponse
     {
-        abort_unless($job->status === JobStatus::Published, 404);
+        abort_unless($job->isPubliclyVisible(), 404);
 
         // An external job nobody can receive applications for here: send the
         // candidate to the company's own apply page.

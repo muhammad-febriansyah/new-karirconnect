@@ -5,7 +5,6 @@ namespace App\Actions\Applications;
 use App\Enums\AiInterviewMode;
 use App\Enums\AiInterviewStatus;
 use App\Enums\ApplicationStatus;
-use App\Enums\JobStatus;
 use App\Jobs\RelayExternalApplicationJob;
 use App\Models\AiInterviewSession;
 use App\Models\Application;
@@ -39,7 +38,7 @@ class SubmitApplicationAction
      */
     public function execute(Job $job, EmployeeProfile $profile, array $data): Application
     {
-        if ($job->status !== JobStatus::Published) {
+        if (! $job->isPubliclyVisible()) {
             throw ValidationException::withMessages(['job' => 'Lowongan tidak menerima lamaran saat ini.']);
         }
 

@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
+    config(['external_jobs.publicly_visible' => true]);
     Queue::fake();
     app()->instance(DnsResolver::class, new class extends DnsResolver
     {

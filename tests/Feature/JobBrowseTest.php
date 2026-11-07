@@ -258,6 +258,21 @@ test('public companies index lists only approved companies', function () {
             ->where('companies.total', 1));
 });
 
+test('public companies index hides employers created from Jobs Eksternal', function () {
+    $owner = User::factory()->employer()->create();
+    $externalOwner = User::factory()->employer()->create(['email' => config('external_jobs.owner_email')]);
+    Company::factory()->approved()->create(['owner_id' => $owner->id, 'name' => 'PT Registered Co']);
+    $external = Company::factory()->approved()->create(['owner_id' => $externalOwner->id, 'name' => 'PT Scraped Co']);
+
+    $this->get(route('public.companies.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('companies.total', 1)
+            ->where('companies.data.0.name', 'PT Registered Co'));
+
+    $this->get(route('public.companies.show', ['company' => $external->slug]))->assertOk();
+});
+
 test('employee can save and unsave a published job', function () {
     $employee = User::factory()->employee()->create();
     $owner = User::factory()->employer()->create();

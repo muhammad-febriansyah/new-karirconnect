@@ -2,7 +2,6 @@
 
 namespace App\Services\JobAlerts;
 
-use App\Enums\JobStatus;
 use App\Models\Job;
 use App\Models\JobAlert;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,7 +22,7 @@ class JobAlertMatcherService
     {
         $query = Job::query()
             ->with(['company:id,name,slug,logo_path', 'category:id,name', 'city:id,name'])
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->whereNotNull('published_at');
 
         $cutoff = $ignoreCutoff ? null : $alert->last_sent_at;

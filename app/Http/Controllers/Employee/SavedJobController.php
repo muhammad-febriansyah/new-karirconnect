@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Employee;
 
-use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Job;
 use App\Models\SavedJob;
@@ -63,7 +62,7 @@ class SavedJobController extends Controller
 
     public function store(Request $request, Job $job): RedirectResponse
     {
-        abort_unless($job->status === JobStatus::Published, 422, 'Hanya lowongan aktif yang bisa disimpan.');
+        abort_unless($job->isPubliclyVisible(), 422, 'Hanya lowongan aktif yang bisa disimpan.');
 
         $request->user()->savedJobs()->firstOrCreate([
             'job_id' => $job->id,

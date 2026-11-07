@@ -10,6 +10,7 @@ use App\Enums\JobStatus;
 use App\Enums\WorkArrangement;
 use Database\Factories\JobFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -92,6 +93,31 @@ class Job extends Model
     public function isPublished(): bool
     {
         return $this->status === JobStatus::Published;
+    }
+
+    /**
+     * Whether visitors and candidates may see this job: it is published and,
+     * unless external jobs are made public, it was not scraped (Jobs Eksternal).
+     */
+    public function isPubliclyVisible(): bool
+    {
+        return $this->isPublished()
+            && (! $this->isExternal() || (bool) config('external_jobs.publicly_visible'));
+    }
+
+    /**
+     * Limit the query to jobs visitors and candidates may see. See
+     * isPubliclyVisible().
+     *
+     * @param  Builder<Job>  $query
+     */
+    public function scopePubliclyVisible(Builder $query): void
+    {
+        $query->where($query->qualifyColumn('status'), JobStatus::Published);
+
+        if (! config('external_jobs.publicly_visible')) {
+            $query->whereNull($query->qualifyColumn('scraped_job_listing_id'));
+        }
     }
 
     /**

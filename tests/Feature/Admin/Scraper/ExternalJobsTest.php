@@ -33,6 +33,8 @@ use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
+    // These tests cover the public apply flow for external jobs.
+    config(['external_jobs.publicly_visible' => true]);
     $this->admin = User::factory()->admin()->create();
     $this->category = JobCategory::factory()->create();
     $this->company = ScrapedCompany::factory()->create(['name' => 'PT Contoh Teknologi', 'logo_path' => null]);
@@ -422,3 +424,27 @@ it('reads seniority only from unambiguous title words', function (string $title,
     ['Software Engineering Intern', 'entry'],
     ['Head of People', 'executive'],
 ]);
+
+describe('public visibility', function () {
+    it('keeps published external jobs off public pages by default', function () {
+        config(['external_jobs.publicly_visible' => false]);
+
+        $listing = externalListing(['title' => 'Hidden Scraped Role']);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('admin.scraper.listings.publish'), publishDefaults(['listing_ids' => [$listing->id]]))
+            ->assertOk();
+        auth()->logout();
+
+        $job = Job::query()->where('scraped_job_listing_id', $listing->id)->sole();
+
+        expect($job->status)->toBe(JobStatus::Published)
+            ->and($job->isPubliclyVisible())->toBeFalse()
+            ->and(Job::query()->publiclyVisible()->whereKey($job->id)->exists())->toBeFalse();
+
+        $this->get(route('public.jobs.show', ['job' => $job->slug]))->assertNotFound();
+        $this->get(route('public.jobs.index'))
+            ->assertOk()
+            ->assertDontSee('Hidden Scraped Role');
+    });
+});

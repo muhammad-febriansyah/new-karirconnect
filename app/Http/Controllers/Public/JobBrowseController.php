@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Public;
 use App\Enums\EducationLevel;
 use App\Enums\EmploymentType;
 use App\Enums\ExperienceLevel;
-use App\Enums\JobStatus;
 use App\Enums\WorkArrangement;
 use App\Filters\Jobs\JobBrowseFilter;
 use App\Http\Controllers\Controller;
@@ -55,7 +54,7 @@ class JobBrowseController extends Controller
 
     public function show(Request $request, Job $job): Response
     {
-        abort_unless($job->status === JobStatus::Published, 404);
+        abort_unless($job->isPubliclyVisible(), 404);
 
         $job->load([
             'company:id,name,slug,logo_path,about,verification_status,website',
@@ -100,7 +99,7 @@ class JobBrowseController extends Controller
                 'category:id,name',
             ])
             ->where('id', '!=', $job->id)
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->where('job_category_id', $job->job_category_id)
             ->latest('published_at')
             ->limit(4)

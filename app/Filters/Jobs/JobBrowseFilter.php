@@ -2,7 +2,6 @@
 
 namespace App\Filters\Jobs;
 
-use App\Enums\JobStatus;
 use App\Models\Job;
 use App\Services\Sanitizer\LikeEscaper;
 use Illuminate\Contracts\Database\Eloquent\Builder;
@@ -45,7 +44,7 @@ class JobBrowseFilter
                 'city.province:id,name',
                 'skills:id,name',
             ])
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->whereNotNull('published_at');
 
         if (empty($filters['include_expired'])) {

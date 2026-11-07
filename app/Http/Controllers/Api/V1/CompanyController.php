@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CompanyIndexRequest;
 use App\Http\Resources\Api\V1\CompanyDetailResource;
@@ -18,10 +17,11 @@ class CompanyController extends Controller
     {
         $companies = Company::query()
             ->with(['industry:id,name', 'city:id,name', 'size:id,name'])
-            ->withCount(['jobs as open_jobs_count' => fn ($query) => $query->where('status', JobStatus::Published)])
+            ->withCount(['jobs as open_jobs_count' => fn ($query) => $query->publiclyVisible()])
 
-            // The public visibility gate: approved or verified, never suspended.
-            ->recruiterActive()
+            // The public visibility gate: approved or verified, never suspended,
+            // and never a scraped Jobs Eksternal employer.
+            ->listedInDirectory()
 
             ->when($request->filled('search'), fn ($query) => $query->where('name', 'like', '%'.$request->string('search')->toString().'%'))
             ->when($request->filled('industry_id'), fn ($query) => $query->where('industry_id', $request->integer('industry_id')))
@@ -67,7 +67,7 @@ class CompanyController extends Controller
 
         $jobs = $company->jobs()
             ->with(['company:id,name,slug,logo_path,verification_status', 'city:id,name', 'category:id,name'])
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->orderByDesc('is_featured')
             ->orderByDesc('published_at')
             ->paginate($request->perPage())

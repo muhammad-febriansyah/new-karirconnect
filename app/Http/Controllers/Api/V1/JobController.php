@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\JobStatus;
 use App\Filters\Jobs\JobBrowseFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\JobIndexRequest;
@@ -52,7 +51,7 @@ class JobController extends Controller
     {
         // A draft, closed, or archived posting is not public. 404 rather than
         // 403: the existence of an unpublished job is itself not public.
-        abort_unless($job->status === JobStatus::Published, 404);
+        abort_unless($job->isPubliclyVisible(), 404);
 
         $job->load([
             'company:id,name,slug,logo_path,about,verification_status,website',
@@ -126,7 +125,7 @@ class JobController extends Controller
                 'category:id,name',
             ])
             ->where('id', '!=', $job->id)
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->where('job_category_id', $job->job_category_id)
             ->latest('published_at')
             ->limit(4)

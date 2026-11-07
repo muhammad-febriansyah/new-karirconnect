@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Public;
 
-use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Industry;
@@ -24,8 +23,8 @@ class CompanyBrowseController extends Controller
 
         $companies = Company::query()
             ->with(['industry:id,name', 'city:id,name', 'size:id,name,employee_range'])
-            ->withCount(['jobs as open_jobs_count' => fn (Builder $q) => $q->where('status', JobStatus::Published)])
-            ->recruiterActive()
+            ->withCount(['jobs as open_jobs_count' => fn (Builder $q) => $q->publiclyVisible()])
+            ->listedInDirectory()
             ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
             ->when($industryId, fn ($q) => $q->where('industry_id', $industryId))
             ->when($provinceId, fn ($q) => $q->where('province_id', $provinceId))
@@ -80,7 +79,7 @@ class CompanyBrowseController extends Controller
         $jobs = Job::query()
             ->with(['category:id,name', 'city:id,name'])
             ->where('company_id', $company->id)
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->orderByDesc('is_featured')
             ->orderByDesc('published_at')
             ->limit(20)

@@ -2,7 +2,6 @@
 
 namespace App\Services\Recommendations;
 
-use App\Enums\JobStatus;
 use App\Models\AiMatchScore;
 use App\Models\DismissedJobRecommendation;
 use App\Models\EmployeeProfile;
@@ -59,7 +58,7 @@ class JobRecommendationService
                 'city:id,name',
                 'skills:id,name',
             ])
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->whereNotNull('published_at')
             ->when($excludedIds, fn ($q) => $q->whereNotIn('id', $excludedIds))
             ->latest('published_at')

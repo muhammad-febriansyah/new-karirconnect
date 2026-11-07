@@ -6,7 +6,6 @@ use App\Enums\CompanyStatus;
 use App\Enums\EducationLevel;
 use App\Enums\EmploymentType;
 use App\Enums\ExperienceLevel;
-use App\Enums\JobStatus;
 use App\Enums\WorkArrangement;
 use App\Models\CareerResource;
 use App\Models\Company;
@@ -73,7 +72,7 @@ class HomeService
     private function metrics(): array
     {
         return [
-            'open_jobs' => Job::query()->where('status', JobStatus::Published)->count(),
+            'open_jobs' => Job::query()->publiclyVisible()->count(),
             'active_companies' => Company::query()->where('status', CompanyStatus::Approved)->count(),
             'candidates' => EmployeeProfile::query()->count(),
             'salary_reports' => SalarySubmission::query()->where('status', 'approved')->count(),
@@ -87,7 +86,7 @@ class HomeService
     {
         return Job::query()
             ->with(['company:id,name,slug,logo_path,verification_status', 'category:id,name', 'city:id,name', 'skills:id,name'])
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->whereNotNull('published_at')
             ->orderByDesc('is_featured')
             ->latest('published_at')
@@ -159,7 +158,7 @@ class HomeService
             return Company::query()
                 ->where('status', CompanyStatus::Approved)
                 ->with(['industry:id,name'])
-                ->withCount(['jobs as open_jobs_count' => fn ($q) => $q->where('status', JobStatus::Published)])
+                ->withCount(['jobs as open_jobs_count' => fn ($q) => $q->publiclyVisible()])
                 ->orderByDesc('open_jobs_count')
                 ->limit(8)
                 ->get()
@@ -171,7 +170,7 @@ class HomeService
             ->whereIn('id', $reviewAggregates->keys())
             ->where('status', CompanyStatus::Approved)
             ->with(['industry:id,name'])
-            ->withCount(['jobs as open_jobs_count' => fn ($q) => $q->where('status', JobStatus::Published)])
+            ->withCount(['jobs as open_jobs_count' => fn ($q) => $q->publiclyVisible()])
             ->get()
             ->map(fn (Company $c) => $this->companyRow(
                 $c,
@@ -205,7 +204,7 @@ class HomeService
     private function topCategories(): array
     {
         $counts = Job::query()
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->selectRaw('job_category_id, count(*) as c')
             ->whereNotNull('job_category_id')
             ->groupBy('job_category_id')
@@ -236,7 +235,7 @@ class HomeService
     private function salaryTeasers(): array
     {
         return Job::query()
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->whereNotNull('salary_min')
             ->whereNotNull('salary_max')
             ->where('is_salary_visible', true)

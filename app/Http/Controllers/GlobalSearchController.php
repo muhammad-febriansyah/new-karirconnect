@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\JobStatus;
 use App\Enums\UserRole;
 use App\Models\Application;
 use App\Models\Company;
@@ -140,7 +139,7 @@ class GlobalSearchController extends Controller
     {
         $jobs = Job::query()
             ->with('company:id,name')
-            ->where('status', JobStatus::Published)
+            ->publiclyVisible()
             ->whereRaw(LikeEscaper::sql('title'), [$this->like($term)])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()
@@ -152,7 +151,7 @@ class GlobalSearchController extends Controller
             ->all();
 
         $companies = Company::query()
-            ->recruiterActive()
+            ->listedInDirectory()
             ->whereRaw(LikeEscaper::sql('name'), [$this->like($term)])
             ->limit(self::LIMIT_PER_GROUP)
             ->get()

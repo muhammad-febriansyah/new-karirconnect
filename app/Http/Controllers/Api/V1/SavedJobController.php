@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\JobResource;
 use App\Models\Job;
@@ -56,7 +55,7 @@ class SavedJobController extends Controller
         ]);
 
         abort_unless(
-            $job->status === JobStatus::Published,
+            $job->isPubliclyVisible(),
             422,
             'Hanya lowongan aktif yang bisa disimpan.',
         );
